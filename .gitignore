@@ -30,3 +30,13 @@
 *.exe
 *.out
 *.app
+
+# Build directory, runtime logs, etc.
+/.vs/**
+/build/**
+/external/**
+/docs/**
+/logs/**
+/out/**
+*/out/**
+/cppcheck/**

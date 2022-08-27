@@ -1,0 +1,21 @@
+#include "mgealite_version.h"
+
+std::string getMGEALiteVersion() {
+	return "@MGEALite_VERSION@";
+}
+
+unsigned getMGEALiteVersionMajor() {
+	return @MGEALite_VERSION_MAJOR@;
+}
+
+unsigned getMGEALiteVersionMinor() {
+	return @MGEALite_VERSION_MINOR@ +0;
+}
+
+unsigned getMGEALiteVersionPatch() {
+	return @MGEALite_VERSION_PATCH@ +0;
+}
+
+unsigned getMGEALiteVersionTweak() {
+	return @MGEALite_VERSION_TWEAK@ +0;
+}
