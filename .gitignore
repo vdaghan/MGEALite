@@ -39,4 +39,5 @@
 /logs/**
 /out/**
 */out/**
+/data/**
 /cppcheck/**
