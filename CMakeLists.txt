@@ -16,17 +16,22 @@ set(FETCHCONTENT_QUIET OFF)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.0.0.2)
+project(MGEALite LANGUAGES CXX VERSION 0.0.0.3)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
-FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 97d18c31e6f8fe127ec4954563888d8914747153 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.1.1.0
+FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG be4adfcb2a4d02dcac54120009544fcec73522d8 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.2.0.0
 FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.9.2
 FetchContent_Declare(json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG 4f8fba14066156b73f1189a2b8bd568bde5284c5 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/json) # release-3.10.5
 FetchContent_MakeAvailable(spdlog DEvA json)
 
-
-set(MGEALite_SOURCES "${CMAKE_BINARY_DIR}/mgealite_version.cpp" "src/MGEALite.cpp" "src/SimulationData.cpp" "src/SimulationLog.cpp" "src/Database.cpp")
-add_executable(MGEALite ${MGEALite_SOURCES})
+add_executable(MGEALite)
+set(MotionGeneration_SOURCES  "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp")
+set(MGEALite_SOURCES "${CMAKE_BINARY_DIR}/mgealite_version.cpp"
+					"${CMAKE_SOURCE_DIR}/src/MGEALite.cpp"
+					"${CMAKE_SOURCE_DIR}/src/SimulationData.cpp"
+					"${CMAKE_SOURCE_DIR}/src/SimulationLog.cpp"
+					"${CMAKE_SOURCE_DIR}/src/Database.cpp")
+target_sources(MGEALite PUBLIC ${MGEALite_SOURCES} ${MotionGeneration_SOURCES})
 target_include_directories(MGEALite PUBLIC "${CMAKE_SOURCE_DIR}")
 target_include_directories(MGEALite PUBLIC "${CMAKE_SOURCE_DIR}/include")
 
