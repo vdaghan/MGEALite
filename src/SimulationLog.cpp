@@ -15,6 +15,30 @@ SimulationLog::SimulationLog(std::size_t gen, std::size_t id, std::filesystem::p
 	std::filesystem::create_directory(m_generationPath);
 }
 
+bool SimulationLog::inputExists() {
+	if (m_hasInput) {
+		return true;
+	}
+	auto simDataPtr = loadInput();
+	if (simDataPtr) {
+		m_hasInput = true;
+		return true;
+	}
+	return false;
+}
+
+bool SimulationLog::outputExists() {
+	if (m_hasOutput) {
+		return true;
+	}
+	auto simDataPtr = loadOutput();
+	if (simDataPtr) {
+		m_hasOutput = true;
+		return true;
+	}
+	return false;
+}
+
 SimulationDataPtr SimulationLog::loadInput() {
 	if (!m_input) {
 		m_input = importSimulationData(m_inputFilePath.string());

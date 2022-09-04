@@ -13,8 +13,8 @@ class SimulationLog {
 		std::size_t generation() const { return m_gen; };
 		std::size_t identifier() const { return m_id; };
 
-		bool inputExists() const { return m_hasInput; };
-		bool outputExists() const { return m_hasOutput; };
+		bool inputExists();
+		bool outputExists();
 
 		SimulationDataPtr loadInput();
 		SimulationDataPtr loadOutput();

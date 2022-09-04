@@ -54,7 +54,7 @@ void Database::rescan() {
 					continue;
 				}
 
-				std::string const fileNameExtension = d.path().extension().string();
+				//std::string const fileNameExtension = d.path().extension().string();
 				SimulationInfo simulationInfo{.generation = generation, .identifier = individual};
 				auto simLogPtr = getSimulation(simulationInfo);
 			}

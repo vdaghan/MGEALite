@@ -16,7 +16,7 @@ set(FETCHCONTENT_QUIET OFF)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.0.0.4)
+project(MGEALite LANGUAGES CXX VERSION 0.0.0.5)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 2f39c701f17a1d63b2531f19996b625887667124 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.3.0.1
