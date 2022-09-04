@@ -25,6 +25,8 @@ class SimulationLog {
 		std::size_t const m_gen;
 		std::size_t const m_id;
 
+		std::filesystem::path const m_generationPath;
+
 		std::filesystem::path const m_inputFilePath;
 		bool m_hasInput;
 		SimulationDataPtr m_input;

@@ -9,15 +9,13 @@
 #include "mgealite_version.h"
 #include "Database.h"
 #include "MotionGeneration/MotionGenerator.h"
-	
-#include "EvolutionaryAlgorithm.h"
-#include "Specialisation.h"
+#include "MotionGeneration/Specification.h"
 
 int main() {
 	std::cout << "MGEALite version: " << getMGEALiteVersion() << std::endl;
-	Database db("./data");
 
-	MotionGenerator motionGenerator;
+	MotionGenerator motionGenerator("./data");
+	motionGenerator.start();
 
 	return 0;
 }

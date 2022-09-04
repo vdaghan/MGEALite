@@ -1,5 +1,7 @@
 #include "Database.h"
 
+#include "spdlog/spdlog.h"
+
 #include <algorithm>
 #include <iostream>
 #include <ranges>
@@ -9,7 +11,7 @@ Database::Database(std::string pathName) : path(pathName), scan(true) {
 		std::filesystem::create_directory(path);
 	}
 	rescanThread = std::jthread(&Database::rescan, this);
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+	//std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 }
 
 Database::~Database() {
@@ -18,11 +20,11 @@ Database::~Database() {
 
 void Database::rescan() {
 	while (scan) {
-		std::lock_guard dbLock(dbMutex);
-		std::cout << "Scanning folders..." << std::endl;
+		spdlog::info("Scanning folders...");
 		std::string pathFolder = path.filename().string();
-		std::cout << "Path folder is " << pathFolder << std::endl;
+		spdlog::info("Path folder is \"{}\"", pathFolder);
 		for (auto & d : std::filesystem::directory_iterator{path}) {
+			std::lock_guard<std::mutex> dbLock(dbMutex);
 			if (!std::filesystem::is_directory(d.path())) {
 				continue;
 			}
@@ -53,8 +55,8 @@ void Database::rescan() {
 				}
 
 				std::string const fileNameExtension = d.path().extension().string();
-				auto simLogPtr = getSimulation(generation, individual);
-
+				SimulationInfo simulationInfo{.generation = generation, .identifier = individual};
+				auto simLogPtr = getSimulation(simulationInfo);
 			}
 		}
 
@@ -62,31 +64,32 @@ void Database::rescan() {
 	}
 }
 
-SimulationLogPtr Database::getSimulation(std::size_t gen, std::size_t id) {
-	std::lock_guard dbLock(dbMutex);
-	if (!simulations.contains(gen)) {
+SimulationLogPtr Database::getSimulation(SimulationInfo simInfo) {
+	//std::lock_guard<std::mutex> dbLock(dbMutex); // This results in recursive lock. Make sure we don't need this.
+	if (!simulations.contains(simInfo.generation)) {
 		return nullptr;
 	}
-	if (!simulations.at(gen).contains(id)) {
+	if (!simulations.at(simInfo.generation).contains(simInfo.identifier)) {
 		return nullptr;
 	}
-	return simulations.at(gen).at(id);
+	return simulations.at(simInfo.generation).at(simInfo.identifier);
 }
 
-SimulationLogPtr Database::createSimulation(std::size_t gen, std::size_t id) {
-	std::lock_guard dbLock(dbMutex);
-	if (!simulations.contains(gen)) {
-		simulations.emplace(std::make_pair(gen, SimulationLogPtrMap()));
+SimulationLogPtr Database::createSimulation(SimulationInfo simInfo) {
+	spdlog::info("Creating simulation ({}, {})", simInfo.generation, simInfo.identifier);
+	std::lock_guard<std::mutex> dbLock(dbMutex);
+	if (!simulations.contains(simInfo.generation)) {
+		simulations.emplace(std::make_pair(simInfo.generation, SimulationLogPtrMap()));
 	}
-	if (!simulations.at(gen).contains(id)) {
-		SimulationLog * simulationLogRawPtr = new SimulationLog(gen, id, path);
-		simulations.at(gen).emplace(id, simulationLogRawPtr);
+	if (!simulations.at(simInfo.generation).contains(simInfo.identifier)) {
+		SimulationLog * simulationLogRawPtr = new SimulationLog(simInfo.generation, simInfo.identifier, path);
+		simulations.at(simInfo.generation).emplace(simInfo.identifier, simulationLogRawPtr);
 	}
-	return simulations.at(gen).at(id);
+	return simulations.at(simInfo.generation).at(simInfo.identifier);
 }
 
 UpdatedSimulationList Database::getUpdatedSimulations() {
-	std::lock_guard dbLock(dbMutex);
+	std::lock_guard<std::mutex> dbLock(dbMutex);
 	UpdatedSimulationList retVal(std::move(updatedSimulations));
 	updatedSimulations.clear();
 	return retVal;

@@ -15,6 +15,7 @@ struct SimulationInfo {
 	std::size_t generation;
 	std::size_t identifier;
 };
+using SimulationInfoPtr = std::shared_ptr<SimulationInfo>;
 using UpdatedSimulationList = std::list<SimulationInfo>;
 
 class Database {
@@ -22,8 +23,14 @@ class Database {
 		Database(std::string);
 		~Database();
 		void rescan();
-		SimulationLogPtr getSimulation(std::size_t, std::size_t);
-		SimulationLogPtr createSimulation(std::size_t, std::size_t);
+		/// \brief Find existing simulation, or return nullptr if it does not exist.
+		/// Locks database mutex while searching.
+		/// \return
+		SimulationLogPtr getSimulation(SimulationInfo);
+		/// \brief Find existing simulation, or create and return one if it does not exist.
+		/// Locks database mutex while searching and/or creating.
+		/// \return
+		SimulationLogPtr createSimulation(SimulationInfo);
 		UpdatedSimulationList getUpdatedSimulations();
 	private:
 		std::filesystem::path const path;

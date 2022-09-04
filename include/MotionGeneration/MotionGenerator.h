@@ -1,26 +1,30 @@
 #pragma once
 
+#include "Database.h"
 #include "SimulationData.h"
 
-using Genotype = SimulationData;
-using Phenotype = SimulationData;
-
 #include "EvolutionaryAlgorithm.h"
+#include "Specification.h"
 #include "Specialisation.h"
-using Fitness = double;
-using Spec = DEvA::Specialisation<Genotype, Phenotype, Fitness, DEvA::NullVParameters>;
+
+#include <string>
+
+
+using Spec = DEvA::Specialisation<Specification>;
 
 class MotionGenerator {
 	public:
-		MotionGenerator();
+		MotionGenerator(std::string);
+		void start();
 	private:
+		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
 		Spec::Generation genesis();
-		//Spec::GenotypePtr createGenotype();
-		Spec::PhenotypePtr transform(Spec::GenotypePtr);
-		Spec::Fitness evaluate(Spec::GenotypePtr);
+		Spec::GenotypeProxy createGenotype();
+		Spec::PhenotypeProxy transform(Spec::GenotypeProxy);
+		Spec::Fitness evaluate(Spec::GenotypeProxy);
 		Spec::IndividualPtrs parentSelection(Spec::IndividualPtrs);
-		Spec::GenotypePtrs variation(Spec::GenotypePtrs);
+		Spec::GenotypeProxies variation(Spec::GenotypeProxies);
 		void survivorSelection(Spec::IndividualPtrs &);
 		bool convergenceCheck(Spec::Fitness);
 };

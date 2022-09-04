@@ -1,15 +1,18 @@
 #include "SimulationLog.h"
 
+#include "spdlog/spdlog.h"
+
 SimulationLog::SimulationLog(std::size_t gen, std::size_t id, std::filesystem::path path)
 	: m_gen(gen), m_id(id),
+	m_generationPath(path / std::to_string(gen)),
 	m_inputFilePath(path/std::to_string(gen)/(std::to_string(id)+".input")),
-	m_outputFilePath(path/std::to_string(gen)/(std::to_string(id)+".output")),
+	m_outputFilePath(path / std::to_string(gen) / (std::to_string(id) + ".output")),
 	m_input{nullptr},
 	m_output{nullptr},
 	m_hasInput(false),
 	m_hasOutput(false)
-	{
-	
+{
+	std::filesystem::create_directory(m_generationPath);
 }
 
 SimulationDataPtr SimulationLog::loadInput() {
@@ -38,6 +41,7 @@ SimulationDataPtr SimulationLog::createInput(SimulationDataPtr sPtr) {
 	if (!sPtr) {
 		return nullptr;
 	}
+	spdlog::info("Exporting simulation({}, {}) to {}", m_gen, m_id, m_inputFilePath.string());
 	exportSimulationData(sPtr, m_inputFilePath.string());
 	m_input = sPtr;
 	m_hasInput = true;
