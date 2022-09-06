@@ -1,5 +1,7 @@
 #include "SimulationData.h"
 
+#include <spdlog/spdlog.h>
+
 #include <fstream>
 
 void to_json(JSON & j, SimulationData const & sI) {
@@ -30,7 +32,15 @@ SimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 	if (!f.is_open()) {
 		return nullptr;
 	}
-	SimulationData * rawPtr = new SimulationData(nlohmann::json::parse(f));
+	SimulationData parseResult;
+	try {
+		parseResult = nlohmann::json::parse(f);
+	} catch (const std::exception &) {
+		spdlog::warn("Could not parse simulation file {}. Will wait a bit more.", fileName.string());
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		return nullptr;
+	}
+	SimulationData * rawPtr = new SimulationData(parseResult);
 	return SimulationDataPtr(rawPtr);
 }
 

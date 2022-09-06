@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <thread>
 
@@ -11,18 +12,16 @@
 
 using Generation = std::size_t;
 using SimulationId = std::size_t;
-struct SimulationInfo {
-	std::size_t generation;
-	std::size_t identifier;
-};
-using SimulationInfoPtr = std::shared_ptr<SimulationInfo>;
 using UpdatedSimulationList = std::list<SimulationInfo>;
+
+enum class GenerationStatus {Exists, Unavailable};
 
 class Database {
 	public:
 		Database(std::string);
 		~Database();
-		void rescan();
+		void rescan(bool once);
+		std::size_t createNewGeneration();
 		/// \brief Find existing simulation, or return nullptr if it does not exist.
 		/// Locks database mutex while searching.
 		/// \return
@@ -30,14 +29,23 @@ class Database {
 		/// \brief Find existing simulation, or create and return one if it does not exist.
 		/// Locks database mutex while searching and/or creating.
 		/// \return
-		SimulationLogPtr createSimulation(SimulationInfo);
+		SimulationLogPtr createSimulationInThisGeneration();
 		UpdatedSimulationList getUpdatedSimulations();
+
+		bool generationExists(std::size_t) const;
+		std::optional<std::size_t> getCurrentGeneration() const;
+		std::size_t getNextGeneration() const;
 	private:
 		std::filesystem::path const path;
-		std::map<Generation, SimulationLogPtrMap> simulations;
+		std::vector<SimulationLogPtrMap> simulations;
 
 		std::mutex dbMutex;
 		std::jthread rescanThread;
 		bool scan;
 		UpdatedSimulationList updatedSimulations;
+
+		SimulationLogPtr createSimulation(SimulationInfo);
+
+		std::optional<std::size_t> maxSimulationId;
+		void updateMaxSimulationId(std::size_t);
 };

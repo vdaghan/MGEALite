@@ -6,16 +6,18 @@
 #include <string>
 #include <vector>
 
+#include "spdlog/spdlog.h"
+
 #include "mgealite_version.h"
 #include "Database.h"
 #include "MotionGeneration/MotionGenerator.h"
-#include "MotionGeneration/Specification.h"
 
 int main() {
-	std::cout << "MGEALite version: " << getMGEALiteVersion() << std::endl;
+	spdlog::set_pattern("[%Y%m%d:%H:%M:%S.%f][%t][%l] %v");
+	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionGenerator motionGenerator("./data");
-	motionGenerator.start();
+	motionGenerator.epoch();
 
 	return 0;
 }

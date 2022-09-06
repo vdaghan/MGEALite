@@ -17,6 +17,7 @@ struct SimulationData {
 };
 
 using SimulationDataPtr = std::shared_ptr<SimulationData>;
+using SimulationDataPtrs = std::list<SimulationDataPtr>;
 
 void to_json(JSON &, SimulationData const &);
 void from_json(JSON const &, SimulationData &);

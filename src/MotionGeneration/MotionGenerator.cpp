@@ -1,4 +1,5 @@
 #include "MotionGeneration/MotionGenerator.h"
+#include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
 
 #include <algorithm>
 #include <functional>
@@ -9,14 +10,21 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
-	ea.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection, this));
-	ea.setVariationFunction(std::bind_front(&MotionGenerator::variation, this));
+	Spec::SVariationFunctor variationFunctor;
+	variationFunctor.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection, this));
+	variationFunctor.setVariationFunction(std::bind_front(&MotionGenerator::cutAndCrossfillVariation, this));
+	variationFunctor.setProbability(1.0);
+	variationFunctor.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctor);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 };
 
-void MotionGenerator::start() {
+void MotionGenerator::epoch() {
+	auto currentGeneration = database.getCurrentGeneration();
+	spdlog::info("Epoch {} started.", *currentGeneration);
 	auto stepResult = ea.epoch();
+	spdlog::info("Epoch {} ended.", *currentGeneration);
 };
 
 Spec::Generation MotionGenerator::genesis() {
@@ -35,10 +43,10 @@ Spec::Generation MotionGenerator::genesis() {
 		return retVal;
 	};
 
-	for (size_t n(0); n != 100; ++n) {
-		spdlog::info("Creating Individual({}, {})", 0, n);
-		SimulationInfo simulationInfo{.generation = 0, .identifier = n};
-		auto simLogPtr = database.createSimulation(simulationInfo);
+	database.createNewGeneration();
+	for (size_t n(0); n != 500; ++n) {
+		auto simLogPtr = database.createSimulationInThisGeneration();
+		spdlog::info("Created Individual({}, {})", simLogPtr->generation(), simLogPtr->identifier());
 		SimulationDataPtr simDataPtr = std::make_shared<SimulationData>();
 		simDataPtr->time = time;
 		simDataPtr->params.emplace("simStart", 0.0);
@@ -49,8 +57,8 @@ Spec::Generation MotionGenerator::genesis() {
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
 		simLogPtr->createInput(simDataPtr);
-		retVal.emplace_back(new Spec::SIndividual(simulationInfo));
-		spdlog::info("Individual({}, {}) created", 0, n);
+		retVal.emplace_back(new Spec::SIndividual(simLogPtr->info()));
+		spdlog::info("Individual({}, {}) created", simLogPtr->generation(), simLogPtr->identifier());
 	}
 	return retVal;
 }
@@ -58,7 +66,7 @@ Spec::Generation MotionGenerator::genesis() {
 Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	auto simLogPtr = database.getSimulation(genPx);
 	while (!simLogPtr->outputExists()) {
-		spdlog::info("Waiting for output of Individual({}, {})", genPx.generation, genPx.identifier);
+		//spdlog::info("Waiting for output of Individual({}, {})", genPx.generation, genPx.identifier);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	return genPx;
@@ -81,18 +89,37 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	return fitness;
 }
 
-Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs) {
-	return {};
+Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs) {
+	Spec::IndividualPtrs parents = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 5>(iptrs);
+	for (auto it(parents.begin()); it != parents.end(); ++it) {
+		auto & parent = *it;
+		spdlog::info("Selected parent ({}, {}) with fitness {}", parent->genotypeProxy.generation, parent->genotypeProxy.identifier, parent->fitness);
+	}
+	return parents;
 }
 
-Spec::GenotypeProxies MotionGenerator::variation(Spec::GenotypeProxies) {
-	return {};
+void MotionGenerator::survivorSelection(Spec::IndividualPtrs & iptrs) {
+	DEvA::StandardSurvivorSelectors<Spec>::clamp<100>(iptrs);
 }
 
-void MotionGenerator::survivorSelection(Spec::IndividualPtrs &) {
-
+bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
+	return f > 1.0;
 }
 
-bool MotionGenerator::convergenceCheck(Spec::Fitness) {
-	return true;
+Spec::GenotypeProxies MotionGenerator::cutAndCrossfillVariation(Spec::GenotypeProxies gpxs) {
+	Spec::GenotypeProxy simulation1Info= gpxs.front();
+	Spec::GenotypeProxy simulation2Info = gpxs.back();
+	SimulationLogPtr simulation1LogPtr = database.getSimulation(simulation1Info);
+	SimulationLogPtr simulation2LogPtr = database.getSimulation(simulation2Info);
+	SimulationDataPtr simulation1DataPtr = simulation1LogPtr->loadInput();
+	SimulationDataPtr simulation2DataPtr = simulation2LogPtr->loadInput();
+
+	auto children = cutAndCrossfillSingle({simulation1DataPtr, simulation2DataPtr});
+
+	SimulationLogPtr child1LogPtr = database.createSimulationInThisGeneration();
+	SimulationLogPtr child2LogPtr = database.createSimulationInThisGeneration();
+	child1LogPtr->createInput(children.front());
+	child2LogPtr->createInput(children.back());
+	// TODO Check if we could successfully create a new input?
+	return {child1LogPtr->info(), child2LogPtr->info()};
 }

@@ -2,11 +2,12 @@
 
 #include "spdlog/spdlog.h"
 
-SimulationLog::SimulationLog(std::size_t gen, std::size_t id, std::filesystem::path path)
-	: m_gen(gen), m_id(id),
-	m_generationPath(path / std::to_string(gen)),
-	m_inputFilePath(path/std::to_string(gen)/(std::to_string(id)+".input")),
-	m_outputFilePath(path / std::to_string(gen) / (std::to_string(id) + ".output")),
+SimulationLog::SimulationLog(SimulationInfo info, std::filesystem::path path)
+	: m_gen(info.generation),
+	m_id(info.identifier),
+	m_generationPath(path / std::to_string(m_gen)),
+	m_inputFilePath(path/std::to_string(m_gen)/(std::to_string(m_id)+".input")),
+	m_outputFilePath(path / std::to_string(m_gen) / (std::to_string(m_id) + ".output")),
 	m_input{nullptr},
 	m_output{nullptr},
 	m_hasInput(false),

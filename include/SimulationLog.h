@@ -6,12 +6,20 @@
 
 #include "SimulationData.h"
 
+struct SimulationInfo {
+	std::size_t generation;
+	std::size_t identifier;
+};
+using SimulationInfoPtr = std::shared_ptr<SimulationInfo>;
+
 class SimulationLog {
 	public:
-		SimulationLog(std::size_t, std::size_t, std::filesystem::path);
+		SimulationLog(SimulationInfo, std::filesystem::path);
 
 		std::size_t generation() const { return m_gen; };
 		std::size_t identifier() const { return m_id; };
+
+		SimulationInfo info() { return SimulationInfo{.generation = m_gen, .identifier = m_id }; };
 
 		bool inputExists();
 		bool outputExists();
