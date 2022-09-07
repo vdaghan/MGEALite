@@ -74,16 +74,13 @@ void Database::rescan(bool once) {
 
 std::size_t Database::createNewGeneration() {
 	std::size_t retVal = simulations.size();
-	simulations.push_back(SimulationLogPtrMap());
+	simulations.push_back(SimulationLogPtrs());
 	return retVal;
 }
 
 SimulationLogPtr Database::getSimulation(SimulationInfo simInfo) {
 	//std::lock_guard<std::mutex> dbLock(dbMutex); // This results in recursive lock. Make sure we don't need this.
-	if (!generationExists(simInfo.generation)) {
-		return nullptr;
-	}
-	if (!simulations.at(simInfo.generation).contains(simInfo.identifier)) {
+	if (!simulationExists(simInfo)) {
 		return nullptr;
 	}
 	return simulations.at(simInfo.generation).at(simInfo.identifier);
@@ -126,6 +123,19 @@ std::size_t Database::getNextGeneration() const {
 	return simulations.size();
 }
 
+bool Database::simulationExists(SimulationInfo info) const {
+	if (!generationExists(info.generation)) {
+		return false;
+	}
+	auto & simulationLogPtrs = simulations[info.generation];
+	auto pred = [&info](auto & slp) {
+		auto const & slpinfo = slp->info();
+		return info.generation == slpinfo.generation and info.identifier == slpinfo.identifier;
+	};
+	auto const it = std::find_if(simulationLogPtrs.begin(), simulationLogPtrs.end(), pred);
+	return it != simulationLogPtrs.end();
+}
+
 SimulationLogPtr Database::createSimulation(SimulationInfo simInfo) {
 	spdlog::info("Creating simulation ({}, {})", simInfo.generation, simInfo.identifier);
 	std::lock_guard<std::mutex> dbLock(dbMutex);
@@ -135,9 +145,10 @@ SimulationLogPtr Database::createSimulation(SimulationInfo simInfo) {
 		}
 		createNewGeneration();
 	}
-	if (!simulations.at(simInfo.generation).contains(simInfo.identifier)) {
+	if (!simulationExists(simInfo)) {
 		SimulationLog * simulationLogRawPtr = new SimulationLog(simInfo, path);
-		simulations.at(simInfo.generation).emplace(simInfo.identifier, simulationLogRawPtr);
+		SimulationLogPtr simulationLogPtr = SimulationLogPtr(simulationLogRawPtr);
+		simulations.at(simInfo.generation).push_back(simulationLogPtr);
 		updateMaxSimulationId(simInfo.identifier);
 	}
 	return simulations.at(simInfo.generation).at(simInfo.identifier);

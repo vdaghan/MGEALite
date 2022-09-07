@@ -18,13 +18,35 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.addVariationFunctor(variationFunctor);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
+	exportGenerationData();
 };
 
+void MotionGenerator::exportGenerationData() {
+	auto currentGenerationOpt = database.getCurrentGeneration();
+	if (!currentGenerationOpt) {
+		return;
+	}
+	auto currentGeneration = *currentGenerationOpt;
+	for (std::size_t gen(0); gen <= currentGeneration; ++gen) {
+		Spec::Generation generation;
+		auto & simulationLogPtrs = database.getGenerationData(gen);
+		for (std::size_t id(0); id != simulationLogPtrs.size(); ++id) {
+			auto simulationLogPtr = simulationLogPtrs.at(id);
+			generation.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+		}
+		ea.addGeneration(generation);
+	}
+}
+
 void MotionGenerator::epoch() {
-	auto currentGeneration = database.getCurrentGeneration();
-	spdlog::info("Epoch {} started.", *currentGeneration);
+	auto currentGeneration = database.getNextGeneration();
+	spdlog::info("Epoch {} started.", currentGeneration);
 	auto stepResult = ea.epoch();
-	spdlog::info("Epoch {} ended.", *currentGeneration);
+	spdlog::info("Epoch {} ended.", currentGeneration);
+	currentGeneration = database.getNextGeneration();
+	spdlog::info("Epoch {} started.", currentGeneration);
+	stepResult = ea.epoch();
+	spdlog::info("Epoch {} ended.", currentGeneration);
 };
 
 Spec::Generation MotionGenerator::genesis() {
@@ -44,7 +66,7 @@ Spec::Generation MotionGenerator::genesis() {
 	};
 
 	database.createNewGeneration();
-	for (size_t n(0); n != 500; ++n) {
+	for (size_t n(0); n != 50; ++n) {
 		auto simLogPtr = database.createSimulationInThisGeneration();
 		spdlog::info("Created Individual({}, {})", simLogPtr->generation(), simLogPtr->identifier());
 		SimulationDataPtr simDataPtr = std::make_shared<SimulationData>();

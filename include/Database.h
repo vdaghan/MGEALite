@@ -35,9 +35,13 @@ class Database {
 		bool generationExists(std::size_t) const;
 		std::optional<std::size_t> getCurrentGeneration() const;
 		std::size_t getNextGeneration() const;
+
+		bool simulationExists(SimulationInfo) const;
+
+		SimulationLogPtrs & getGenerationData(std::size_t gen) { return simulations.at(gen); };
 	private:
 		std::filesystem::path const path;
-		std::vector<SimulationLogPtrMap> simulations;
+		std::vector<SimulationLogPtrs> simulations;
 
 		std::mutex dbMutex;
 		std::jthread rescanThread;

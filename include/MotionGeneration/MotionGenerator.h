@@ -27,6 +27,8 @@ class MotionGenerator {
 	private:
 		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
+		void exportGenerationData();
+
 		Spec::Generation genesis();
 		Spec::GenotypeProxy createGenotype();
 		Spec::PhenotypeProxy transform(Spec::GenotypeProxy);

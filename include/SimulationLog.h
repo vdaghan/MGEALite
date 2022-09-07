@@ -1,5 +1,6 @@
 #pragma once
 
+#include <deque>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -19,7 +20,7 @@ class SimulationLog {
 		std::size_t generation() const { return m_gen; };
 		std::size_t identifier() const { return m_id; };
 
-		SimulationInfo info() { return SimulationInfo{.generation = m_gen, .identifier = m_id }; };
+		SimulationInfo info() const { return SimulationInfo{.generation = m_gen, .identifier = m_id }; };
 
 		bool inputExists();
 		bool outputExists();
@@ -45,4 +46,4 @@ class SimulationLog {
 };
 
 using SimulationLogPtr = std::shared_ptr<SimulationLog>;
-using SimulationLogPtrMap = std::map<std::size_t, SimulationLogPtr>;
+using SimulationLogPtrs = std::deque<SimulationLogPtr>;
