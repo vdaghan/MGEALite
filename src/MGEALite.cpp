@@ -17,7 +17,7 @@ int main() {
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionGenerator motionGenerator("./data");
-	motionGenerator.epoch();
+	motionGenerator.search(2);
 
 	return 0;
 }

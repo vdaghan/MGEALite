@@ -18,6 +18,9 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.addVariationFunctor(variationFunctor);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
+
+	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
+	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
 	exportGenerationData();
 };
 
@@ -38,16 +41,9 @@ void MotionGenerator::exportGenerationData() {
 	}
 }
 
-void MotionGenerator::epoch() {
-	auto currentGeneration = database.getNextGeneration();
-	spdlog::info("Epoch {} started.", currentGeneration);
-	auto stepResult = ea.epoch();
-	spdlog::info("Epoch {} ended.", currentGeneration);
-	currentGeneration = database.getNextGeneration();
-	spdlog::info("Epoch {} started.", currentGeneration);
-	stepResult = ea.epoch();
-	spdlog::info("Epoch {} ended.", currentGeneration);
-};
+void MotionGenerator::search(std::size_t n) {
+	auto stepResult = ea.search(n);
+}
 
 Spec::Generation MotionGenerator::genesis() {
 	Spec::Generation retVal;
@@ -65,7 +61,6 @@ Spec::Generation MotionGenerator::genesis() {
 		return retVal;
 	};
 
-	database.createNewGeneration();
 	for (size_t n(0); n != 50; ++n) {
 		auto simLogPtr = database.createSimulationInThisGeneration();
 		spdlog::info("Created Individual({}, {})", simLogPtr->generation(), simLogPtr->identifier());
@@ -95,8 +90,11 @@ Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
-	spdlog::info("Evaluating Individual({}, {})", genPx.generation, genPx.identifier);
 	auto simLogPtr = database.getSimulation(genPx);
+	if (simLogPtr->fitnessExists()) {
+		return *simLogPtr->loadFitness();
+	}
+	spdlog::info("Evaluating Individual({}, {})", genPx.generation, genPx.identifier);
 	SimulationDataPtr simDataPtr = simLogPtr->loadOutput();
 	
 	if (!simDataPtr->outputs.contains("ankleHeight")) {
@@ -107,6 +105,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	auto & ankleHeight = simDataPtr->outputs.at("ankleHeight");
 	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
 	double fitness = ankleHeightSum * timeStep;
+	simLogPtr->createFitness(fitness);
 	spdlog::info("Individual({}, {}) evaluated to fitness value {}", genPx.generation, genPx.identifier, fitness);
 	return fitness;
 }
@@ -144,4 +143,14 @@ Spec::GenotypeProxies MotionGenerator::cutAndCrossfillVariation(Spec::GenotypePr
 	child2LogPtr->createInput(children.back());
 	// TODO Check if we could successfully create a new input?
 	return {child1LogPtr->info(), child2LogPtr->info()};
+}
+
+void MotionGenerator::onEpochStart() {
+	std::size_t currentGeneration = database.createNewGeneration();
+	spdlog::info("Epoch {} started.", currentGeneration);
+}
+
+void MotionGenerator::onEpochEnd() {
+	auto currentGeneration = database.getCurrentGeneration();
+	spdlog::info("Epoch {} started.", *currentGeneration);
 }

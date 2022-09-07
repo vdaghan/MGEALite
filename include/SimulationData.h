@@ -14,6 +14,7 @@ struct SimulationData {
 	std::map<std::string, double> params;
 	std::map<std::string, std::vector<double>> torque;
 	std::map<std::string, std::vector<double>> outputs;
+	double fitness;
 };
 
 using SimulationDataPtr = std::shared_ptr<SimulationData>;
@@ -22,4 +23,4 @@ using SimulationDataPtrs = std::list<SimulationDataPtr>;
 void to_json(JSON &, SimulationData const &);
 void from_json(JSON const &, SimulationData &);
 SimulationDataPtr importSimulationData(std::filesystem::path);
-void exportSimulationData(SimulationDataPtr, std::filesystem::path);
+bool exportSimulationData(SimulationDataPtr, std::filesystem::path);

@@ -8,7 +8,8 @@ void to_json(JSON & j, SimulationData const & sI) {
 	j = JSON{{"time", sI.time},
 			{"params", sI.params},
 			{"torque", sI.torque},
-			{"outputs", sI.outputs}
+			{"outputs", sI.outputs},
+			{"fitness", sI.fitness}
 	};
 }
 
@@ -21,6 +22,8 @@ void from_json(JSON const & j, SimulationData & sI) {
 		j.at("torque").get_to(sI.torque);
 	} else if (j.contains("outputs")) {
 		j.at("outputs").get_to(sI.outputs);
+	} else if (j.contains("fitness")) {
+		j.at("fitness").get_to(sI.fitness);
 	}
 }
 
@@ -44,9 +47,11 @@ SimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 	return SimulationDataPtr(rawPtr);
 }
 
-void exportSimulationData(SimulationDataPtr simulationDataPtr, std::filesystem::path fileName) {
+bool exportSimulationData(SimulationDataPtr simulationDataPtr, std::filesystem::path fileName) {
 	JSON j = *simulationDataPtr;
 	std::ofstream o(fileName);
 	o << std::setw(4) << j << std::endl;
 	//o << j << std::endl;
+	// TODO: Some error checking here
+	return true;
 }

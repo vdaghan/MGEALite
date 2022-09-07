@@ -23,7 +23,7 @@ using Spec = DEvA::Specialisation<Specification>;
 class MotionGenerator {
 	public:
 		MotionGenerator(std::string);
-		void epoch();
+		void search(std::size_t);
 	private:
 		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
@@ -38,4 +38,7 @@ class MotionGenerator {
 		bool convergenceCheck(Spec::Fitness);
 
 		Spec::GenotypeProxies cutAndCrossfillVariation(Spec::GenotypeProxies);
+
+		void onEpochStart();
+		void onEpochEnd();
 };

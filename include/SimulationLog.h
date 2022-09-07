@@ -6,12 +6,7 @@
 #include <memory>
 
 #include "SimulationData.h"
-
-struct SimulationInfo {
-	std::size_t generation;
-	std::size_t identifier;
-};
-using SimulationInfoPtr = std::shared_ptr<SimulationInfo>;
+#include "SimulationInfo.h"
 
 class SimulationLog {
 	public:
@@ -24,12 +19,15 @@ class SimulationLog {
 
 		bool inputExists();
 		bool outputExists();
+		bool fitnessExists() { return fitness.has_value(); };
 
 		SimulationDataPtr loadInput();
 		SimulationDataPtr loadOutput();
+		std::optional<double> loadFitness() { return fitness; };
 
 		SimulationDataPtr createInput(SimulationDataPtr);
 		SimulationDataPtr createOutput(SimulationDataPtr);
+		double createFitness(double f) { fitness = f; return *fitness; };
 	private:
 		std::size_t const m_gen;
 		std::size_t const m_id;
@@ -43,6 +41,9 @@ class SimulationLog {
 		std::filesystem::path const m_outputFilePath;
 		bool m_hasOutput;
 		SimulationDataPtr m_output;
+
+		bool m_hasFitness;
+		std::optional<double> fitness;
 };
 
 using SimulationLogPtr = std::shared_ptr<SimulationLog>;
