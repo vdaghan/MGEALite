@@ -68,7 +68,7 @@ Spec::Generation MotionGenerator::genesis() {
 		return retVal;
 	};
 
-	for (size_t n(0); n != 50; ++n) {
+	for (size_t n(0); n != 6; ++n) {
 		SimulationInfo simInfo{.generation = 0, .identifier = n};
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
@@ -80,6 +80,9 @@ Spec::Generation MotionGenerator::genesis() {
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
 		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
+		simulationLogPtr->updateStatus(SimulationStatus::PendingSimulation);
+		bool startSuccessful = database.startSimulation(simulationLogPtr->info());
+		// TODO: What to do if startSimulation fails?
 		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
 		spdlog::info("Individual({}, {}) created", simInfo.generation, simInfo.identifier);
 	}
@@ -88,7 +91,7 @@ Spec::Generation MotionGenerator::genesis() {
 
 Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	auto simLogPtr = database.getSimulationLog(genPx);
-	while (!simLogPtr->outputExists()) {
+	while (!database.getSimulationResult(simLogPtr->info())) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	return genPx;

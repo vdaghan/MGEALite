@@ -194,11 +194,11 @@ void Datastore::addToHistory(SimulationInfo simInfo) {
 }
 
 std::filesystem::path Datastore::toInputPath(std::size_t id) {
-	return std::filesystem::path(m_queuePath / std::to_string(id) / ".input");
+	return std::filesystem::path(m_queuePath / (std::to_string(id) + ".input"));
 }
 
 std::filesystem::path Datastore::toOutputPath(std::size_t id) {
-	return std::filesystem::path(m_queuePath / std::to_string(id) / ".output");
+	return std::filesystem::path(m_queuePath / (std::to_string(id) + ".output"));
 }
 
 std::filesystem::path Datastore::toCombinedPath(SimulationInfo simInfo) {

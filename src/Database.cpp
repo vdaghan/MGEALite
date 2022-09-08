@@ -74,7 +74,10 @@ SimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
 	if (!simulationLogPtr->outputExists()) {
 		return nullptr;
 	}
-
+	bool importSuccessful = datastore.importOutputFile(simulationLogPtr);
+	if (!importSuccessful) {
+		return nullptr;
+	}
 	moveFromListToList(pendingSimulation, pendingEvaluation, simInfo);
 	return simulationLogPtr->data();
 }
