@@ -71,9 +71,6 @@ SimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
 		return nullptr;
 	}
 	SimulationLogPtr simulationLogPtr = simulationHistory.at(simInfo);
-	if (!simulationLogPtr->outputExists()) {
-		return nullptr;
-	}
 	bool importSuccessful = datastore.importOutputFile(simulationLogPtr);
 	if (!importSuccessful) {
 		return nullptr;

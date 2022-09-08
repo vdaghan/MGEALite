@@ -46,4 +46,5 @@ class Datastore {
 		std::filesystem::path toInputPath(std::size_t);
 		std::filesystem::path toOutputPath(std::size_t);
 		std::filesystem::path toCombinedPath(SimulationInfo);
+		std::filesystem::path toGenerationPath(SimulationInfo);
 };

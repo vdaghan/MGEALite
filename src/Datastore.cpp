@@ -86,6 +86,10 @@ bool Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, double fitness
 	if (!inputDataPtr or !outputDataPtr) {
 		return false;
 	}
+	auto const generationFolder = toGenerationPath(simInfo);
+	if (!std::filesystem::exists(generationFolder)) [[unlikely]] {
+		std::filesystem::create_directory(generationFolder);
+	}
 	SimulationDataPtr combinedDataPtr = SimulationDataPtr(new SimulationData());
 	combinedDataPtr->time = inputDataPtr->time;
 	combinedDataPtr->params = inputDataPtr->params;
@@ -176,12 +180,9 @@ bool Datastore::deleteArtifacts(std::size_t id) {
 }
 
 void Datastore::deleteAllArtifacts() {
-	for (auto & toDelete : deleteQueue) {
-		bool deletionSuccessful = deleteArtifacts(toDelete);
-		if (!deletionSuccessful) [[unlikely]] {
-			continue;
-		}
-		deleteQueue.remove(toDelete);
+	std::list<std::size_t> tmp = deleteQueue;
+	for (auto & toDelete : tmp) {
+		deleteArtifacts(toDelete);
 	}
 }
 
@@ -202,5 +203,9 @@ std::filesystem::path Datastore::toOutputPath(std::size_t id) {
 }
 
 std::filesystem::path Datastore::toCombinedPath(SimulationInfo simInfo) {
-	return std::filesystem::path(m_path / std::to_string(simInfo.generation) / std::to_string(simInfo.identifier) / ".json");
+	return std::filesystem::path(m_path / std::to_string(simInfo.generation) / (std::to_string(simInfo.identifier) + ".json"));
+}
+
+std::filesystem::path Datastore::toGenerationPath(SimulationInfo simInfo) {
+	return std::filesystem::path(m_path / std::to_string(simInfo.generation));
 }

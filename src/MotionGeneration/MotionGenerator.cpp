@@ -94,6 +94,7 @@ Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	while (!database.getSimulationResult(simLogPtr->info())) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
+	simLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
 	return genPx;
 }
 
@@ -114,6 +115,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
 	double fitness = ankleHeightSum * timeStep;
 	simLogPtr->data()->fitness = fitness;
+	database.setSimulationFitness(simLogPtr->info(), fitness);
 	simLogPtr->updateStatus(SimulationStatus::Computed);
 	spdlog::info("Individual({}, {}) evaluated to fitness value {}", genPx.generation, genPx.identifier, fitness);
 	return fitness;
@@ -149,13 +151,17 @@ Spec::GenotypeProxies MotionGenerator::cutAndCrossfillVariation(Spec::GenotypePr
 	SimulationInfo sim1Info{.generation = currentGeneration, .identifier = database.nextId()};
 	database.createSimulation(sim1Info);
 	SimulationLogPtr child1LogPtr = database.getSimulationLog(sim1Info);
+	*child1LogPtr->data() = *children.front();
+	child1LogPtr->updateStatus(SimulationStatus::PendingSimulation);
+	bool start1Successful = database.startSimulation(child1LogPtr->info());
 
 	SimulationInfo sim2Info{.generation = currentGeneration, .identifier = database.nextId()};
 	database.createSimulation(sim2Info);
 	SimulationLogPtr child2LogPtr = database.getSimulationLog(sim2Info);
-
-	*child1LogPtr->data() = *children.front();
 	*child2LogPtr->data() = *children.back();
+	child2LogPtr->updateStatus(SimulationStatus::PendingSimulation);
+	bool start2Successful = database.startSimulation(child2LogPtr->info());
+
 	// TODO Check if we could successfully create a new input?
 	return {child1LogPtr->info(), child2LogPtr->info()};
 }
