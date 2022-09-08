@@ -25,17 +25,24 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 };
 
 void MotionGenerator::exportGenerationData() {
-	auto currentGenerationOpt = database.getCurrentGeneration();
-	if (!currentGenerationOpt) {
+	spdlog::info("Exporting previous data to EA...");
+	SimulationHistory const & simulationHistory = database.getSimulationHistory();
+	if (simulationHistory.empty()) {
+		spdlog::info("No previous data found.");
 		return;
 	}
-	auto currentGeneration = *currentGenerationOpt;
-	for (std::size_t gen(0); gen <= currentGeneration; ++gen) {
+	auto const & lastElement = std::max_element(simulationHistory.begin(), simulationHistory.end(), [](auto & lhs, auto & rhs){ return lhs.first < rhs.first; });
+	std::size_t lastGeneration = lastElement->first.generation;
+	spdlog::info("Last run had {} generations.", lastGeneration);
+
+	for (std::size_t gen(0); gen <= lastGeneration; ++gen) {
 		Spec::Generation generation;
-		auto & simulationLogPtrs = database.getGenerationData(gen);
-		for (std::size_t id(0); id != simulationLogPtrs.size(); ++id) {
-			auto simulationLogPtr = simulationLogPtrs.at(id);
-			generation.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+		for (auto const & historyPair : simulationHistory) {
+			auto const & simInfo = historyPair.first;
+			if (simInfo.generation != gen) {
+				continue;
+			}
+			generation.emplace_back(new Spec::SIndividual(simInfo));
 		}
 		ea.addGeneration(generation);
 	}
@@ -62,9 +69,8 @@ Spec::Generation MotionGenerator::genesis() {
 	};
 
 	for (size_t n(0); n != 50; ++n) {
-		auto simLogPtr = database.createSimulationInThisGeneration();
-		spdlog::info("Created Individual({}, {})", simLogPtr->generation(), simLogPtr->identifier());
-		SimulationDataPtr simDataPtr = std::make_shared<SimulationData>();
+		SimulationInfo simInfo{.generation = 0, .identifier = n};
+		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
 		simDataPtr->params.emplace("simStart", 0.0);
 		simDataPtr->params.emplace("simStop", 4.095);
@@ -73,29 +79,28 @@ Spec::Generation MotionGenerator::genesis() {
 		simDataPtr->torque.emplace(std::make_pair("wrist", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
-		simLogPtr->createInput(simDataPtr);
-		retVal.emplace_back(new Spec::SIndividual(simLogPtr->info()));
-		spdlog::info("Individual({}, {}) created", simLogPtr->generation(), simLogPtr->identifier());
+		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
+		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+		spdlog::info("Individual({}, {}) created", simInfo.generation, simInfo.identifier);
 	}
 	return retVal;
 }
 
 Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
-	auto simLogPtr = database.getSimulation(genPx);
+	auto simLogPtr = database.getSimulationLog(genPx);
 	while (!simLogPtr->outputExists()) {
-		//spdlog::info("Waiting for output of Individual({}, {})", genPx.generation, genPx.identifier);
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	return genPx;
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
-	auto simLogPtr = database.getSimulation(genPx);
+	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->fitnessExists()) {
-		return *simLogPtr->loadFitness();
+		return simLogPtr->data()->fitness;
 	}
 	spdlog::info("Evaluating Individual({}, {})", genPx.generation, genPx.identifier);
-	SimulationDataPtr simDataPtr = simLogPtr->loadOutput();
+	SimulationDataPtr simDataPtr = simLogPtr->data();
 	
 	if (!simDataPtr->outputs.contains("ankleHeight")) {
 		spdlog::error("There is no position named \"ankleHeight\" in simulation output ({}, {})", genPx.generation, genPx.identifier);
@@ -105,7 +110,8 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	auto & ankleHeight = simDataPtr->outputs.at("ankleHeight");
 	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
 	double fitness = ankleHeightSum * timeStep;
-	simLogPtr->createFitness(fitness);
+	simLogPtr->data()->fitness = fitness;
+	simLogPtr->updateStatus(SimulationStatus::Computed);
 	spdlog::info("Individual({}, {}) evaluated to fitness value {}", genPx.generation, genPx.identifier, fitness);
 	return fitness;
 }
@@ -130,27 +136,32 @@ bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
 Spec::GenotypeProxies MotionGenerator::cutAndCrossfillVariation(Spec::GenotypeProxies gpxs) {
 	Spec::GenotypeProxy simulation1Info= gpxs.front();
 	Spec::GenotypeProxy simulation2Info = gpxs.back();
-	SimulationLogPtr simulation1LogPtr = database.getSimulation(simulation1Info);
-	SimulationLogPtr simulation2LogPtr = database.getSimulation(simulation2Info);
-	SimulationDataPtr simulation1DataPtr = simulation1LogPtr->loadInput();
-	SimulationDataPtr simulation2DataPtr = simulation2LogPtr->loadInput();
+	SimulationLogPtr simulation1LogPtr = database.getSimulationLog(simulation1Info);
+	SimulationLogPtr simulation2LogPtr = database.getSimulationLog(simulation2Info);
+	SimulationDataPtr simulation1DataPtr = simulation1LogPtr->data();
+	SimulationDataPtr simulation2DataPtr = simulation2LogPtr->data();
 
 	auto children = cutAndCrossfillSingle({simulation1DataPtr, simulation2DataPtr});
 
-	SimulationLogPtr child1LogPtr = database.createSimulationInThisGeneration();
-	SimulationLogPtr child2LogPtr = database.createSimulationInThisGeneration();
-	child1LogPtr->createInput(children.front());
-	child2LogPtr->createInput(children.back());
+	SimulationInfo sim1Info{.generation = currentGeneration, .identifier = database.nextId()};
+	database.createSimulation(sim1Info);
+	SimulationLogPtr child1LogPtr = database.getSimulationLog(sim1Info);
+
+	SimulationInfo sim2Info{.generation = currentGeneration, .identifier = database.nextId()};
+	database.createSimulation(sim2Info);
+	SimulationLogPtr child2LogPtr = database.getSimulationLog(sim2Info);
+
+	*child1LogPtr->data() = *children.front();
+	*child2LogPtr->data() = *children.back();
 	// TODO Check if we could successfully create a new input?
 	return {child1LogPtr->info(), child2LogPtr->info()};
 }
 
-void MotionGenerator::onEpochStart() {
-	std::size_t currentGeneration = database.createNewGeneration();
-	spdlog::info("Epoch {} started.", currentGeneration);
+void MotionGenerator::onEpochStart(std::size_t generation) {
+	currentGeneration = generation;
+	spdlog::info("Epoch {} started.", generation);
 }
 
-void MotionGenerator::onEpochEnd() {
-	auto currentGeneration = database.getCurrentGeneration();
-	spdlog::info("Epoch {} started.", *currentGeneration);
+void MotionGenerator::onEpochEnd(std::size_t generation) {
+	spdlog::info("Epoch {} ended.", generation);
 }

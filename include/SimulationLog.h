@@ -1,49 +1,38 @@
 #pragma once
 
+#include <chrono>
 #include <deque>
-#include <filesystem>
-#include <map>
 #include <memory>
 
 #include "SimulationData.h"
 #include "SimulationInfo.h"
 
+enum class SimulationStatus { NonExistent, Uninitialised, PendingSimulation, PendingEvaluation, Computed, Archived };
+
 class SimulationLog {
 	public:
-		SimulationLog(SimulationInfo, std::filesystem::path);
+		SimulationLog(SimulationInfo);
 
-		std::size_t generation() const { return m_gen; };
-		std::size_t identifier() const { return m_id; };
+		SimulationStatus status() const { return m_status; };
+		void updateStatus(SimulationStatus status) { touch(); m_status = status; };
 
-		SimulationInfo info() const { return SimulationInfo{.generation = m_gen, .identifier = m_id }; };
+		std::size_t generation() const { return m_info.generation; };
+		std::size_t identifier() const { return m_info.identifier; };
+		SimulationInfo info() const { return m_info; };
 
-		bool inputExists();
-		bool outputExists();
-		bool fitnessExists() { return fitness.has_value(); };
+		bool inputExists() const;
+		bool outputExists() const;
+		bool fitnessExists() const;
 
-		SimulationDataPtr loadInput();
-		SimulationDataPtr loadOutput();
-		std::optional<double> loadFitness() { return fitness; };
-
-		SimulationDataPtr createInput(SimulationDataPtr);
-		SimulationDataPtr createOutput(SimulationDataPtr);
-		double createFitness(double f) { fitness = f; return *fitness; };
+		SimulationDataPtr data() { touch(); return m_data; };
+		uint64_t timeSinceLastTouch();
 	private:
-		std::size_t const m_gen;
-		std::size_t const m_id;
+		SimulationInfo m_info;
+		SimulationStatus m_status;
+		SimulationDataPtr m_data;
 
-		std::filesystem::path const m_generationPath;
-
-		std::filesystem::path const m_inputFilePath;
-		bool m_hasInput;
-		SimulationDataPtr m_input;
-
-		std::filesystem::path const m_outputFilePath;
-		bool m_hasOutput;
-		SimulationDataPtr m_output;
-
-		bool m_hasFitness;
-		std::optional<double> fitness;
+		std::chrono::time_point<std::chrono::steady_clock> m_lastTouch;
+		void touch();
 };
 
 using SimulationLogPtr = std::shared_ptr<SimulationLog>;

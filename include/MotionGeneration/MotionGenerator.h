@@ -11,9 +11,9 @@
 struct Specification {
 	Specification(Database & database_) : database{database_} {};
 	Database & database;
-	using Genotype = std::vector<size_t>;
+	using Genotype = SimulationDataPtr;
 	using GenotypeProxy = SimulationInfo;
-	using Phenotype = std::vector<size_t>;
+	using Phenotype = SimulationDataPtr;
 	using PhenotypeProxy = SimulationInfo;
 	using Fitness = double;
 	using IndividualParameters = DEvA::NullVParameters;
@@ -27,6 +27,7 @@ class MotionGenerator {
 	private:
 		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
+		std::size_t currentGeneration;
 		void exportGenerationData();
 
 		Spec::Generation genesis();
@@ -39,6 +40,6 @@ class MotionGenerator {
 
 		Spec::GenotypeProxies cutAndCrossfillVariation(Spec::GenotypeProxies);
 
-		void onEpochStart();
-		void onEpochEnd();
+		void onEpochStart(std::size_t);
+		void onEpochEnd(std::size_t);
 };

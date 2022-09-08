@@ -16,10 +16,10 @@ set(FETCHCONTENT_QUIET OFF)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.0.0.8)
+project(MGEALite LANGUAGES CXX VERSION 0.0.0.9)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
-FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 2feb0421664426a326e30ee865446b193492b815 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.1.0
+FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG efcf883bc1eb904d67735b289cdcfdbc6d6355f7 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.1.2
 FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.9.2
 FetchContent_Declare(json GIT_REPOSITORY https://github.com/nlohmann/json.git GIT_TAG 4f8fba14066156b73f1189a2b8bd568bde5284c5 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/json) # release-3.10.5
 set(DEvA_BUILD_TESTS FALSE)

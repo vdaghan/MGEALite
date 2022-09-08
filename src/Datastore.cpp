@@ -22,10 +22,59 @@ Datastore::Datastore(std::filesystem::path path)
 	std::filesystem::create_directory(m_queuePath);
 }
 
-bool Datastore::combineInputOutputAndFitness(SimulationInfo simInfo, double fitness) {
-	auto inputFile = toInputPath(simInfo.identifier);
-	auto outputFile = toOutputPath(simInfo.identifier);
-	auto combinedFile = toCombinedPath(simInfo);
+void Datastore::syncWithFilesystem() {
+	deleteAllArtifacts();
+	Progress progress = getProgress();
+
+	std::set_intersection(progress.idsWithInputs.begin(), progress.idsWithInputs.end(),
+		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
+		std::back_inserter(progress.idsWithInputsAndOutputs));
+	for (auto & idWithInputAndOutput : progress.idsWithInputsAndOutputs) {
+		simulationQueue.remove(idWithInputAndOutput);
+		evaluationQueue.push_back(idWithInputAndOutput);
+	}
+
+	std::list<std::size_t> tmp;
+	std::set_union(evaluationQueue.begin(), evaluationQueue.end(),
+		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
+		std::back_inserter(tmp));
+	std::list<std::size_t> updatedEvaluationQueue;
+	std::set_difference(tmp.begin(), tmp.end(),
+		deleteQueue.begin(), deleteQueue.end(),
+		std::back_inserter(updatedEvaluationQueue));
+	evaluationQueue = updatedEvaluationQueue;
+}
+
+bool Datastore::exportInputFile(SimulationLogPtr simLogPtr) {
+	if (!simLogPtr->inputExists()) {
+		return false;
+	}
+	bool exportSuccessful = exportSimulationData(simLogPtr->data(), toInputPath(simLogPtr->info().identifier));
+	if (!exportSuccessful) {
+		return false;
+	}
+	simLogPtr->updateStatus(SimulationStatus::PendingSimulation);
+	return true;
+}
+
+bool Datastore::importOutputFile(SimulationLogPtr simLogPtr) {
+	if (simLogPtr->outputExists()) {
+		return true;
+	}
+	SimulationDataPtr outputData = importSimulationData(toOutputPath(simLogPtr->info().identifier));
+	if (!outputData) {
+		return false;
+	}
+	simLogPtr->data()->outputs = outputData->outputs;
+	simLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
+	return true;
+}
+
+bool Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, double fitness) {
+	auto const simInfo = slptr->info();
+	auto const inputFile = toInputPath(simInfo.identifier);
+	auto const outputFile = toOutputPath(simInfo.identifier);
+	auto const combinedFile = toCombinedPath(simInfo);
 	if (std::filesystem::exists(combinedFile)) [[unlikely]] {
 		return true;
 	}
@@ -47,74 +96,21 @@ bool Datastore::combineInputOutputAndFitness(SimulationInfo simInfo, double fitn
 	if (!exportSuccessful) {
 		return false;
 	}
+	slptr->updateStatus(SimulationStatus::Computed);
 	addToHistory(simInfo);
 	deleteQueue.push_back(simInfo.identifier);
 	return true;
 }
 
-bool Datastore::deleteUncombined(std::size_t id) {
-	auto inputFile = toInputPath(id);
-	auto outputFile = toOutputPath(id);
-	if (std::filesystem::exists(inputFile)) [[likely]] {
-		bool removed = std::filesystem::remove(inputFile);
-		if (!removed) {
-			return false;
-		}
-	}
-	if (std::filesystem::exists(outputFile)) [[likely]] {
-		bool removed = std::filesystem::remove(outputFile);
-		if (!removed) {
-			return false;
-		}
-	}
-	deleteQueue.remove(id);
-	return true;
-}
-
 bool Datastore::existsInHistory(SimulationInfo simInfo) {
-	if (m_history.size() < simInfo.generation) {
-		return false;
-	}
-	auto & historyGeneration = m_history[simInfo.generation];
-	auto it = std::find(historyGeneration.begin(), historyGeneration.end(), simInfo);
-	return it == historyGeneration.end();
-	return false;
+	auto it = std::find(m_history.begin(), m_history.end(), simInfo);
+	return it == m_history.end();
 }
 
-void Datastore::addToHistory(SimulationInfo simInfo) {
-	if (existsInHistory(simInfo)) {
-		return;
-	}
-	if (m_history.size() < simInfo.generation) {
-		m_history.resize(simInfo.generation + 1);
-	}
-	m_history[simInfo.generation].push_back(simInfo);
-	m_history[simInfo.generation].sort();
-}
-
-std::filesystem::path Datastore::toInputPath(std::size_t id) {
-	return std::filesystem::path(m_queuePath / std::to_string(id) / ".input");
-}
-
-std::filesystem::path Datastore::toOutputPath(std::size_t id) {
-	return std::filesystem::path(m_queuePath / std::to_string(id) / ".output");
-}
-
-std::filesystem::path Datastore::toCombinedPath(SimulationInfo simInfo) {
-	return std::filesystem::path(m_path / std::to_string(simInfo.generation) / std::to_string(simInfo.identifier) / ".json");
-}
-
-void Datastore::sync() {
-	for (auto & toDelete : deleteQueue) {
-		bool deletionSuccessful = deleteUncombined(toDelete);
-		if (!deletionSuccessful) [[unlikely]] {
-			continue;
-		}
-		deleteQueue.remove(toDelete);
-	}
-	std::list<std::size_t> idsWithInputs;
-	std::list<std::size_t> idsWithOutputs;
-	std::list<std::size_t> idsCombined;
+Progress Datastore::getProgress() {
+	Progress progress;
+	auto & idsWithInputs = progress.idsWithInputs;
+	auto & idsWithOutputs = progress.idsWithOutputs;
 	for (auto & d : std::filesystem::directory_iterator{m_queuePath}) {
 		if (d.path() == m_queuePath) {
 			continue;
@@ -154,31 +150,57 @@ void Datastore::sync() {
 			if (!idOpt) {
 				continue;
 			}
-			idsCombined.push_back(*idOpt);
 			addToHistory(SimulationInfo{.generation = *genOpt, .identifier = *idOpt});
 		}
 	}
-	{
-		std::lock_guard<std::mutex> dsLock(dsMutex);
-		std::list<std::size_t> idsWithInputsAndOutputs;
-		std::set_intersection(idsWithInputs.begin(), idsWithInputs.end(),
-			idsWithOutputs.begin(), idsWithOutputs.end(),
-			std::back_inserter(idsWithInputsAndOutputs));
-		for (auto & idWithInputAndOutput : idsWithInputsAndOutputs) {
-			simulationQueue.remove(idWithInputAndOutput);
-			evaluationQueue.push_back(idWithInputAndOutput);
+	return progress;
+}
+
+bool Datastore::deleteArtifacts(std::size_t id) {
+	auto inputFile = toInputPath(id);
+	auto outputFile = toOutputPath(id);
+	if (std::filesystem::exists(inputFile)) [[likely]] {
+		bool removed = std::filesystem::remove(inputFile);
+		if (!removed) {
+			return false;
 		}
 	}
-	{
-		std::lock_guard<std::mutex> dsLock(dsMutex);
-		std::list<std::size_t> tmp;
-		std::set_union(evaluationQueue.begin(), evaluationQueue.end(),
-			idsWithOutputs.begin(), idsWithOutputs.end(),
-			std::back_inserter(tmp));
-		std::list<std::size_t> updatedEvaluationQueue;
-		std::set_difference(tmp.begin(), tmp.end(),
-			deleteQueue.begin(), deleteQueue.end(),
-			std::back_inserter(updatedEvaluationQueue));
-		evaluationQueue = updatedEvaluationQueue;
+	if (std::filesystem::exists(outputFile)) [[likely]] {
+		bool removed = std::filesystem::remove(outputFile);
+		if (!removed) {
+			return false;
+		}
 	}
+	deleteQueue.remove(id);
+	return true;
+}
+
+void Datastore::deleteAllArtifacts() {
+	for (auto & toDelete : deleteQueue) {
+		bool deletionSuccessful = deleteArtifacts(toDelete);
+		if (!deletionSuccessful) [[unlikely]] {
+			continue;
+		}
+		deleteQueue.remove(toDelete);
+	}
+}
+
+void Datastore::addToHistory(SimulationInfo simInfo) {
+	if (existsInHistory(simInfo)) {
+		return;
+	}
+	m_history.push_back(simInfo);
+	m_history.sort();
+}
+
+std::filesystem::path Datastore::toInputPath(std::size_t id) {
+	return std::filesystem::path(m_queuePath / std::to_string(id) / ".input");
+}
+
+std::filesystem::path Datastore::toOutputPath(std::size_t id) {
+	return std::filesystem::path(m_queuePath / std::to_string(id) / ".output");
+}
+
+std::filesystem::path Datastore::toCombinedPath(SimulationInfo simInfo) {
+	return std::filesystem::path(m_path / std::to_string(simInfo.generation) / std::to_string(simInfo.identifier) / ".json");
 }

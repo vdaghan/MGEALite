@@ -8,48 +8,49 @@
 #include <string>
 #include <thread>
 
+#include "Datastore.h"
 #include "SimulationLog.h"
 
 using Generation = std::size_t;
 using SimulationId = std::size_t;
 using UpdatedSimulationList = std::list<SimulationInfo>;
 
-enum class GenerationStatus {Exists, Unavailable};
-
+using SimulationInfoList = std::list<SimulationInfo>;
+using SimulationHistory = std::map<SimulationInfo, SimulationLogPtr>;
 class Database {
 	public:
 		Database(std::string);
 		~Database();
-		void rescan(bool once);
-		std::size_t createNewGeneration();
-		/// \brief Find existing simulation, or return nullptr if it does not exist.
-		/// Locks database mutex while searching.
-		/// \return
-		SimulationLogPtr getSimulation(SimulationInfo);
-		/// \brief Find existing simulation, or create and return one if it does not exist.
-		/// Locks database mutex while searching and/or creating.
-		/// \return
-		SimulationLogPtr createSimulationInThisGeneration();
-		UpdatedSimulationList getUpdatedSimulations();
 
-		bool generationExists(std::size_t) const;
-		std::optional<std::size_t> getCurrentGeneration() const;
-		std::size_t getNextGeneration() const;
+		void startSyncLoop();
+		void stopSyncLoop();
 
-		bool simulationExists(SimulationInfo) const;
+		[[nodiscard]] SimulationStatus status(SimulationInfo) const;
+		[[nodiscard]] SimulationDataPtr createSimulation(SimulationInfo);
+		[[nodiscard]] bool startSimulation(SimulationInfo);
+		[[nodiscard]] SimulationDataPtr getSimulationResult(SimulationInfo);
+		bool setSimulationFitness(SimulationInfo, double);
 
-		SimulationLogPtrs & getGenerationData(std::size_t gen) { return simulations.at(gen); };
+		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
+
+		[[nodiscard]] SimulationHistory const & getSimulationHistory();
+		[[nodiscard]] std::size_t nextId() { return m_nextId; };
 	private:
-		std::filesystem::path const path;
-		std::vector<SimulationLogPtrs> simulations;
-
+		Datastore datastore;
+		std::size_t m_nextId;
 		std::mutex dbMutex;
-		std::jthread rescanThread;
-		bool scan;
-		UpdatedSimulationList updatedSimulations;
+		void syncWithDatastore();
+		bool keepSyncing;
+		std::jthread scanThread;
 
-		SimulationLogPtr createSimulation(SimulationInfo);
+		SimulationInfoList uninitialised;
+		SimulationInfoList pendingSimulation;
+		SimulationInfoList pendingEvaluation;
+		SimulationInfoList computed;
+		bool listContains(SimulationInfoList &, SimulationInfo);
+		void removeFromList(SimulationInfoList &, SimulationInfo);
+		void addToList(SimulationInfoList &, SimulationInfo);
+		void moveFromListToList(SimulationInfoList &, SimulationInfoList &, SimulationInfo);
 
-		std::optional<std::size_t> maxSimulationId;
-		void updateMaxSimulationId(std::size_t);
+		SimulationHistory simulationHistory;
 };
