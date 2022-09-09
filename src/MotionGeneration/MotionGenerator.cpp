@@ -1,10 +1,9 @@
 #include "MotionGeneration/MotionGenerator.h"
 #include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
+#include "Logging/SpdlogCommon.h"
 
 #include <algorithm>
 #include <functional>
-
-#include "spdlog/spdlog.h"
 
 MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
@@ -12,7 +11,7 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	Spec::SVariationFunctor variationFunctor;
 	variationFunctor.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection, this));
-	variationFunctor.setVariationFunction(std::bind_front(&MotionGenerator::cutAndCrossfillVariation, this));
+	variationFunctor.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
 	variationFunctor.setProbability(1.0);
 	variationFunctor.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctor);
@@ -48,8 +47,8 @@ void MotionGenerator::exportGenerationData() {
 	}
 }
 
-void MotionGenerator::search(std::size_t n) {
-	auto stepResult = ea.search(n);
+DEvA::StepResult MotionGenerator::search(std::size_t n) {
+	return ea.search(n);
 }
 
 Spec::Generation MotionGenerator::genesis() {
@@ -80,21 +79,22 @@ Spec::Generation MotionGenerator::genesis() {
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
 		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
-		simulationLogPtr->updateStatus(SimulationStatus::PendingSimulation);
 		bool startSuccessful = database.startSimulation(simulationLogPtr->info());
 		// TODO: What to do if startSimulation fails?
 		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
-		spdlog::info("Individual({}, {}) created", simInfo.generation, simInfo.identifier);
+		spdlog::info("Individual{} created", simInfo);
 	}
 	return retVal;
 }
 
 Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	auto simLogPtr = database.getSimulationLog(genPx);
+	if (simLogPtr->outputExists()) {
+		return genPx;
+	}
 	while (!database.getSimulationResult(simLogPtr->info())) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-	simLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
 	return genPx;
 }
 
@@ -103,11 +103,10 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	if (simLogPtr->fitnessExists()) {
 		return simLogPtr->data()->fitness;
 	}
-	spdlog::info("Evaluating Individual({}, {})", genPx.generation, genPx.identifier);
 	SimulationDataPtr simDataPtr = simLogPtr->data();
 	
 	if (!simDataPtr->outputs.contains("ankleHeight")) {
-		spdlog::error("There is no position named \"ankleHeight\" in simulation output ({}, {})", genPx.generation, genPx.identifier);
+		spdlog::error("There is no position named \"ankleHeight\" in simulation output {}", genPx);
 		return 0.0;
 	}
 	double timeStep = 0.001;
@@ -116,8 +115,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double fitness = ankleHeightSum * timeStep;
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
-	simLogPtr->updateStatus(SimulationStatus::Computed);
-	spdlog::info("Individual({}, {}) evaluated to fitness value {}", genPx.generation, genPx.identifier, fitness);
+	spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
 	return fitness;
 }
 
@@ -125,7 +123,7 @@ Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs
 	Spec::IndividualPtrs parents = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 5>(iptrs);
 	for (auto it(parents.begin()); it != parents.end(); ++it) {
 		auto & parent = *it;
-		spdlog::info("Selected parent ({}, {}) with fitness {}", parent->genotypeProxy.generation, parent->genotypeProxy.identifier, parent->fitness);
+		spdlog::info("Selected {} as parent. It has fitness {}", parent->genotypeProxy, parent->fitness);
 	}
 	return parents;
 }
@@ -138,32 +136,29 @@ bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
 	return f > 1.0;
 }
 
-Spec::GenotypeProxies MotionGenerator::cutAndCrossfillVariation(Spec::GenotypeProxies gpxs) {
-	Spec::GenotypeProxy simulation1Info= gpxs.front();
-	Spec::GenotypeProxy simulation2Info = gpxs.back();
-	SimulationLogPtr simulation1LogPtr = database.getSimulationLog(simulation1Info);
-	SimulationLogPtr simulation2LogPtr = database.getSimulationLog(simulation2Info);
-	SimulationDataPtr simulation1DataPtr = simulation1LogPtr->data();
-	SimulationDataPtr simulation2DataPtr = simulation2LogPtr->data();
+Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(SimulationDataPtrs)> varFunc, Spec::GenotypeProxies parentProxies) {
+	std::list<SimulationDataPtr> parentData;
+	for (auto & parentProxy : parentProxies) {
+		SimulationLogPtr parentLogPtr = database.getSimulationLog(parentProxy);
+		SimulationDataPtr parentDataPtr = parentLogPtr->data();
+		parentData.push_back(parentDataPtr);
+	}
 
-	auto children = cutAndCrossfillSingle({simulation1DataPtr, simulation2DataPtr});
+	auto children = varFunc(parentData);
 
-	SimulationInfo sim1Info{.generation = currentGeneration, .identifier = database.nextId()};
-	database.createSimulation(sim1Info);
-	SimulationLogPtr child1LogPtr = database.getSimulationLog(sim1Info);
-	*child1LogPtr->data() = *children.front();
-	child1LogPtr->updateStatus(SimulationStatus::PendingSimulation);
-	bool start1Successful = database.startSimulation(child1LogPtr->info());
-
-	SimulationInfo sim2Info{.generation = currentGeneration, .identifier = database.nextId()};
-	database.createSimulation(sim2Info);
-	SimulationLogPtr child2LogPtr = database.getSimulationLog(sim2Info);
-	*child2LogPtr->data() = *children.back();
-	child2LogPtr->updateStatus(SimulationStatus::PendingSimulation);
-	bool start2Successful = database.startSimulation(child2LogPtr->info());
-
-	// TODO Check if we could successfully create a new input?
-	return {child1LogPtr->info(), child2LogPtr->info()};
+	Spec::GenotypeProxies childProxies;
+	for (auto & child : children) {
+		SimulationInfo childInfo{.generation = currentGeneration, .identifier = database.nextId()};
+		database.createSimulation(childInfo);
+		// TODO Check if we could successfully create a new input?
+		SimulationLogPtr childLogPtr = database.getSimulationLog(childInfo);
+		*childLogPtr->data() = *child;
+		//childLogPtr->updateStatus(SimulationStatus::PendingSimulation);
+		bool startSuccessful = database.startSimulation(childLogPtr->info());
+		// TODO Check if start was successful?
+		childProxies.push_back(childInfo);
+	}
+	return childProxies;
 }
 
 void MotionGenerator::onEpochStart(std::size_t generation) {

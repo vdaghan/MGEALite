@@ -53,28 +53,37 @@ SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
 		return nullptr;
 	}
 	++m_nextId;
+	simulationLogPtr->updateStatus(SimulationStatus::Uninitialised);
 	addToList(uninitialised, simInfo);
 	return simulationLogPtr->data();
 }
 
 bool Database::startSimulation(SimulationInfo simInfo) {
-	if (!simulationHistory.contains(simInfo)) {
+	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
+	if (!simulationLogPtr) {
 		return false;
 	}
-	SimulationLogPtr simulationLogPtr = simulationHistory.at(simInfo);
+	if (simulationLogPtr->inputExists()) {
+		return true;
+	}
+	simulationLogPtr->updateStatus(SimulationStatus::PendingSimulation);
 	moveFromListToList(uninitialised, pendingSimulation, simInfo);
 	return datastore.exportInputFile(simulationLogPtr);
 }
 
 SimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
-	if (!simulationHistory.contains(simInfo)) {
+	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
+	if (!simulationLogPtr) {
 		return nullptr;
 	}
-	SimulationLogPtr simulationLogPtr = simulationHistory.at(simInfo);
+	if (simulationLogPtr->outputExists()) {
+		return simulationLogPtr->data();
+	}
 	bool importSuccessful = datastore.importOutputFile(simulationLogPtr);
 	if (!importSuccessful) {
 		return nullptr;
 	}
+	simulationLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
 	moveFromListToList(pendingSimulation, pendingEvaluation, simInfo);
 	return simulationLogPtr->data();
 }
@@ -84,10 +93,14 @@ bool Database::setSimulationFitness(SimulationInfo simInfo, double fitness) {
 	if (!simulationLogPtr) {
 		return false;
 	}
+	if (simulationLogPtr->fitnessExists()) {
+		return true;
+	}
 	bool setSuccessful = datastore.setFitnessAndCombineFiles(simulationLogPtr, fitness);
 	if (!setSuccessful) {
 		return false;
 	}
+	simulationLogPtr->updateStatus(SimulationStatus::Computed);
 	moveFromListToList(pendingEvaluation, computed, simInfo);
 	return true;
 }
