@@ -15,7 +15,7 @@ int main() {
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionGenerator motionGenerator("./data");
-	auto result = motionGenerator.search(2);
+	auto result = motionGenerator.search(10);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");
 	} else if (DEvA::StepResult::Inconclusive == result) {

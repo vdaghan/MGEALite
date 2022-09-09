@@ -67,7 +67,7 @@ Spec::Generation MotionGenerator::genesis() {
 		return retVal;
 	};
 
-	for (size_t n(0); n != 6; ++n) {
+	for (size_t n(0); n != 100; ++n) {
 		SimulationInfo simInfo{.generation = 0, .identifier = n};
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
