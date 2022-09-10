@@ -1,5 +1,9 @@
 #include "MotionGeneration/MotionGenerator.h"
+#include "MotionGeneration/Variations/CrossoverAll.h"
+#include "MotionGeneration/Variations/CrossoverSingle.h"
+#include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
+#include "MotionGeneration/Variations/SNV.h"
 #include "Logging/SpdlogCommon.h"
 
 #include <algorithm>
@@ -9,12 +13,36 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
-	Spec::SVariationFunctor variationFunctor;
-	variationFunctor.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection, this));
-	variationFunctor.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
-	variationFunctor.setProbability(1.0);
-	variationFunctor.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctor);
+	Spec::SVariationFunctor variationFunctorCrossoverAll;
+	variationFunctorCrossoverAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
+	variationFunctorCrossoverAll.setProbability(1.0);
+	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorCrossoverAll);
+	Spec::SVariationFunctor variationFunctorCrossoverSingle;
+	variationFunctorCrossoverSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle));
+	variationFunctorCrossoverSingle.setProbability(1.0);
+	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorCrossoverSingle);
+	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
+	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCutAndCrossfillAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll));
+	variationFunctorCutAndCrossfillAll.setProbability(1.0);
+	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorCutAndCrossfillAll);
+	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
+	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCutAndCrossfillSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
+	variationFunctorCutAndCrossfillSingle.setProbability(1.0);
+	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
+	Spec::SVariationFunctor variationFunctorSNV;
+	variationFunctorSNV.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<1, 5>, this));
+	variationFunctorSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &snv));
+	variationFunctorSNV.setProbability(1.0);
+	variationFunctorSNV.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorSNV);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
@@ -119,8 +147,9 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	return fitness;
 }
 
+template <std::size_t N, std::size_t M>
 Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs) {
-	Spec::IndividualPtrs parents = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 5>(iptrs);
+	Spec::IndividualPtrs parents = DEvA::StandardParentSelectors<Spec>::bestNofM<N, M>(iptrs);
 	for (auto it(parents.begin()); it != parents.end(); ++it) {
 		auto & parent = *it;
 		spdlog::info("Selected {} as parent. It has fitness {}", parent->genotypeProxy, parent->fitness);

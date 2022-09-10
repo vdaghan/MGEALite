@@ -1,7 +1,7 @@
-#include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
+#include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "EvolutionaryAlgorithm.h"
 
-SimulationDataPtrs cutAndCrossfillSingle(SimulationDataPtrs sdptrs) {
+SimulationDataPtrs cutAndCrossfillAll(SimulationDataPtrs sdptrs) {
 	auto & parent1 = *sdptrs.front();
 	auto & parent2 = *sdptrs.back();
 
@@ -19,16 +19,11 @@ SimulationDataPtrs cutAndCrossfillSingle(SimulationDataPtrs sdptrs) {
 	child2DataPtr->time = parent2.time;
 	child2DataPtr->params = parent2.params;
 
-	std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
-	std::size_t const randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
+	std::size_t randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
+	std::size_t randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
 
-	std::size_t i(0);
 	std::vector<double> const tmpTorque(simLength);
 	for (auto & joints : parent1.torque) {
-		if (randJointIndex != i) {
-			++i;
-			continue;
-		}
 		auto & jointName = joints.first;
 		auto & p1JointData = parent1.torque[jointName];
 		auto & p2JointData = parent2.torque[jointName];
@@ -44,7 +39,6 @@ SimulationDataPtrs cutAndCrossfillSingle(SimulationDataPtrs sdptrs) {
 			c1JointData[ind] = p2JointData[ind];
 			c2JointData[ind] = p1JointData[ind];
 		}
-		++i;
 	}
 
 	return {child1DataPtr, child2DataPtr};
