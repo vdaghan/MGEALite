@@ -20,7 +20,7 @@ SimulationDataPtrs crossoverSingle(SimulationDataPtrs sdptrs) {
 	child2DataPtr->params = parent2.params;
 
 	std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
-	std::size_t const weight = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(0, 1);
+	double const weight = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(0.0, 1.0);
 
 	std::size_t i(0);
 	std::vector<double> const tmpTorque(simLength);

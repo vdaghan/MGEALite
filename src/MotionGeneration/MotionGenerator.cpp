@@ -84,14 +84,14 @@ Spec::Generation MotionGenerator::genesis() {
 	Spec::Generation retVal;
 	std::random_device randDev;
 	std::default_random_engine randGen(randDev());
-	std::uniform_int_distribution<std::size_t> distributionVal(0, 4095);
+	std::uniform_int_distribution<std::size_t> distributionVal(0, 511);
 	std::uniform_real_distribution<double> randRealDist(0, 1);
 
-	std::vector<double> time(4096);
+	std::vector<double> time(512);
 	std::generate(time.begin(), time.end(), [t = 0.0]() mutable { return (t += 0.001); });
 
 	auto generateRandomVector = [&]() -> std::vector<double> {
-		std::vector<double> retVal(4096);
+		std::vector<double> retVal(512);
 		std::generate(retVal.begin(), retVal.end(), [&](){ return randRealDist(randGen); });
 		return retVal;
 	};
@@ -101,9 +101,9 @@ Spec::Generation MotionGenerator::genesis() {
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
 		simDataPtr->params.emplace("simStart", 0.0);
-		simDataPtr->params.emplace("simStop", 4.095);
+		simDataPtr->params.emplace("simStop", 0.511);
 		simDataPtr->params.emplace("simStep", 0.001);
-		simDataPtr->params.emplace("simSamples", 4096);
+		simDataPtr->params.emplace("simSamples", 512);
 		simDataPtr->torque.emplace(std::make_pair("wrist", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
