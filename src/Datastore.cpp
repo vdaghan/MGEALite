@@ -45,65 +45,62 @@ void Datastore::syncWithFilesystem() {
 	evaluationQueue = updatedEvaluationQueue;
 }
 
-bool Datastore::exportInputFile(SimulationLogPtr simLogPtr) {
+MGEA::ErrorCode Datastore::exportInputFile(SimulationLogPtr simLogPtr) {
 	if (!simLogPtr->inputExists()) {
-		return false;
+		return MGEA::ErrorCode::NoInput;
 	}
-	bool exportSuccessful = exportSimulationData(simLogPtr->data(), toInputPath(simLogPtr->info().identifier));
-	if (!exportSuccessful) {
-		return false;
-	}
-	simLogPtr->updateStatus(SimulationStatus::PendingSimulation);
-	return true;
+	auto exportError = exportSimulationData(simLogPtr->data(), toInputPath(simLogPtr->info().identifier));
+	return exportError;
 }
 
-bool Datastore::importOutputFile(SimulationLogPtr simLogPtr) {
+MGEA::ErrorCode Datastore::importOutputFile(SimulationLogPtr simLogPtr) {
 	if (simLogPtr->outputExists()) {
-		return true;
+		return MGEA::ErrorCode::OK;
 	}
-	SimulationDataPtr outputData = importSimulationData(toOutputPath(simLogPtr->info().identifier));
-	if (!outputData) {
-		return false;
+	auto maybeOutputData = importSimulationData(toOutputPath(simLogPtr->info().identifier));
+	if (!maybeOutputData) {
+		return maybeOutputData.error();
 	}
-	simLogPtr->data()->outputs = outputData->outputs;
-	simLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
-	return true;
+	updateSimulationDataPtr({.source = maybeOutputData.value(), .target = simLogPtr->data()});
+	return MGEA::ErrorCode::OK;
 }
 
-bool Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, double fitness) {
+MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, double fitness) {
 	auto const simInfo = slptr->info();
 	auto const inputFile = toInputPath(simInfo.identifier);
 	auto const outputFile = toOutputPath(simInfo.identifier);
 	auto const combinedFile = toCombinedPath(simInfo);
 	if (std::filesystem::exists(combinedFile)) [[unlikely]] {
-		return true;
+		return MGEA::ErrorCode::OK;
 	}
 	if (!std::filesystem::exists(inputFile) or !std::filesystem::exists(outputFile)) [[unlikely]] {
-		return false;
+		return MGEA::ErrorCode::FileNotFound;
 	}
-	SimulationDataPtr inputDataPtr = importSimulationData(inputFile);
-	SimulationDataPtr outputDataPtr = importSimulationData(outputFile);
-	if (!inputDataPtr or !outputDataPtr) {
-		return false;
+	MaybeSimulationDataPtr maybeInputDataPtr = importSimulationData(inputFile);
+	if (!maybeInputDataPtr) {
+		return maybeInputDataPtr.error();
+	}
+	MaybeSimulationDataPtr maybeOutputDataPtr = importSimulationData(outputFile);
+	if (!maybeOutputDataPtr) {
+		return maybeOutputDataPtr.error();
 	}
 	auto const generationFolder = toGenerationPath(simInfo);
 	if (!std::filesystem::exists(generationFolder)) [[unlikely]] {
 		std::filesystem::create_directory(generationFolder);
 	}
 	SimulationDataPtr combinedDataPtr = SimulationDataPtr(new SimulationData());
-	combinedDataPtr->time = inputDataPtr->time;
-	combinedDataPtr->params = inputDataPtr->params;
-	combinedDataPtr->torque = inputDataPtr->torque;
-	combinedDataPtr->outputs = outputDataPtr->outputs;
+	combinedDataPtr->time = maybeInputDataPtr.value()->time;
+	combinedDataPtr->params = maybeInputDataPtr.value()->params;
+	combinedDataPtr->torque = maybeInputDataPtr.value()->torque;
+	combinedDataPtr->outputs = maybeOutputDataPtr.value()->outputs;
 	combinedDataPtr->fitness = fitness;
-	bool exportSuccessful = exportSimulationData(combinedDataPtr, combinedFile);
-	if (!exportSuccessful) {
-		return false;
+	MGEA::ErrorCode exportError = exportSimulationData(combinedDataPtr, combinedFile);
+	if (MGEA::ErrorCode::OK != exportError) {
+		return exportError;
 	}
-	slptr->updateStatus(SimulationStatus::Computed);
 	addToHistory(simInfo);
 	deleteQueue.push_back(simInfo.identifier);
-	return true;
+	return MGEA::ErrorCode::OK;
 }
 
 bool Datastore::existsInHistory(SimulationInfo simInfo) {

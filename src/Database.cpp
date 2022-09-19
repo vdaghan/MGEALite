@@ -1,6 +1,6 @@
 #include "Database.h"
 
-#include "spdlog/spdlog.h"
+#include "Logging/SpdlogCommon.h"
 
 #include <algorithm>
 #include <iostream>
@@ -58,20 +58,20 @@ SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
 	return simulationLogPtr->data();
 }
 
-bool Database::startSimulation(SimulationInfo simInfo) {
+MGEA::ErrorCode Database::startSimulation(SimulationInfo simInfo) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
-		return false;
+		return MGEA::ErrorCode::Fail;
 	}
 	if (simulationLogPtr->inputExists()) {
-		return true;
+		return MGEA::ErrorCode::OK;
 	}
 	simulationLogPtr->updateStatus(SimulationStatus::PendingSimulation);
 	moveFromListToList(uninitialised, pendingSimulation, simInfo);
 	return datastore.exportInputFile(simulationLogPtr);
 }
 
-SimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
+MaybeSimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
 		return nullptr;
@@ -79,30 +79,36 @@ SimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
 	if (simulationLogPtr->outputExists()) {
 		return simulationLogPtr->data();
 	}
-	bool importSuccessful = datastore.importOutputFile(simulationLogPtr);
-	if (!importSuccessful) {
-		return nullptr;
+	MGEA::ErrorCode importError = datastore.importOutputFile(simulationLogPtr);
+	if (MGEA::ErrorCode::OK != importError) {
+		return std::unexpected(importError);
+	}
+	if (simulationLogPtr->data()->error) {
+		spdlog::warn("Simulation error for {}. Error message was:", simInfo);
+		spdlog::warn("{}", *simulationLogPtr->data()->error);
+		simulationLogPtr->updateStatus(SimulationStatus::SimulationError);
+		return std::unexpected(MGEA::ErrorCode::SimulationError);
 	}
 	simulationLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
 	moveFromListToList(pendingSimulation, pendingEvaluation, simInfo);
 	return simulationLogPtr->data();
 }
 
-bool Database::setSimulationFitness(SimulationInfo simInfo, double fitness) {
+MGEA::ErrorCode Database::setSimulationFitness(SimulationInfo simInfo, double fitness) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
-		return false;
+		return MGEA::ErrorCode::Fail;
 	}
 	if (simulationLogPtr->fitnessExists()) {
-		return true;
+		return MGEA::ErrorCode::OK;
 	}
-	bool setSuccessful = datastore.setFitnessAndCombineFiles(simulationLogPtr, fitness);
-	if (!setSuccessful) {
-		return false;
+	MGEA::ErrorCode setError = datastore.setFitnessAndCombineFiles(simulationLogPtr, fitness);
+	if (MGEA::ErrorCode::OK != setError) {
+		return setError;
 	}
 	simulationLogPtr->updateStatus(SimulationStatus::Computed);
 	moveFromListToList(pendingEvaluation, computed, simInfo);
-	return true;
+	return MGEA::ErrorCode::OK;
 }
 
 SimulationLogPtr Database::getSimulationLog(SimulationInfo simInfo) {

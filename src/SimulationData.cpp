@@ -4,36 +4,76 @@
 
 #include <fstream>
 
+
+void updateSimulationDataPtr(SimulationDataPtrPair pair) {
+	if (!pair.source) {
+		return;
+	}
+	if (!pair.source->time.empty()) {
+		pair.target->time = pair.source->time;
+	}
+	if (!pair.source->params.empty()) {
+		pair.target->params = pair.source->params;
+	}
+	if (!pair.source->torque.empty()) {
+		pair.target->torque = pair.source->torque;
+	}
+	if (!pair.source->outputs.empty()) {
+		pair.target->outputs = pair.source->outputs;
+	}
+	pair.target->fitness = pair.source->fitness;
+	if (pair.source->error) {
+		pair.target->error = pair.source->error;
+	}
+}
+
 void to_json(JSON & j, SimulationData const & sI) {
-	j = JSON{{"time", sI.time},
+	if (sI.error) {
+		j = JSON{{"time", sI.time},
+				{"params", sI.params},
+				{"torque", sI.torque},
+				{"outputs", sI.outputs},
+				{"fitness", sI.fitness},
+				{"error", *sI.error}
+		};
+	} else {
+		j = JSON{{"time", sI.time},
 			{"params", sI.params},
 			{"torque", sI.torque},
 			{"outputs", sI.outputs},
 			{"fitness", sI.fitness}
-	};
+		};
+	}
 }
 
 void from_json(JSON const & j, SimulationData & sI) {
 	if (j.contains("time")) {
 		j.at("time").get_to(sI.time);
-	} else if (j.contains("params")) {
+	}
+	if (j.contains("params")) {
 		j.at("params").get_to(sI.params);
-	} else if (j.contains("torque")) {
+	}
+	if (j.contains("torque")) {
 		j.at("torque").get_to(sI.torque);
-	} else if (j.contains("outputs")) {
+	}
+	if (j.contains("outputs")) {
 		j.at("outputs").get_to(sI.outputs);
-	} else if (j.contains("fitness")) {
+	}
+	if (j.contains("fitness")) {
 		j.at("fitness").get_to(sI.fitness);
+	}
+	if (j.contains("error")) {
+		j.at("error").get_to(sI.error);
 	}
 }
 
-SimulationDataPtr importSimulationData(std::filesystem::path fileName) {
+MaybeSimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 	if (!std::filesystem::exists(fileName)) {
-		return nullptr;
+		return std::unexpected(MGEA::ErrorCode::FileNotFound);
 	}
 	std::ifstream f(fileName);
 	if (!f.is_open()) {
-		return nullptr;
+		return std::unexpected(MGEA::ErrorCode::ErrorReadingFile);
 	}
 	SimulationData parseResult;
 	try {
@@ -41,17 +81,17 @@ SimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 	} catch (const std::exception &) {
 		spdlog::warn("Could not parse simulation file {}. Will wait a bit more.", fileName.string());
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
-		return nullptr;
+		return std::unexpected(MGEA::ErrorCode::ErrorReadingFile);
 	}
 	SimulationData * rawPtr = new SimulationData(parseResult);
 	return SimulationDataPtr(rawPtr);
 }
 
-bool exportSimulationData(SimulationDataPtr simulationDataPtr, std::filesystem::path fileName) {
+MGEA::ErrorCode exportSimulationData(SimulationDataPtr simulationDataPtr, std::filesystem::path fileName) {
 	JSON j = *simulationDataPtr;
 	std::ofstream o(fileName);
 	o << std::setw(4) << j << std::endl;
 	//o << j << std::endl;
 	// TODO: Some error checking here
-	return true;
+	return MGEA::ErrorCode::OK;
 }

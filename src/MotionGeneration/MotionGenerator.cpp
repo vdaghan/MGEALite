@@ -13,6 +13,7 @@ MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
+	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
 	variationFunctorCrossoverAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
 	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
@@ -107,7 +108,7 @@ Spec::Generation MotionGenerator::genesis() {
 		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
 		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
 		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
-		bool startSuccessful = database.startSimulation(simulationLogPtr->info());
+		MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 		// TODO: What to do if startSimulation fails?
 		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
 		spdlog::info("Individual{} created", simInfo);
@@ -115,15 +116,22 @@ Spec::Generation MotionGenerator::genesis() {
 	return retVal;
 }
 
-Spec::PhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
+Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->outputExists()) {
 		return genPx;
 	}
-	while (!database.getSimulationResult(simLogPtr->info())) {
+	while (true) {
+		auto maybeSimulationDataPtr = database.getSimulationResult(simLogPtr->info());
+		if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
+			return std::unexpected(DEvA::ErrorCode::InvalidTransform);
+		}
+		if (maybeSimulationDataPtr and maybeSimulationDataPtr.value()) {
+			return genPx;
+		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-	return genPx;
+	std::unreachable();
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
@@ -183,7 +191,7 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 		SimulationLogPtr childLogPtr = database.getSimulationLog(childInfo);
 		*childLogPtr->data() = *child;
 		//childLogPtr->updateStatus(SimulationStatus::PendingSimulation);
-		bool startSuccessful = database.startSimulation(childLogPtr->info());
+		MGEA::ErrorCode startError = database.startSimulation(childLogPtr->info());
 		// TODO Check if start was successful?
 		childProxies.push_back(childInfo);
 	}

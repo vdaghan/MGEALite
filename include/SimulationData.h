@@ -1,7 +1,10 @@
 #pragma once
 
+#include "MGEAError.h"
+
 #include <filesystem>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -15,12 +18,20 @@ struct SimulationData {
 	std::map<std::string, std::vector<double>> torque;
 	std::map<std::string, std::vector<double>> outputs;
 	double fitness;
+	std::optional<std::string> error;
 };
 
 using SimulationDataPtr = std::shared_ptr<SimulationData>;
+using MaybeSimulationDataPtr = MGEA::Maybe<SimulationDataPtr>;
 using SimulationDataPtrs = std::list<SimulationDataPtr>;
+
+struct SimulationDataPtrPair {
+	SimulationDataPtr source;
+	SimulationDataPtr target;
+};
+void updateSimulationDataPtr(SimulationDataPtrPair);
 
 void to_json(JSON &, SimulationData const &);
 void from_json(JSON const &, SimulationData &);
-SimulationDataPtr importSimulationData(std::filesystem::path);
-bool exportSimulationData(SimulationDataPtr, std::filesystem::path);
+MaybeSimulationDataPtr importSimulationData(std::filesystem::path);
+MGEA::ErrorCode exportSimulationData(SimulationDataPtr, std::filesystem::path);

@@ -10,6 +10,8 @@
 
 #include "Datastore.h"
 #include "SimulationLog.h"
+#include "Error.h"
+#include "MGEAError.h"
 
 using Generation = std::size_t;
 using SimulationId = std::size_t;
@@ -27,9 +29,9 @@ class Database {
 
 		[[nodiscard]] SimulationStatus status(SimulationInfo) const;
 		[[nodiscard]] SimulationDataPtr createSimulation(SimulationInfo);
-		[[nodiscard]] bool startSimulation(SimulationInfo);
-		[[nodiscard]] SimulationDataPtr getSimulationResult(SimulationInfo);
-		bool setSimulationFitness(SimulationInfo, double);
+		[[nodiscard]] MGEA::ErrorCode startSimulation(SimulationInfo);
+		[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
+		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
 
 		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
 

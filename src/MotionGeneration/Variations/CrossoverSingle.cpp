@@ -25,13 +25,15 @@ SimulationDataPtrs crossoverSingle(SimulationDataPtrs sdptrs) {
 	std::size_t i(0);
 	std::vector<double> const tmpTorque(simLength);
 	for (auto & joints : parent1.torque) {
-		if (randJointIndex != i) {
-			++i;
-			continue;
-		}
 		auto & jointName = joints.first;
 		auto & p1JointData = parent1.torque[jointName];
 		auto & p2JointData = parent2.torque[jointName];
+		if (randJointIndex != i) {
+			child1DataPtr->torque.emplace(jointName, p1JointData);
+			child2DataPtr->torque.emplace(jointName, p2JointData);
+			++i;
+			continue;
+		}
 		child1DataPtr->torque.emplace(jointName, tmpTorque);
 		child2DataPtr->torque.emplace(jointName, tmpTorque);
 		auto & c1JointData = child1DataPtr->torque[jointName];

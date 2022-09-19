@@ -32,7 +32,7 @@ class MotionGenerator {
 
 		Spec::Generation genesis();
 		Spec::GenotypeProxy createGenotype();
-		Spec::PhenotypeProxy transform(Spec::GenotypeProxy);
+		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::Fitness evaluate(Spec::GenotypeProxy);
 		template <std::size_t, std::size_t>
 		Spec::IndividualPtrs parentSelection(Spec::IndividualPtrs);

@@ -28,6 +28,10 @@ bool SimulationLog::fitnessExists() const {
 		or m_status == SimulationStatus::Archived;
 }
 
+bool SimulationLog::errorExists() const {
+	return m_status == SimulationStatus::SimulationError;
+}
+
 uint64_t SimulationLog::timeSinceLastTouch() {
 	auto currentTimepoint = std::chrono::steady_clock::now();
 	return std::chrono::duration_cast<std::chrono::nanoseconds>(currentTimepoint - m_lastTouch).count();

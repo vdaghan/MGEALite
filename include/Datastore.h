@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MGEAError.h"
 #include "SimulationLog.h"
 
 #include <filesystem>
@@ -24,9 +25,9 @@ class Datastore {
 
 		void syncWithFilesystem();
 
-		bool exportInputFile(SimulationLogPtr);
-		bool importOutputFile(SimulationLogPtr);
-		bool setFitnessAndCombineFiles(SimulationLogPtr, double);
+		MGEA::ErrorCode exportInputFile(SimulationLogPtr);
+		MGEA::ErrorCode importOutputFile(SimulationLogPtr);
+		MGEA::ErrorCode setFitnessAndCombineFiles(SimulationLogPtr, double);
 
 		DatastoreHistory const & history() const { return m_history; };
 		bool existsInHistory(SimulationInfo);

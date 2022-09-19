@@ -7,7 +7,7 @@
 #include "SimulationData.h"
 #include "SimulationInfo.h"
 
-enum class SimulationStatus { NonExistent, Uninitialised, PendingSimulation, PendingEvaluation, Computed, Archived };
+enum class SimulationStatus { NonExistent, Uninitialised, PendingSimulation, SimulationError, PendingEvaluation, Computed, Archived };
 
 class SimulationLog {
 	public:
@@ -23,6 +23,7 @@ class SimulationLog {
 		bool inputExists() const;
 		bool outputExists() const;
 		bool fitnessExists() const;
+		bool errorExists() const;
 
 		SimulationDataPtr data() { touch(); return m_data; };
 		uint64_t timeSinceLastTouch();
