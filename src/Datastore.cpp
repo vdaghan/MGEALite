@@ -94,6 +94,9 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 	combinedDataPtr->torque = maybeInputDataPtr.value()->torque;
 	combinedDataPtr->outputs = maybeOutputDataPtr.value()->outputs;
 	combinedDataPtr->fitness = fitness;
+	if (maybeOutputDataPtr.value()->error) {
+		combinedDataPtr->error = maybeOutputDataPtr.value()->error;
+	}
 	MGEA::ErrorCode exportError = exportSimulationData(combinedDataPtr, combinedFile);
 	if (MGEA::ErrorCode::OK != exportError) {
 		return exportError;

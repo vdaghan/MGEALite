@@ -87,6 +87,10 @@ MaybeSimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
 		spdlog::warn("Simulation error for {}. Error message was:", simInfo);
 		spdlog::warn("{}", *simulationLogPtr->data()->error);
 		simulationLogPtr->updateStatus(SimulationStatus::SimulationError);
+		MGEA::ErrorCode setError = datastore.setFitnessAndCombineFiles(simulationLogPtr, std::numeric_limits<double>::min());
+		if (MGEA::ErrorCode::OK != setError) {
+			return std::unexpected(setError);
+		}
 		return std::unexpected(MGEA::ErrorCode::SimulationError);
 	}
 	simulationLogPtr->updateStatus(SimulationStatus::PendingEvaluation);

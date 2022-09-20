@@ -57,7 +57,19 @@ void from_json(JSON const & j, SimulationData & sI) {
 		j.at("torque").get_to(sI.torque);
 	}
 	if (j.contains("outputs")) {
-		j.at("outputs").get_to(sI.outputs);
+		auto & outputs = j["outputs"];
+		for (auto outputIt = outputs.begin(); outputIt != outputs.end(); ++outputIt) {
+			std::string outputKey = outputIt.key();
+			auto & outputValue = outputIt.value();
+			if (outputValue.is_array()) {
+				auto outputValueAsArray = outputValue.get<std::vector<double>>();
+				sI.outputs.emplace(std::make_pair(outputKey, outputValueAsArray));
+			} else if (outputValue.is_number()) {
+				auto outputValueAsNumber = outputValue.get<double>();
+				std::vector<double> outputValueAsArray{outputValueAsNumber};
+				sI.outputs.emplace(std::make_pair(outputKey, outputValueAsArray));
+			}
+		}
 	}
 	if (j.contains("fitness")) {
 		j.at("fitness").get_to(sI.fitness);
@@ -71,7 +83,8 @@ MaybeSimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 	if (!std::filesystem::exists(fileName)) {
 		return std::unexpected(MGEA::ErrorCode::FileNotFound);
 	}
-	std::ifstream f(fileName);
+	std::ifstream f;
+	f.open(fileName, std::ios_base::in);
 	if (!f.is_open()) {
 		return std::unexpected(MGEA::ErrorCode::ErrorReadingFile);
 	}
@@ -80,9 +93,11 @@ MaybeSimulationDataPtr importSimulationData(std::filesystem::path fileName) {
 		parseResult = nlohmann::json::parse(f);
 	} catch (const std::exception &) {
 		spdlog::warn("Could not parse simulation file {}. Will wait a bit more.", fileName.string());
+		f.close();
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 		return std::unexpected(MGEA::ErrorCode::ErrorReadingFile);
 	}
+	f.close();
 	SimulationData * rawPtr = new SimulationData(parseResult);
 	return SimulationDataPtr(rawPtr);
 }
