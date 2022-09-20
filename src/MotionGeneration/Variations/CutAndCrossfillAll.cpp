@@ -1,12 +1,12 @@
 #include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "EvolutionaryAlgorithm.h"
 
-SimulationDataPtrs cutAndCrossfillAll(SimulationDataPtrs sdptrs) {
-	auto & parent1 = *sdptrs.front();
-	auto & parent2 = *sdptrs.back();
+SimulationDataPtrs cutAndCrossfillAll(MotionParameters const & motionParameters, SimulationDataPtrs sdptrs) {
+	auto const & parent1 = *sdptrs.front();
+	auto const & parent2 = *sdptrs.back();
 
-	std::size_t simLength = parent1.time.size();
-	std::size_t numJoints = parent2.torque.size();
+	std::size_t const simLength = motionParameters.simSamples;
+	std::size_t const numJoints = motionParameters.jointNames.size();
 	if (0 == simLength || 0 == numJoints) {
 		return {};
 	}
@@ -19,14 +19,14 @@ SimulationDataPtrs cutAndCrossfillAll(SimulationDataPtrs sdptrs) {
 	child2DataPtr->time = parent2.time;
 	child2DataPtr->params = parent2.params;
 
-	std::size_t randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
-	std::size_t randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
+	std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
+	std::size_t const randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
 
 	std::vector<double> const tmpTorque(simLength);
 	for (auto & joints : parent1.torque) {
-		auto & jointName = joints.first;
-		auto & p1JointData = parent1.torque[jointName];
-		auto & p2JointData = parent2.torque[jointName];
+		auto const & jointName = joints.first;
+		auto const & p1JointData = parent1.torque.at(jointName);
+		auto const & p2JointData = parent2.torque.at(jointName);
 		child1DataPtr->torque.emplace(jointName, tmpTorque);
 		child2DataPtr->torque.emplace(jointName, tmpTorque);
 		auto & c1JointData = child1DataPtr->torque[jointName];

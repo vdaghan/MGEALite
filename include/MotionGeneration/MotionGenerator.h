@@ -41,7 +41,8 @@ class MotionGenerator {
 		void survivorSelection(Spec::IndividualPtrs &);
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
-		[[nodiscard]] Spec::GenotypeProxies computeVariation(std::function<SimulationDataPtrs(SimulationDataPtrs)>, Spec::GenotypeProxies);
+		using VariationInterface = std::function<SimulationDataPtrs(MotionParameters const &, SimulationDataPtrs)>;
+		[[nodiscard]] Spec::GenotypeProxies computeVariation(VariationInterface, Spec::GenotypeProxies);
 
 		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);

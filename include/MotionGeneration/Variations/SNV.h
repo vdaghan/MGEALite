@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MotionGeneration/MotionParameters.h"
 #include "SimulationData.h"
 
-SimulationDataPtrs snv(SimulationDataPtrs);
+SimulationDataPtrs snv(MotionParameters const &, SimulationDataPtrs);

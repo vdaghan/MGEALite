@@ -1,12 +1,12 @@
 #include "MotionGeneration/Variations/CrossoverSingle.h"
 #include "EvolutionaryAlgorithm.h"
 
-SimulationDataPtrs crossoverSingle(SimulationDataPtrs sdptrs) {
-	auto & parent1 = *sdptrs.front();
-	auto & parent2 = *sdptrs.back();
+SimulationDataPtrs crossoverSingle(MotionParameters const & motionParameters, SimulationDataPtrs sdptrs) {
+	auto const & parent1 = *sdptrs.front();
+	auto const & parent2 = *sdptrs.back();
 
-	std::size_t simLength = parent1.time.size();
-	std::size_t numJoints = parent2.torque.size();
+	std::size_t const simLength = motionParameters.simSamples;
+	std::size_t const numJoints = motionParameters.jointNames.size();
 	if (0 == simLength || 0 == numJoints) {
 		return {};
 	}
@@ -25,9 +25,9 @@ SimulationDataPtrs crossoverSingle(SimulationDataPtrs sdptrs) {
 	std::size_t i(0);
 	std::vector<double> const tmpTorque(simLength);
 	for (auto & joints : parent1.torque) {
-		auto & jointName = joints.first;
-		auto & p1JointData = parent1.torque[jointName];
-		auto & p2JointData = parent2.torque[jointName];
+		auto const & jointName = joints.first;
+		auto const & p1JointData = parent1.torque.at(jointName);
+		auto const & p2JointData = parent2.torque.at(jointName);
 		if (randJointIndex != i) {
 			child1DataPtr->torque.emplace(jointName, p1JointData);
 			child2DataPtr->torque.emplace(jointName, p2JointData);

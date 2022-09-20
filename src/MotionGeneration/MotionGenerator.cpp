@@ -178,7 +178,7 @@ bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
 	return f > 1.0;
 }
 
-Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(SimulationDataPtrs)> varFunc, Spec::GenotypeProxies parentProxies) {
+Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(MotionParameters const &, SimulationDataPtrs)> varFunc, Spec::GenotypeProxies parentProxies) {
 	std::list<SimulationDataPtr> parentData;
 	for (auto & parentProxy : parentProxies) {
 		SimulationLogPtr parentLogPtr = database.getSimulationLog(parentProxy);
@@ -186,7 +186,7 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 		parentData.push_back(parentDataPtr);
 	}
 
-	auto children = varFunc(parentData);
+	auto children = varFunc(motionParameters, parentData);
 
 	Spec::GenotypeProxies childProxies;
 	for (auto & child : children) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MotionGeneration/MotionParameters.h"
 #include "SimulationData.h"
 
-SimulationDataPtrs crossoverSingle(SimulationDataPtrs);
+SimulationDataPtrs crossoverSingle(MotionParameters const &, SimulationDataPtrs);

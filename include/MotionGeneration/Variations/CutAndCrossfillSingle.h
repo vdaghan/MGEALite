@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MotionGeneration/MotionParameters.h"
 #include "SimulationData.h"
 
-SimulationDataPtrs cutAndCrossfillSingle(SimulationDataPtrs);
+SimulationDataPtrs cutAndCrossfillSingle(MotionParameters const &, SimulationDataPtrs);

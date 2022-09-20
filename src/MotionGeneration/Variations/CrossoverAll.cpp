@@ -1,12 +1,12 @@
 #include "MotionGeneration/Variations/CrossoverAll.h"
 #include "EvolutionaryAlgorithm.h"
 
-SimulationDataPtrs crossoverAll(SimulationDataPtrs sdptrs) {
+SimulationDataPtrs crossoverAll(MotionParameters const & motionParameters, SimulationDataPtrs sdptrs) {
 	auto const & parent1 = *sdptrs.front();
 	auto const & parent2 = *sdptrs.back();
 
-	std::size_t const simLength = parent1.time.size();
-	std::size_t const numJoints = parent2.torque.size();
+	std::size_t const simLength = motionParameters.simSamples;
+	std::size_t const numJoints = motionParameters.jointNames.size();
 	if (0 == simLength || 0 == numJoints) {
 		return {};
 	}
