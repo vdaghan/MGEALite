@@ -49,7 +49,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : data
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(100);
+	ea.setLambda(80);
 	exportGenerationData();
 };
 
@@ -116,7 +116,7 @@ Spec::Generation MotionGenerator::genesis() {
 		MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 		// TODO: What to do if startSimulation fails?
 		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
-		spdlog::info("Individual{} created", simInfo);
+		//spdlog::info("Individual{} created", simInfo);
 	}
 	return retVal;
 }
@@ -165,7 +165,7 @@ Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs
 	Spec::IndividualPtrs parents = DEvA::StandardParentSelectors<Spec>::bestNofM<N, M>(iptrs);
 	for (auto it(parents.begin()); it != parents.end(); ++it) {
 		auto & parent = *it;
-		spdlog::info("Selected {} as parent. It has fitness {}", parent->genotypeProxy, parent->fitness);
+		//spdlog::info("Selected {} as parent. It has fitness {}", parent->genotypeProxy, parent->fitness);
 	}
 	return parents;
 }
