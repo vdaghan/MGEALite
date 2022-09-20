@@ -9,46 +9,47 @@
 #include <algorithm>
 #include <functional>
 
-MotionGenerator::MotionGenerator(std::string folder) : database(folder) {
+MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : database(folder), motionParameters(mP) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
-	variationFunctorCrossoverAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCrossoverAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
 	variationFunctorCrossoverAll.setProbability(1.0);
-	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
+	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorCrossoverAll);
 	Spec::SVariationFunctor variationFunctorCrossoverSingle;
-	variationFunctorCrossoverSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCrossoverSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle));
-	variationFunctorCrossoverSingle.setProbability(1.0);
-	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(false);
+	variationFunctorCrossoverSingle.setProbability(0.5);
+	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
-	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCutAndCrossfillAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll));
-	variationFunctorCutAndCrossfillAll.setProbability(1.0);
-	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(false);
+	variationFunctorCutAndCrossfillAll.setProbability(0.1);
+	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillAll);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
-	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 5>, this));
+	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCutAndCrossfillSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
-	variationFunctorCutAndCrossfillSingle.setProbability(1.0);
-	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
+	variationFunctorCutAndCrossfillSingle.setProbability(0.1);
+	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
 	Spec::SVariationFunctor variationFunctorSNV;
-	variationFunctorSNV.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<1, 5>, this));
+	variationFunctorSNV.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<1, 10>, this));
 	variationFunctorSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &snv));
 	variationFunctorSNV.setProbability(1.0);
-	variationFunctorSNV.setRemoveParentFromMatingPool(false);
+	variationFunctorSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorSNV);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
+	ea.setLambda(100);
 	exportGenerationData();
 };
 
@@ -82,17 +83,19 @@ DEvA::StepResult MotionGenerator::search(std::size_t n) {
 
 Spec::Generation MotionGenerator::genesis() {
 	Spec::Generation retVal;
-	std::random_device randDev;
-	std::default_random_engine randGen(randDev());
-	std::uniform_int_distribution<std::size_t> distributionVal(0, 511);
-	std::uniform_real_distribution<double> randRealDist(0, 1);
 
-	std::vector<double> time(512);
-	std::generate(time.begin(), time.end(), [t = 0.0]() mutable { return (t += 0.001); });
+	std::vector<double> time(motionParameters.simSamples);
+	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
+		return (t += motionParameters.simStep);
+	};
+	std::generate(time.begin(), time.end(), timeGenerator);
 
-	auto generateRandomVector = [&]() -> std::vector<double> {
-		std::vector<double> retVal(512);
-		std::generate(retVal.begin(), retVal.end(), [&](){ return randRealDist(randGen); });
+	auto generateRandomVector = [&](std::pair<double, double> limits) -> std::vector<double> {
+		std::vector<double> retVal(motionParameters.simSamples);
+		auto vectorGenerator = [&]() {
+			return DEvA::RandomNumberGenerator::get()->getRealBetween<double>(limits.first, limits.second);
+		};
+		std::generate(retVal.begin(), retVal.end(), vectorGenerator);
 		return retVal;
 	};
 
@@ -100,13 +103,15 @@ Spec::Generation MotionGenerator::genesis() {
 		SimulationInfo simInfo{.generation = 0, .identifier = n};
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
-		simDataPtr->params.emplace("simStart", 0.0);
-		simDataPtr->params.emplace("simStop", 0.511);
-		simDataPtr->params.emplace("simStep", 0.001);
-		simDataPtr->params.emplace("simSamples", 512);
-		simDataPtr->torque.emplace(std::make_pair("wrist", generateRandomVector()));
-		simDataPtr->torque.emplace(std::make_pair("shoulder", generateRandomVector()));
-		simDataPtr->torque.emplace(std::make_pair("hip", generateRandomVector()));
+		simDataPtr->params.emplace("simStart", motionParameters.simStart);
+		simDataPtr->params.emplace("simStop", motionParameters.simStop());
+		simDataPtr->params.emplace("simStep", motionParameters.simStep);
+		simDataPtr->params.emplace("simSamples", motionParameters.simSamples);
+		for (auto & jointName : motionParameters.jointNames) {
+			auto & jointLimits = motionParameters.jointLimits.at(jointName);
+			auto randomVector = generateRandomVector(jointLimits);
+			simDataPtr->torque.emplace(std::make_pair(jointName, randomVector));
+		}
 		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
 		MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 		// TODO: What to do if startSimulation fails?
@@ -145,7 +150,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		spdlog::error("There is no position named \"ankleHeight\" in simulation output {}", genPx);
 		return 0.0;
 	}
-	double timeStep = 0.001;
+	double timeStep = motionParameters.simStep;
 	auto & ankleHeight = simDataPtr->outputs.at("ankleHeight");
 	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
 	double fitness = ankleHeightSum * timeStep;
@@ -190,7 +195,6 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 		// TODO Check if we could successfully create a new input?
 		SimulationLogPtr childLogPtr = database.getSimulationLog(childInfo);
 		*childLogPtr->data() = *child;
-		//childLogPtr->updateStatus(SimulationStatus::PendingSimulation);
 		MGEA::ErrorCode startError = database.startSimulation(childLogPtr->info());
 		// TODO Check if start was successful?
 		childProxies.push_back(childInfo);

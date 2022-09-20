@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Database.h"
+#include "MotionParameters.h"
 #include "SimulationData.h"
 
 #include "EvolutionaryAlgorithm.h"
@@ -22,10 +23,11 @@ using Spec = DEvA::Specialisation<Specification>;
 
 class MotionGenerator {
 	public:
-		MotionGenerator(std::string);
+		MotionGenerator(std::string, MotionParameters);
 		DEvA::StepResult search(std::size_t);
 	private:
 		Database database;
+		MotionParameters motionParameters;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
 		std::size_t currentGeneration;
 		void exportGenerationData();
