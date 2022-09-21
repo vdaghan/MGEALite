@@ -32,7 +32,8 @@ class MotionGenerator {
 		std::size_t currentGeneration;
 		void exportGenerationData();
 
-		Spec::Generation genesis();
+		Spec::Generation genesisBoundary();
+		Spec::Generation genesisRandom();
 		Spec::GenotypeProxy createGenotype();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::Fitness evaluate(Spec::GenotypeProxy);

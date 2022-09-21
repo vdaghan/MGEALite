@@ -10,7 +10,7 @@
 #include <functional>
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : database(folder), motionParameters(mP) {
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesis, this));
+	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundary, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
@@ -49,7 +49,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : data
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(80);
+	ea.setLambda(200);
 	exportGenerationData();
 };
 
@@ -81,7 +81,56 @@ DEvA::StepResult MotionGenerator::search(std::size_t n) {
 	return ea.search(n);
 }
 
-Spec::Generation MotionGenerator::genesis() {
+Spec::Generation MotionGenerator::genesisBoundary() {
+	Spec::Generation retVal;
+
+	std::vector<double> time(motionParameters.simSamples);
+	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
+		return (t += motionParameters.simStep);
+	};
+	std::generate(time.begin(), time.end(), timeGenerator);
+
+	auto generateBoundaryVector = [&](std::size_t timeIndex, double value) -> std::vector<double> {
+		std::vector<double> retVal(motionParameters.simSamples, 0.0);
+		retVal[timeIndex] = value;
+		return retVal;
+	};
+
+	std::vector<double> const zeroVector(motionParameters.simSamples, 0.0);
+	std::size_t numJoints(motionParameters.jointNames.size());
+	std::size_t id(0);
+	for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
+		std::string const & jointName = motionParameters.jointNames[jointIndex];
+		for (std::size_t timeIndex(0); timeIndex != motionParameters.simSamples; ++timeIndex) {
+			auto & jointLimitsPair = motionParameters.jointLimits.at(jointName);
+			std::array<double, 2> jointLimitsArray{jointLimitsPair.first, jointLimitsPair.second};
+			for (auto & jointLimit : jointLimitsArray) {
+				SimulationInfo simInfo{.generation = 0, .identifier = id++};
+				auto simDataPtr = database.createSimulation(simInfo);
+				simDataPtr->time = time;
+				simDataPtr->params.emplace("simStart", motionParameters.simStart);
+				simDataPtr->params.emplace("simStop", motionParameters.simStop());
+				simDataPtr->params.emplace("simStep", motionParameters.simStep);
+				simDataPtr->params.emplace("simSamples", motionParameters.simSamples);
+				for (auto & jN : motionParameters.jointNames) {
+					if (jointName != jN) {
+						simDataPtr->torque.emplace(std::make_pair(jN, zeroVector));
+					} else {
+						auto boundaryVector = generateBoundaryVector(timeIndex, jointLimit);
+						simDataPtr->torque.emplace(std::make_pair(jN, boundaryVector));
+					}
+				}
+				SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
+				MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
+				// TODO: What to do if startSimulation fails?
+				retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+			}
+		}
+	}
+	return retVal;
+}
+
+Spec::Generation MotionGenerator::genesisRandom() {
 	Spec::Generation retVal;
 
 	std::vector<double> time(motionParameters.simSamples);
@@ -171,7 +220,7 @@ Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs
 }
 
 void MotionGenerator::survivorSelection(Spec::IndividualPtrs & iptrs) {
-	DEvA::StandardSurvivorSelectors<Spec>::clamp<100>(iptrs);
+	DEvA::StandardSurvivorSelectors<Spec>::clamp<250>(iptrs);
 }
 
 bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
