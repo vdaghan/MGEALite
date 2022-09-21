@@ -261,4 +261,7 @@ void MotionGenerator::onEpochStart(std::size_t generation) {
 
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
+	auto & bestIndividualPtr = ea.genealogy.back().front();
+	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
+	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
 }

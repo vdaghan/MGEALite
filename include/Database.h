@@ -37,6 +37,8 @@ class Database {
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();
 		[[nodiscard]] std::size_t nextId() { return m_nextId; };
+
+		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
 	private:
 		Datastore datastore;
 		std::size_t m_nextId;

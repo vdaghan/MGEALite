@@ -126,6 +126,10 @@ SimulationHistory const & Database::getSimulationHistory() {
 	return simulationHistory;
 }
 
+MGEA::ErrorCode Database::saveVisualisationTarget(SimulationInfo simInfo) {
+	return datastore.saveVisualisationTarget(simInfo);
+}
+
 void Database::syncWithDatastore() {
 	datastore.syncWithFilesystem();
 }

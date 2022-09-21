@@ -16,10 +16,12 @@ std::optional<std::size_t> stringToSizeT(std::string s) {
 
 Datastore::Datastore(std::filesystem::path path)
 	: m_path(path),
-	m_queuePath(path / "queue")
+	m_queuePath(path / "queue"),
+	m_visualisationPath(path / "visualisation")
 {
 	std::filesystem::create_directory(m_path);
 	std::filesystem::create_directory(m_queuePath);
+	std::filesystem::create_directory(m_visualisationPath);
 }
 
 void Datastore::syncWithFilesystem() {
@@ -109,6 +111,17 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 bool Datastore::existsInHistory(SimulationInfo simInfo) {
 	auto it = std::find(m_history.begin(), m_history.end(), simInfo);
 	return it == m_history.end();
+}
+
+MGEA::ErrorCode Datastore::saveVisualisationTarget(SimulationInfo simInfo) {
+	auto const combinedFilePath = toCombinedPath(simInfo);
+	std::filesystem::path const visualisationFilePath(m_visualisationPath / "visualise.json");
+	if (!std::filesystem::exists(combinedFilePath)) [[unlikely]] {
+		return MGEA::ErrorCode::FileNotFound;
+	}
+	std::error_code copyError;
+	std::filesystem::copy(combinedFilePath, visualisationFilePath, std::filesystem::copy_options::overwrite_existing, copyError);
+	return MGEA::ErrorCode::OK;
 }
 
 Progress Datastore::getProgress() {

@@ -31,9 +31,11 @@ class Datastore {
 
 		DatastoreHistory const & history() const { return m_history; };
 		bool existsInHistory(SimulationInfo);
+		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
 	private:
 		std::filesystem::path const m_path;
 		std::filesystem::path const m_queuePath;
+		std::filesystem::path const m_visualisationPath;
 
 		std::list<std::size_t> simulationQueue;
 		std::list<std::size_t> evaluationQueue;
