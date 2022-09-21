@@ -39,7 +39,6 @@ class MotionGenerator {
 		Spec::Fitness evaluate(Spec::GenotypeProxy);
 		template <std::size_t, std::size_t>
 		Spec::IndividualPtrs parentSelection(Spec::IndividualPtrs);
-		void survivorSelection(Spec::IndividualPtrs &);
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
 		using VariationInterface = std::function<SimulationDataPtrs(MotionParameters const &, SimulationDataPtrs)>;
