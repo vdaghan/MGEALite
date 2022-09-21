@@ -4,6 +4,7 @@
 #include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
 #include "MotionGeneration/Variations/SNV.h"
+#include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Logging/SpdlogCommon.h"
 
 #include <algorithm>
@@ -17,26 +18,26 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : data
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
 	variationFunctorCrossoverAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
-	variationFunctorCrossoverAll.setProbability(1.0);
-	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(true);
+	variationFunctorCrossoverAll.setProbability(0.5);
+	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCrossoverAll);
 	Spec::SVariationFunctor variationFunctorCrossoverSingle;
 	variationFunctorCrossoverSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle));
-	variationFunctorCrossoverSingle.setProbability(0.5);
-	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(true);
+	variationFunctorCrossoverSingle.setProbability(0.25);
+	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
 	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCutAndCrossfillAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll));
 	variationFunctorCutAndCrossfillAll.setProbability(0.1);
-	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(true);
+	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillAll);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
 	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<2, 10>, this));
 	variationFunctorCutAndCrossfillSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
 	variationFunctorCutAndCrossfillSingle.setProbability(0.1);
-	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(true);
+	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
 	Spec::SVariationFunctor variationFunctorSNV;
 	variationFunctorSNV.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<1, 10>, this));
@@ -44,6 +45,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : data
 	variationFunctorSNV.setProbability(1.0);
 	variationFunctorSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorSNV);
+	Spec::SVariationFunctor variationFunctorWaveletSNV;
+	variationFunctorWaveletSNV.setParentSelectionFunction(std::bind_front(&MotionGenerator::parentSelection<1, 10>, this));
+	variationFunctorWaveletSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &waveletSNV));
+	variationFunctorWaveletSNV.setProbability(1.0);
+	variationFunctorWaveletSNV.setRemoveParentFromMatingPool(true);
+	ea.addVariationFunctor(variationFunctorWaveletSNV);
 	ea.setSurvivorSelectionFunction(std::bind_front(&MotionGenerator::survivorSelection, this));
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
