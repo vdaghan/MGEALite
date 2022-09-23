@@ -90,15 +90,11 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 	if (!std::filesystem::exists(generationFolder)) [[unlikely]] {
 		std::filesystem::create_directory(generationFolder);
 	}
-	SimulationDataPtr combinedDataPtr = SimulationDataPtr(new SimulationData());
-	combinedDataPtr->time = maybeInputDataPtr.value()->time;
-	combinedDataPtr->params = maybeInputDataPtr.value()->params;
-	combinedDataPtr->torque = maybeInputDataPtr.value()->torque;
-	combinedDataPtr->outputs = maybeOutputDataPtr.value()->outputs;
+	//SimulationDataPtr combinedDataPtr = SimulationDataPtr(new SimulationData());
+	SimulationDataPtr combinedDataPtr = std::make_shared<SimulationData>();
+	updateSimulationDataPtr({.source = maybeInputDataPtr.value(), .target = combinedDataPtr});
+	updateSimulationDataPtr({.source = maybeOutputDataPtr.value(), .target = combinedDataPtr});
 	combinedDataPtr->fitness = fitness;
-	if (maybeOutputDataPtr.value()->error) {
-		combinedDataPtr->error = maybeOutputDataPtr.value()->error;
-	}
 	MGEA::ErrorCode exportError = exportSimulationData(combinedDataPtr, combinedFile);
 	if (MGEA::ErrorCode::OK != exportError) {
 		return exportError;

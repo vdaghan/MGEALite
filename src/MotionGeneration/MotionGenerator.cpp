@@ -10,8 +10,8 @@
 #include <algorithm>
 #include <functional>
 
-MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : database(folder), motionParameters(mP) {
 	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundary, this));
+MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
@@ -118,7 +118,7 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 				simDataPtr->params.emplace("simStart", motionParameters.simStart);
 				simDataPtr->params.emplace("simStop", motionParameters.simStop());
 				simDataPtr->params.emplace("simStep", motionParameters.simStep);
-				simDataPtr->params.emplace("simSamples", motionParameters.simSamples);
+				simDataPtr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
 				for (auto & jN : motionParameters.jointNames) {
 					if (jointName != jN) {
 						simDataPtr->torque.emplace(std::make_pair(jN, zeroVector));
@@ -162,7 +162,7 @@ Spec::Generation MotionGenerator::genesisRandom() {
 		simDataPtr->params.emplace("simStart", motionParameters.simStart);
 		simDataPtr->params.emplace("simStop", motionParameters.simStop());
 		simDataPtr->params.emplace("simStep", motionParameters.simStep);
-		simDataPtr->params.emplace("simSamples", motionParameters.simSamples);
+		simDataPtr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
 		for (auto & jointName : motionParameters.jointNames) {
 			auto & jointLimits = motionParameters.jointLimits.at(jointName);
 			auto randomVector = generateRandomVector(jointLimits);
@@ -243,10 +243,10 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 	Spec::GenotypeProxies childProxies;
 	for (auto & child : children) {
 		SimulationInfo childInfo{.generation = currentGeneration, .identifier = database.nextId()};
-		database.createSimulation(childInfo);
+		auto createResult = database.createSimulation(childInfo);
 		// TODO Check if we could successfully create a new input?
 		SimulationLogPtr childLogPtr = database.getSimulationLog(childInfo);
-		*childLogPtr->data() = *child;
+		updateSimulationDataPtr({.source = child, .target = childLogPtr->data()});
 		MGEA::ErrorCode startError = database.startSimulation(childLogPtr->info());
 		// TODO Check if start was successful?
 		childProxies.push_back(childInfo);
@@ -261,7 +261,27 @@ void MotionGenerator::onEpochStart(std::size_t generation) {
 
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
-	auto & bestIndividualPtr = ea.genealogy.back().front();
+	auto & lastGeneration = ea.genealogy.back();
+	auto & bestIndividualPtr = lastGeneration.front();
 	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
 	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
+
+	std::optional<double> minSimTime;
+	std::optional<double> maxSimTime;
+	for (auto & iptr : lastGeneration) {
+		auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
+		auto metadata = simulationLogPtr->data()->metadata;
+		if (metadata.contains("totalTime")) {
+			auto & totalTime = metadata.at("totalTime");
+			if (!minSimTime or (minSimTime and minSimTime.value() > totalTime)) {
+				minSimTime = totalTime;
+			}
+			if (!maxSimTime or (maxSimTime and maxSimTime.value() < totalTime)) {
+				maxSimTime = totalTime;
+			}
+		}
+	}
+	if (minSimTime and maxSimTime) {
+		spdlog::info("Minimum and maximum simulation times were: {} & {}", minSimTime.value(), maxSimTime.value());
+	}
 }

@@ -103,7 +103,7 @@ SimulationDataPtrs waveletSNV(MotionParameters const & motionParameters, Simulat
 	std::string const & randJointName = motionParameters.jointNames.at(randJointIndex);
 	std::size_t const randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
 	std::pair<double, double> const & jointLimits = motionParameters.jointLimits.at(randJointName);
-	std::size_t const randTorque = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second);
+	double const randTorque = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second);
 
 	std::size_t i(0);
 	for (auto & pair : childDataPtr->torque) {

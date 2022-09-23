@@ -15,8 +15,11 @@ using JSON = nlohmann::ordered_json;
 struct SimulationData {
 	std::vector<double> time;
 	std::map<std::string, double> params;
+	std::optional<int> alignment;
+	std::optional<double> timeout;
 	std::map<std::string, std::vector<double>> torque;
 	std::map<std::string, std::vector<double>> outputs;
+	std::map<std::string, double> metadata;
 	double fitness;
 	std::optional<std::string> error;
 };

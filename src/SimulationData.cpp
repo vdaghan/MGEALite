@@ -15,11 +15,20 @@ void updateSimulationDataPtr(SimulationDataPtrPair pair) {
 	if (!pair.source->params.empty()) {
 		pair.target->params = pair.source->params;
 	}
+	if (pair.source->alignment) {
+		pair.target->alignment = pair.source->alignment;
+	}
+	if (pair.source->timeout) {
+		pair.target->timeout = pair.source->timeout;
+	}
 	if (!pair.source->torque.empty()) {
 		pair.target->torque = pair.source->torque;
 	}
 	if (!pair.source->outputs.empty()) {
 		pair.target->outputs = pair.source->outputs;
+	}
+	if (!pair.source->metadata.empty()) {
+		pair.target->metadata = pair.source->metadata;
 	}
 	pair.target->fitness = pair.source->fitness;
 	if (pair.source->error) {
@@ -28,21 +37,30 @@ void updateSimulationDataPtr(SimulationDataPtrPair pair) {
 }
 
 void to_json(JSON & j, SimulationData const & sI) {
+	if (!sI.time.empty()) {
+		j["time"] = sI.time;
+	}
+	if (!sI.params.empty()) {
+		j["params"] = sI.params;
+	}
+	if (sI.alignment) {
+		j["alignment"] = sI.alignment.value();
+	}
+	if (sI.timeout) {
+		j["timeout"] = sI.timeout.value();
+	}
+	if (!sI.torque.empty()) {
+		j["torque"] = sI.torque;
+	}
+	if (!sI.outputs.empty()) {
+		j["outputs"] = sI.outputs;
+	}
+	if (!sI.metadata.empty()) {
+		j["metadata"] = sI.metadata;
+	}
+	j["fitness"] = sI.fitness;
 	if (sI.error) {
-		j = JSON{{"time", sI.time},
-				{"params", sI.params},
-				{"torque", sI.torque},
-				{"outputs", sI.outputs},
-				{"fitness", sI.fitness},
-				{"error", *sI.error}
-		};
-	} else {
-		j = JSON{{"time", sI.time},
-			{"params", sI.params},
-			{"torque", sI.torque},
-			{"outputs", sI.outputs},
-			{"fitness", sI.fitness}
-		};
+		j["error"] = sI.error.value();
 	}
 }
 
@@ -52,6 +70,12 @@ void from_json(JSON const & j, SimulationData & sI) {
 	}
 	if (j.contains("params")) {
 		j.at("params").get_to(sI.params);
+	}
+	if (j.contains("alignment")) {
+		sI.alignment = j.at("alignment").get<int>();
+	}
+	if (j.contains("timeout")) {
+		sI.timeout = j.at("timeout").get<double>();
 	}
 	if (j.contains("torque")) {
 		j.at("torque").get_to(sI.torque);
@@ -73,6 +97,9 @@ void from_json(JSON const & j, SimulationData & sI) {
 	}
 	if (j.contains("fitness")) {
 		j.at("fitness").get_to(sI.fitness);
+	}
+	if (j.contains("metadata")) {
+		j.at("metadata").get_to(sI.metadata);
 	}
 	if (j.contains("error")) {
 		j.at("error").get_to(sI.error);

@@ -16,7 +16,7 @@ set(FETCHCONTENT_QUIET OFF)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.2.1.1)
+project(MGEALite LANGUAGES CXX VERSION 0.3.0.0)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 470ee031eb03be74961e0ce95e97cae5dd0c3029 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.4.0
@@ -44,7 +44,7 @@ set(MGEALite_SOURCES "${CMAKE_BINARY_DIR}/mgealite_version.cpp"
 target_sources(MGEALite PUBLIC ${Logging_SOURCES})
 target_sources(MGEALite PUBLIC ${MotionGeneration_SOURCES})
 target_sources(MGEALite PUBLIC ${Variations_SOURCES})
-target_sources(MGEALite PUBLIC ${Wavelet_SOURCES})
+#target_sources(MGEALite PUBLIC ${Wavelet_SOURCES})
 target_sources(MGEALite PUBLIC ${MGEALite_SOURCES})
 target_include_directories(MGEALite PUBLIC "${CMAKE_SOURCE_DIR}")
 target_include_directories(MGEALite PUBLIC "${CMAKE_SOURCE_DIR}/include")

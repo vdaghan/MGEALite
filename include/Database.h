@@ -9,6 +9,7 @@
 #include <thread>
 
 #include "Datastore.h"
+#include "MotionGeneration/MotionParameters.h"
 #include "SimulationLog.h"
 #include "Error.h"
 #include "MGEAError.h"
@@ -21,7 +22,7 @@ using SimulationInfoList = std::list<SimulationInfo>;
 using SimulationHistory = std::map<SimulationInfo, SimulationLogPtr>;
 class Database {
 	public:
-		Database(std::string);
+		Database(std::string, MotionParameters &);
 		~Database();
 
 		void startSyncLoop();
@@ -40,6 +41,7 @@ class Database {
 
 		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
 	private:
+		MotionParameters & motionParameters;
 		Datastore datastore;
 		std::size_t m_nextId;
 		std::mutex dbMutex;

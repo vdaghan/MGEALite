@@ -6,7 +6,7 @@
 #include <iostream>
 #include <ranges>
 
-Database::Database(std::string pathName) : datastore(pathName), m_nextId(0) {
+Database::Database(std::string pathName, MotionParameters & mP) : motionParameters(mP), datastore(pathName), m_nextId(0) {
 	syncWithDatastore();
 	auto const & datastoreHistory = datastore.history();
 	for (auto const & simInfo : datastoreHistory) {
@@ -48,6 +48,8 @@ SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
 		return getSimulationLog(simInfo)->data();
 	}
 	SimulationLogPtr simulationLogPtr = SimulationLogPtr(new SimulationLog(simInfo));
+	simulationLogPtr->data()->alignment = motionParameters.alignment;
+	simulationLogPtr->data()->timeout = motionParameters.timeout;
 	auto emplaceResult = simulationHistory.emplace(std::make_pair(simInfo, simulationLogPtr));
 	if (!simulationHistory.contains(simInfo)) {
 		return nullptr;

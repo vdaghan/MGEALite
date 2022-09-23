@@ -26,8 +26,8 @@ class MotionGenerator {
 		MotionGenerator(std::string, MotionParameters);
 		DEvA::StepResult search(std::size_t);
 	private:
-		Database database;
 		MotionParameters motionParameters;
+		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
 		std::size_t currentGeneration;
 		void exportGenerationData();
