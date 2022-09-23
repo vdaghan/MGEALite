@@ -10,15 +10,15 @@
 #include <algorithm>
 #include <functional>
 
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundary, this));
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
+	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
 	variationFunctorCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
 	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
-	variationFunctorCrossoverAll.setProbability(0.5);
+	variationFunctorCrossoverAll.setProbability(0.25);
 	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCrossoverAll);
 	Spec::SVariationFunctor variationFunctorCrossoverSingle;
@@ -51,12 +51,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 	variationFunctorWaveletSNV.setProbability(1.0);
 	variationFunctorWaveletSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorWaveletSNV);
-	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<250>);
+	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<100>);
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(200);
+	ea.setLambda(80);
 	exportGenerationData();
 };
 
@@ -262,26 +262,39 @@ void MotionGenerator::onEpochStart(std::size_t generation) {
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
 	auto & lastGeneration = ea.genealogy.back();
-	auto & bestIndividualPtr = lastGeneration.front();
-	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
-	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
 
-	std::optional<double> minSimTime;
-	std::optional<double> maxSimTime;
-	for (auto & iptr : lastGeneration) {
-		auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
-		auto metadata = simulationLogPtr->data()->metadata;
-		if (metadata.contains("totalTime")) {
-			auto & totalTime = metadata.at("totalTime");
-			if (!minSimTime or (minSimTime and minSimTime.value() > totalTime)) {
-				minSimTime = totalTime;
-			}
-			if (!maxSimTime or (maxSimTime and maxSimTime.value() < totalTime)) {
-				maxSimTime = totalTime;
-			}
+	auto const & bestIndividualPtr = lastGeneration.front();
+	auto worstIndividualPtr = lastGeneration.front();
+	std::list<Spec::Fitness> fitnessValues;
+	Spec::Fitness totalFitness = 0.0;
+	for (auto const & iptr : lastGeneration) {
+		if (iptr->maybePhenotypeProxy) {
+			auto & fitness = iptr->fitness;
+			totalFitness += fitness;
+			fitnessValues.push_back(fitness);
+			worstIndividualPtr = iptr;
 		}
 	}
-	if (minSimTime and maxSimTime) {
-		spdlog::info("Minimum and maximum simulation times were: {} & {}", minSimTime.value(), maxSimTime.value());
+	Spec::Fitness meanFitness = totalFitness / static_cast<Spec::Fitness>(fitnessValues.size());
+	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
+	spdlog::info("Worst individual {} has fitness {}.", worstIndividualPtr->genotypeProxy, worstIndividualPtr->fitness);
+	spdlog::info("Mean fitness value: {}.", meanFitness);
+	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
+
+	std::list<double> simulationTimes;
+	for (auto & iptr : lastGeneration) {
+		auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
+		auto const & metadata = simulationLogPtr->data()->metadata;
+		if (metadata.contains("totalTime")) {
+			auto const & totalTime = metadata.at("totalTime");
+			simulationTimes.push_back(totalTime);
+		}
+	}
+	if (!simulationTimes.empty()) {
+		auto minmax = std::minmax_element(simulationTimes.begin(), simulationTimes.end());
+		double total = std::accumulate(simulationTimes.begin(), simulationTimes.end(), 0.0);
+		double mean = total / static_cast<double>(simulationTimes.size());
+		spdlog::info("(Min, mean, max) simulation times were: ({}s, {}s, {}s)", *minmax.first, mean, *minmax.second);
+		spdlog::info("Total simulation time was: {}", total);
 	}
 }
