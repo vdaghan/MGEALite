@@ -24,6 +24,10 @@ Datastore::Datastore(std::filesystem::path path)
 	std::filesystem::create_directory(m_visualisationPath);
 }
 
+Datastore::~Datastore() {
+	syncWithFilesystem();
+}
+
 void Datastore::syncWithFilesystem() {
 	deleteAllArtifacts();
 	Progress progress = getProgress();

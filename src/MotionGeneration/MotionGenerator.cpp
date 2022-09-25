@@ -7,11 +7,13 @@
 #include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Logging/SpdlogCommon.h"
 
+#include <DTimer/DTimer.h>
+
 #include <algorithm>
 #include <functional>
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this));
+	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
@@ -51,12 +53,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 	variationFunctorWaveletSNV.setProbability(1.0);
 	variationFunctorWaveletSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorWaveletSNV);
-	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<100>);
+	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<256>);
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(80);
+	ea.setLambda(250);
 	exportGenerationData();
 };
 
@@ -137,7 +139,7 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 	return retVal;
 }
 
-Spec::Generation MotionGenerator::genesisRandom() {
+Spec::Generation MotionGenerator::genesisRandom(std::size_t numIndividuals) {
 	Spec::Generation retVal;
 
 	std::vector<double> time(motionParameters.simSamples);
@@ -155,7 +157,7 @@ Spec::Generation MotionGenerator::genesisRandom() {
 		return retVal;
 	};
 
-	for (size_t n(0); n != 100; ++n) {
+	for (size_t n(0); n != numIndividuals; ++n) {
 		SimulationInfo simInfo{.generation = 0, .identifier = n};
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
@@ -196,6 +198,7 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
+	auto & timer = DTimer::simple("evaluate()").newSample().begin();
 	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->fitnessExists()) {
 		return simLogPtr->data()->fitness;
@@ -212,7 +215,8 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double fitness = ankleHeightSum * timeStep;
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
-	spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
+	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
+	timer.end();
 	return fitness;
 }
 
@@ -227,10 +231,11 @@ Spec::IndividualPtrs MotionGenerator::parentSelection(Spec::IndividualPtrs iptrs
 }
 
 bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
-	return f > 1.0;
+	return f > 1.5 * motionParameters.simStop();
 }
 
 Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(MotionParameters const &, SimulationDataPtrs)> varFunc, Spec::GenotypeProxies parentProxies) {
+	auto & timer = DTimer::simple("computeVariation()").newSample().begin();
 	std::list<SimulationDataPtr> parentData;
 	for (auto & parentProxy : parentProxies) {
 		SimulationLogPtr parentLogPtr = database.getSimulationLog(parentProxy);
@@ -251,6 +256,7 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 		// TODO Check if start was successful?
 		childProxies.push_back(childInfo);
 	}
+	timer.end();
 	return childProxies;
 }
 
@@ -263,6 +269,7 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
 	auto & lastGeneration = ea.genealogy.back();
 
+	auto & timer = DTimer::simple("stats").newSample().begin();
 	auto const & bestIndividualPtr = lastGeneration.front();
 	auto worstIndividualPtr = lastGeneration.front();
 	std::list<Spec::Fitness> fitnessValues;
@@ -297,4 +304,5 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 		spdlog::info("(Min, mean, max) simulation times were: ({}s, {}s, {}s)", *minmax.first, mean, *minmax.second);
 		spdlog::info("Total simulation time was: {}", total);
 	}
+	timer.end();
 }

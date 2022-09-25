@@ -5,6 +5,7 @@
 
 #include "spdlog/spdlog.h"
 #include "EvolutionaryAlgorithm.h"
+#include <DTimer/DTimer.h>
 
 #include "mgealite_version.h"
 #include "Database.h"
@@ -17,7 +18,7 @@ int main() {
 	MotionParameters motionParameters;
 	motionParameters.simStart = 0.0;
 	motionParameters.simStep = 0.01;
-	motionParameters.simSamples = 512;
+	motionParameters.simSamples = 256;
 	motionParameters.alignment = -1;
 	motionParameters.timeout = 10.0;
 	motionParameters.jointNames.push_back("wrist");
@@ -30,7 +31,7 @@ int main() {
 	motionParameters.jointLimits.emplace(std::make_pair("ankle", std::make_pair(-250.0, 250.0)));
 
 	MotionGenerator motionGenerator("./data", motionParameters);
-	auto result = motionGenerator.search(100);
+	auto result = motionGenerator.search(250);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");
 	} else if (DEvA::StepResult::Inconclusive == result) {
@@ -39,5 +40,6 @@ int main() {
 		spdlog::info("Step limit reached.");
 	}
 
+	spdlog::info("{}", DTimer::print());
 	return 0;
 }

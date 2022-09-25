@@ -22,6 +22,7 @@ struct Progress {
 class Datastore {
 	public:
 		Datastore(std::filesystem::path);
+		~Datastore();
 
 		void syncWithFilesystem();
 
