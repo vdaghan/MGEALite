@@ -205,12 +205,12 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	}
 	SimulationDataPtr simDataPtr = simLogPtr->data();
 	
-	if (!simDataPtr->outputs.contains("ankleHeight")) {
-		spdlog::error("There is no position named \"ankleHeight\" in simulation output {}", genPx);
+	if (!simDataPtr->outputs.contains("toeHeight")) {
+		spdlog::error("There is no position named \"toeHeight\" in simulation output {}", genPx);
 		return 0.0;
 	}
 	double timeStep = motionParameters.simStep;
-	auto & ankleHeight = simDataPtr->outputs.at("ankleHeight");
+	auto & ankleHeight = simDataPtr->outputs.at("toeHeight");
 	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
 	double fitness = ankleHeightSum * timeStep;
 	simLogPtr->data()->fitness = fitness;
@@ -290,6 +290,9 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 
 	std::list<double> simulationTimes;
 	for (auto & iptr : lastGeneration) {
+		if (iptr->genotypeProxy.generation != generation) {
+			continue;
+		}
 		auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
 		auto const & metadata = simulationLogPtr->data()->metadata;
 		if (metadata.contains("totalTime")) {
@@ -301,8 +304,9 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 		auto minmax = std::minmax_element(simulationTimes.begin(), simulationTimes.end());
 		double total = std::accumulate(simulationTimes.begin(), simulationTimes.end(), 0.0);
 		double mean = total / static_cast<double>(simulationTimes.size());
-		spdlog::info("(Min, mean, max) simulation times were: ({}s, {}s, {}s)", *minmax.first, mean, *minmax.second);
-		spdlog::info("Total simulation time was: {}", total);
+		spdlog::info("(min, mean, max) simulation times were: ({:.3f}s, {:.3f}s, {:.3f}s)", *minmax.first, mean, *minmax.second);
+		spdlog::info("Total simulation time was: {:.3f}s", total);
 	}
 	timer.end();
+	spdlog::info("\n{}", DTimer::print());
 }
