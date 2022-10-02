@@ -44,6 +44,7 @@ int main() {
 	motionParameters.jointLimits.emplace(std::make_pair("shoulder", std::make_pair(-250.0, 250.0)));
 	motionParameters.jointLimits.emplace(std::make_pair("hip", std::make_pair(-500.0, 500.0)));
 	motionParameters.jointLimits.emplace(std::make_pair("ankle", std::make_pair(-250.0, 250.0)));
+	motionParameters.contactParameters = bodyGroundContactParameters();
 
 	MotionGenerator motionGenerator("./data", motionParameters);
 	auto result = motionGenerator.search(250);

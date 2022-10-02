@@ -1,6 +1,7 @@
 #pragma once
 
 #include "MGEAError.h"
+#include "MotionGeneration/MotionParameters.h"
 
 #include <filesystem>
 #include <map>
@@ -18,6 +19,7 @@ struct SimulationData {
 	std::optional<int> alignment;
 	std::optional<double> timeout;
 	std::map<std::string, std::vector<double>> torque;
+	std::optional<ContactParameters> contacts;
 	std::map<std::string, std::vector<double>> outputs;
 	std::map<std::string, double> metadata;
 	double fitness;

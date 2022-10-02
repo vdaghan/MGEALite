@@ -50,6 +50,7 @@ SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
 	SimulationLogPtr simulationLogPtr = SimulationLogPtr(new SimulationLog(simInfo));
 	simulationLogPtr->data()->alignment = motionParameters.alignment;
 	simulationLogPtr->data()->timeout = motionParameters.timeout;
+	simulationLogPtr->data()->contacts = motionParameters.contactParameters;
 	auto emplaceResult = simulationHistory.emplace(std::make_pair(simInfo, simulationLogPtr));
 	if (!simulationHistory.contains(simInfo)) {
 		return nullptr;

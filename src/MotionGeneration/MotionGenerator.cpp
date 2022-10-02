@@ -3,6 +3,8 @@
 #include "MotionGeneration/Variations/CrossoverSingle.h"
 #include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
+#include "MotionGeneration/Variations/InsertionAll.h"
+#include "MotionGeneration/Variations/InsertionSingle.h"
 #include "MotionGeneration/Variations/SNV.h"
 #include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Logging/SpdlogCommon.h"
@@ -13,34 +15,47 @@
 #include <functional>
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
+	//ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
+	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundary, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
 	variationFunctorCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
 	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
-	variationFunctorCrossoverAll.setProbability(0.25);
+	variationFunctorCrossoverAll.setProbability(0.05);
 	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCrossoverAll);
 	Spec::SVariationFunctor variationFunctorCrossoverSingle;
 	variationFunctorCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
 	variationFunctorCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle));
-	variationFunctorCrossoverSingle.setProbability(0.25);
+	variationFunctorCrossoverSingle.setProbability(0.05);
 	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
 	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
 	variationFunctorCutAndCrossfillAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll));
-	variationFunctorCutAndCrossfillAll.setProbability(0.1);
+	variationFunctorCutAndCrossfillAll.setProbability(0.05);
 	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillAll);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
 	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
 	variationFunctorCutAndCrossfillSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
-	variationFunctorCutAndCrossfillSingle.setProbability(0.1);
+	variationFunctorCutAndCrossfillSingle.setProbability(0.05);
 	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
+	Spec::SVariationFunctor variationFunctorInsertionAll;
+	variationFunctorInsertionAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
+	variationFunctorInsertionAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &insertionAll));
+	variationFunctorInsertionAll.setProbability(0.2);
+	variationFunctorInsertionAll.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorInsertionAll);
+	Spec::SVariationFunctor variationFunctorInsertionSingle;
+	variationFunctorInsertionSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
+	variationFunctorInsertionSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &insertionSingle));
+	variationFunctorInsertionSingle.setProbability(0.2);
+	variationFunctorInsertionSingle.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorInsertionSingle);
 	Spec::SVariationFunctor variationFunctorSNV;
 	variationFunctorSNV.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
 	variationFunctorSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &snv));
@@ -201,18 +216,46 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	auto & timer = DTimer::simple("evaluate()").newSample().begin();
 	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->fitnessExists()) {
+		timer.end();
 		return simLogPtr->data()->fitness;
 	}
 	SimulationDataPtr simDataPtr = simLogPtr->data();
 	
-	if (!simDataPtr->outputs.contains("toeHeight")) {
-		spdlog::error("There is no position named \"toeHeight\" in simulation output {}", genPx);
+	bool hasToeHeight = simDataPtr->outputs.contains("toeHeight");
+	bool hasFingertipHeight = simDataPtr->outputs.contains("fingertipHeight");
+	if (!hasToeHeight or !hasFingertipHeight) {
+		spdlog::error("There is no position named \"toeHeight\" or \"fingertipHeight\" in simulation output {}", genPx);
+		timer.end();
 		return 0.0;
 	}
 	double timeStep = motionParameters.simStep;
+	auto & fingertipHeight = simDataPtr->outputs.at("fingertipHeight");
 	auto & ankleHeight = simDataPtr->outputs.at("toeHeight");
-	double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
-	double fitness = ankleHeightSum * timeStep;
+	bool sameSize = fingertipHeight.size() == ankleHeight.size();
+	if (!sameSize) {
+		spdlog::error("\"toeHeight\" and \"fingertipHeight\" are not of same size");
+		timer.end();
+		return 0.0;
+	}
+	//double diff(0.0);
+	double ankleHeightSum = 0.0;
+	double fingertipHeightSum = 0.0;
+	for (auto itAnkle(ankleHeight.begin()), itFingertip(fingertipHeight.begin());
+	itAnkle != ankleHeight.end() or itFingertip != fingertipHeight.end();
+	++itAnkle, ++itFingertip) {
+		//diff += (*itAnkle - *itFingertip);
+		ankleHeightSum += *itAnkle;
+		fingertipHeightSum += *itFingertip;
+	}
+	//double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
+	//double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0);
+	//double fitness = diff * timeStep - std::abs(fingertipHeightSum);
+	double fitness;
+	if (fingertipHeightSum > 0.0) {
+		fitness = -fingertipHeightSum;
+	} else {
+		fitness = ankleHeightSum * timeStep;
+	}
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
 	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);

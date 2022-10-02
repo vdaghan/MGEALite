@@ -24,6 +24,9 @@ void updateSimulationDataPtr(SimulationDataPtrPair pair) {
 	if (!pair.source->torque.empty()) {
 		pair.target->torque = pair.source->torque;
 	}
+	if (pair.source->contacts) {
+		pair.target->contacts = pair.source->contacts;
+	}
 	if (!pair.source->outputs.empty()) {
 		pair.target->outputs = pair.source->outputs;
 	}
@@ -52,6 +55,9 @@ void to_json(JSON & j, SimulationData const & sI) {
 	if (!sI.torque.empty()) {
 		j["torque"] = sI.torque;
 	}
+	if (sI.contacts) {
+		j["contacts"] = sI.contacts.value();
+	}
 	if (!sI.outputs.empty()) {
 		j["outputs"] = sI.outputs;
 	}
@@ -79,6 +85,9 @@ void from_json(JSON const & j, SimulationData & sI) {
 	}
 	if (j.contains("torque")) {
 		j.at("torque").get_to(sI.torque);
+	}
+	if (j.contains("contacts")) {
+		sI.contacts = j.at("contacts").get<ContactParameters>();
 	}
 	if (j.contains("outputs")) {
 		auto & outputs = j["outputs"];
