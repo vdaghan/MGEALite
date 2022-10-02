@@ -32,6 +32,7 @@ SimulationDataPtrs insertionSingle(MotionParameters const& motionParameters, Sim
 			pair.second.at(i) = pair.second.at(i - 1);
 		}
 		pair.second.at(randTimeIndex) = randTorque;
+		++jointIndex;
 	}
 
 	return { childDataPtr };

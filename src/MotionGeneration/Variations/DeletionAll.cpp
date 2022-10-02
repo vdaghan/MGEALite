@@ -1,7 +1,7 @@
-#include "MotionGeneration/Variations/InsertionAll.h"
+#include "MotionGeneration/Variations/DeletionAll.h"
 #include "EvolutionaryAlgorithm.h"
 
-SimulationDataPtrs insertionAll(MotionParameters const& motionParameters, SimulationDataPtrs parents) {
+SimulationDataPtrs deletionAll(MotionParameters const& motionParameters, SimulationDataPtrs parents) {
 	auto const& parent = *parents.front();
 
 	std::size_t const simLength = motionParameters.simSamples;
@@ -23,10 +23,10 @@ SimulationDataPtrs insertionAll(MotionParameters const& motionParameters, Simula
 	double const randTorque = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second);
 
 	for (auto& pair : childDataPtr->torque) {
-		for (std::size_t i(simLength - 1); i != randTimeIndex; --i) {
-			pair.second.at(i) = pair.second.at(i - 1);
+		for (std::size_t i(randTimeIndex); i < simLength - 1; ++i) {
+			pair.second.at(i) = pair.second.at(i + 1);
 		}
-		pair.second.at(randTimeIndex) = randTorque;
+		pair.second.at(simLength - 1) = 0.0;
 	}
 
 	return { childDataPtr };

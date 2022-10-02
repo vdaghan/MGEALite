@@ -3,6 +3,8 @@
 #include "MotionGeneration/Variations/CrossoverSingle.h"
 #include "MotionGeneration/Variations/CutAndCrossfillAll.h"
 #include "MotionGeneration/Variations/CutAndCrossfillSingle.h"
+#include "MotionGeneration/Variations/DeletionAll.h"
+#include "MotionGeneration/Variations/DeletionSingle.h"
 #include "MotionGeneration/Variations/InsertionAll.h"
 #include "MotionGeneration/Variations/InsertionSingle.h"
 #include "MotionGeneration/Variations/SNV.h"
@@ -44,6 +46,18 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 	variationFunctorCutAndCrossfillSingle.setProbability(0.05);
 	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
+	Spec::SVariationFunctor variationFunctorDeletionAll;
+	variationFunctorDeletionAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
+	variationFunctorDeletionAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &deletionAll));
+	variationFunctorDeletionAll.setProbability(0.2);
+	variationFunctorDeletionAll.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorDeletionAll);
+	Spec::SVariationFunctor variationFunctorDeletionSingle;
+	variationFunctorDeletionSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
+	variationFunctorDeletionSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &deletionSingle));
+	variationFunctorDeletionSingle.setProbability(0.2);
+	variationFunctorDeletionSingle.setRemoveParentFromMatingPool(false);
+	ea.addVariationFunctor(variationFunctorDeletionSingle);
 	Spec::SVariationFunctor variationFunctorInsertionAll;
 	variationFunctorInsertionAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
 	variationFunctorInsertionAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &insertionAll));
@@ -68,12 +82,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 	variationFunctorWaveletSNV.setProbability(1.0);
 	variationFunctorWaveletSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorWaveletSNV);
-	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<256>);
+	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<512>);
 	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
 
 	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
 	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(250);
+	ea.setLambda(256);
 	exportGenerationData();
 };
 
