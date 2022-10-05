@@ -7,7 +7,11 @@
 #include "MotionGeneration/Variations/DeletionSingle.h"
 #include "MotionGeneration/Variations/InsertionAll.h"
 #include "MotionGeneration/Variations/InsertionSingle.h"
+#include "MotionGeneration/Variations/kPointCrossoverAll.h"
+#include "MotionGeneration/Variations/kPointCrossoverSingle.h"
 #include "MotionGeneration/Variations/SNV.h"
+#include "MotionGeneration/Variations/UniformCrossoverAll.h"
+#include "MotionGeneration/Variations/UniformCrossoverSingle.h"
 #include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Logging/SpdlogCommon.h"
 
@@ -70,12 +74,36 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 	variationFunctorInsertionSingle.setProbability(0.2);
 	variationFunctorInsertionSingle.setRemoveParentFromMatingPool(false);
 	ea.addVariationFunctor(variationFunctorInsertionSingle);
+	Spec::SVariationFunctor variationFunctorkPointCrossoverAll;
+	variationFunctorkPointCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
+	variationFunctorkPointCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverAll));
+	variationFunctorkPointCrossoverAll.setProbability(1.0);
+	variationFunctorkPointCrossoverAll.setRemoveParentFromMatingPool(true);
+	ea.addVariationFunctor(variationFunctorkPointCrossoverAll);
+	Spec::SVariationFunctor variationFunctorkPointCrossoverSingle;
+	variationFunctorkPointCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
+	variationFunctorkPointCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverSingle));
+	variationFunctorkPointCrossoverSingle.setProbability(1.0);
+	variationFunctorkPointCrossoverSingle.setRemoveParentFromMatingPool(true);
+	ea.addVariationFunctor(variationFunctorkPointCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorSNV;
 	variationFunctorSNV.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
 	variationFunctorSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &snv));
 	variationFunctorSNV.setProbability(1.0);
 	variationFunctorSNV.setRemoveParentFromMatingPool(true);
 	ea.addVariationFunctor(variationFunctorSNV);
+	Spec::SVariationFunctor variationFunctorUniformCrossoverAll;
+	variationFunctorUniformCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
+	variationFunctorUniformCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverAll));
+	variationFunctorUniformCrossoverAll.setProbability(1.0);
+	variationFunctorUniformCrossoverAll.setRemoveParentFromMatingPool(true);
+	ea.addVariationFunctor(variationFunctorUniformCrossoverAll);
+	Spec::SVariationFunctor variationFunctorUniformCrossoverSingle;
+	variationFunctorUniformCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
+	variationFunctorUniformCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverSingle));
+	variationFunctorUniformCrossoverSingle.setProbability(1.0);
+	variationFunctorUniformCrossoverSingle.setRemoveParentFromMatingPool(true);
+	ea.addVariationFunctor(variationFunctorUniformCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorWaveletSNV;
 	variationFunctorWaveletSNV.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
 	variationFunctorWaveletSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &waveletSNV));
