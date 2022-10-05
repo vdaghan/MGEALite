@@ -22,6 +22,24 @@ Datastore::Datastore(std::filesystem::path path)
 	std::filesystem::create_directory(m_path);
 	std::filesystem::create_directory(m_queuePath);
 	std::filesystem::create_directory(m_visualisationPath);
+
+	std::size_t gen(0);
+	std::size_t id(0);
+	while (true) {
+		std::filesystem::path genPath{ m_path / std::to_string(gen) };
+		if (!std::filesystem::exists(genPath)) {
+			break;
+		}
+		while (true) {
+			std::filesystem::path individualPath{ genPath / (std::to_string(id) + ".json") };
+			if (!std::filesystem::exists(individualPath)) {
+				break;
+			}
+			addToHistory(SimulationInfo{.generation=gen, .identifier=id});
+			++id;
+		}
+		++gen;
+	}
 }
 
 Datastore::~Datastore() {
@@ -108,9 +126,17 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 	return MGEA::ErrorCode::OK;
 }
 
+MaybeSimulationDataPtr Datastore::importCombinedFile(SimulationInfo simInfo) {
+	std::filesystem::path const file = toCombinedPath(simInfo);
+	if (!std::filesystem::exists(file)) {
+		return std::unexpected(MGEA::ErrorCode::FileNotFound);
+	}
+	return importSimulationData(file);
+}
+
 bool Datastore::existsInHistory(SimulationInfo simInfo) {
 	auto it = std::find(m_history.begin(), m_history.end(), simInfo);
-	return it == m_history.end();
+	return it != m_history.end();
 }
 
 MGEA::ErrorCode Datastore::saveVisualisationTarget(SimulationInfo simInfo) {

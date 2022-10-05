@@ -10,8 +10,16 @@ Database::Database(std::string pathName, MotionParameters & mP) : motionParamete
 	syncWithDatastore();
 	auto const & datastoreHistory = datastore.history();
 	for (auto const & simInfo : datastoreHistory) {
-		SimulationLogPtr simulationLogPtr = SimulationLogPtr(new SimulationLog(simInfo));
-		simulationLogPtr->updateStatus(SimulationStatus::Archived);
+		SimulationLogPtr simulationLogPtr = std::make_shared<SimulationLog>(simInfo);
+		MaybeSimulationDataPtr sdPtr = datastore.importCombinedFile(simInfo);
+		if (sdPtr.has_value()) {
+			updateSimulationDataPtr(SimulationDataPtrPair{ .source = sdPtr.value(), .target = simulationLogPtr->data()});
+			if (sdPtr.value()->error) {
+				simulationLogPtr->updateStatus(SimulationStatus::SimulationError);
+			} else {
+				simulationLogPtr->updateStatus(SimulationStatus::Computed);
+			}
+		}
 		simulationHistory.emplace(std::make_pair(simInfo, simulationLogPtr));
 	}
 	startSyncLoop();
@@ -47,7 +55,7 @@ SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
 	if (SimulationStatus::NonExistent != status(simInfo)) {
 		return getSimulationLog(simInfo)->data();
 	}
-	SimulationLogPtr simulationLogPtr = SimulationLogPtr(new SimulationLog(simInfo));
+	SimulationLogPtr simulationLogPtr = std::make_shared<SimulationLog>(simInfo);
 	simulationLogPtr->data()->alignment = motionParameters.alignment;
 	simulationLogPtr->data()->timeout = motionParameters.timeout;
 	simulationLogPtr->data()->contacts = motionParameters.contactParameters;
@@ -126,6 +134,14 @@ SimulationLogPtr Database::getSimulationLog(SimulationInfo simInfo) {
 }
 
 SimulationHistory const & Database::getSimulationHistory() {
+	std::size_t maxId(0);
+	for (auto const& historyPair : simulationHistory) {
+		auto const& simInfo = historyPair.first;
+		if (simInfo.identifier >= maxId) {
+			maxId = simInfo.identifier;
+		}
+	}
+	m_nextId = maxId + 1;
 	return simulationHistory;
 }
 
