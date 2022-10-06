@@ -168,7 +168,7 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 	std::size_t id(0);
 	for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
 		std::string const & jointName = motionParameters.jointNames[jointIndex];
-		for (std::size_t timeIndex(0); timeIndex != motionParameters.simSamples; ++timeIndex) {
+		for (std::size_t timeIndex(0); timeIndex * 8 != motionParameters.simSamples; ++timeIndex) {
 			auto & jointLimitsPair = motionParameters.jointLimits.at(jointName);
 			std::array<double, 2> jointLimitsArray{jointLimitsPair.first, jointLimitsPair.second};
 			for (auto & jointLimit : jointLimitsArray) {
@@ -264,40 +264,45 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	}
 	SimulationDataPtr simDataPtr = simLogPtr->data();
 	
+	bool hasHeelHeight = simDataPtr->outputs.contains("heelHeight");
 	bool hasToeHeight = simDataPtr->outputs.contains("toeHeight");
 	bool hasFingertipHeight = simDataPtr->outputs.contains("fingertipHeight");
-	if (!hasToeHeight or !hasFingertipHeight) {
-		spdlog::error("There is no position named \"toeHeight\" or \"fingertipHeight\" in simulation output {}", genPx);
+	bool hasPalmHeight = simDataPtr->outputs.contains("palmHeight");
+	if (!hasToeHeight or !hasFingertipHeight or !hasHeelHeight or !hasPalmHeight) {
+		spdlog::error("There is no position named \"heelHeight\" or \"toeHeight\" or \"fingertipHeight\" or \"palmHeight\" in simulation output {}", genPx);
 		timer.end();
 		return 0.0;
 	}
 	double timeStep = motionParameters.simStep;
 	auto & fingertipHeight = simDataPtr->outputs.at("fingertipHeight");
-	auto & ankleHeight = simDataPtr->outputs.at("toeHeight");
-	bool sameSize = fingertipHeight.size() == ankleHeight.size();
+	auto & palmHeight = simDataPtr->outputs.at("palmHeight");
+	auto & heelHeight = simDataPtr->outputs.at("heelHeight");
+	auto & toeHeight = simDataPtr->outputs.at("toeHeight");
+	bool sameSize = fingertipHeight.size() == toeHeight.size()
+					and fingertipHeight.size() == heelHeight.size()
+					and fingertipHeight.size() == palmHeight.size();
 	if (!sameSize) {
-		spdlog::error("\"toeHeight\" and \"fingertipHeight\" are not of same size");
+		spdlog::error("\"heelHeight\", \"toeHeight\", \"palmHeight\" and \"fingertipHeight\" are not of same size");
 		timer.end();
 		return 0.0;
 	}
 	//double diff(0.0);
-	double ankleHeightSum = 0.0;
-	double fingertipHeightSum = 0.0;
-	for (auto itAnkle(ankleHeight.begin()), itFingertip(fingertipHeight.begin());
-	itAnkle != ankleHeight.end() or itFingertip != fingertipHeight.end();
-	++itAnkle, ++itFingertip) {
-		//diff += (*itAnkle - *itFingertip);
-		ankleHeightSum += *itAnkle;
-		fingertipHeightSum += *itFingertip;
-	}
-	//double ankleHeightSum = std::accumulate(ankleHeight.begin(), ankleHeight.end(), 0.0);
-	//double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0);
+	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0);
+	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0);
+	double heelHeightSum = std::accumulate(heelHeight.begin(), heelHeight.end(), 0.0);
+	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0);
 	//double fitness = diff * timeStep - std::abs(fingertipHeightSum);
 	double fitness;
-	if (fingertipHeightSum > 0.0) {
-		fitness = -fingertipHeightSum;
+	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
+		fitness = toeHeightSum * timeStep;
 	} else {
-		fitness = ankleHeightSum * timeStep;
+		fitness = 0.0;
+		if (fingertipHeightSum > 0.0) {
+			fitness -= fingertipHeightSum;
+		}
+		if (palmHeightSum > 0.0) {
+			fitness -= palmHeightSum;
+		}
 	}
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
@@ -391,7 +396,8 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 		double total = std::accumulate(simulationTimes.begin(), simulationTimes.end(), 0.0);
 		double mean = total / static_cast<double>(simulationTimes.size());
 		spdlog::info("(min, mean, max) simulation times were: ({:.3f}s, {:.3f}s, {:.3f}s)", *minmax.first, mean, *minmax.second);
-		spdlog::info("Total simulation time was: {:.3f}s", total);
+		//spdlog::info("Total simulation time was: {:.3f}s", total);
+		spdlog::info("Total simulation time was: {}", DTimer::printTime(static_cast<std::size_t>(total * 1000.0)));
 	}
 	timer.end();
 	spdlog::info("\n{}", DTimer::print());
