@@ -1,4 +1,5 @@
 #include "MotionGeneration/MotionGenerator.h"
+
 #include "MotionGeneration/Variations/CrossoverAll.h"
 #include "MotionGeneration/Variations/CrossoverSingle.h"
 #include "MotionGeneration/Variations/CutAndCrossfillAll.h"
@@ -22,101 +23,103 @@
 #include <functional>
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
+	ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundary, this);
+	//ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundaryWavelet, this);
 	//ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundaryWavelet, this));
-	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
-	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
-	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
+	ea.transformFunction = std::bind_front(&MotionGenerator::transform, this);
+	ea.evaluationFunction = std::bind_front(&MotionGenerator::evaluate, this);
+	ea.fitnessComparisonFunction = [](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; };
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
-	variationFunctorCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll));
-	variationFunctorCrossoverAll.setProbability(0.05);
-	variationFunctorCrossoverAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorCrossoverAll);
+	variationFunctorCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &crossoverAll);
+	variationFunctorCrossoverAll.probability = 0.05;
+	variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorCrossoverAll);
 	Spec::SVariationFunctor variationFunctorCrossoverSingle;
-	variationFunctorCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle));
-	variationFunctorCrossoverSingle.setProbability(0.05);
-	variationFunctorCrossoverSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorCrossoverSingle);
+	variationFunctorCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &crossoverSingle);
+	variationFunctorCrossoverSingle.probability = 0.05;
+	variationFunctorCrossoverSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
-	variationFunctorCutAndCrossfillAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorCutAndCrossfillAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll));
-	variationFunctorCutAndCrossfillAll.setProbability(0.05);
-	variationFunctorCutAndCrossfillAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorCutAndCrossfillAll);
+	variationFunctorCutAndCrossfillAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorCutAndCrossfillAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillAll);
+	variationFunctorCutAndCrossfillAll.probability = 0.05;
+	variationFunctorCutAndCrossfillAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorCutAndCrossfillAll);
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
-	variationFunctorCutAndCrossfillSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorCutAndCrossfillSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle));
-	variationFunctorCutAndCrossfillSingle.setProbability(0.05);
-	variationFunctorCutAndCrossfillSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorCutAndCrossfillSingle);
+	variationFunctorCutAndCrossfillSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorCutAndCrossfillSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &cutAndCrossfillSingle);
+	variationFunctorCutAndCrossfillSingle.probability = 0.05;
+	variationFunctorCutAndCrossfillSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorCutAndCrossfillSingle);
 	Spec::SVariationFunctor variationFunctorDeletionAll;
-	variationFunctorDeletionAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
-	variationFunctorDeletionAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &deletionAll));
-	variationFunctorDeletionAll.setProbability(0.2);
-	variationFunctorDeletionAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorDeletionAll);
+	variationFunctorDeletionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
+	variationFunctorDeletionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &deletionAll);
+	variationFunctorDeletionAll.probability = 0.2;
+	variationFunctorDeletionAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorDeletionAll);
 	Spec::SVariationFunctor variationFunctorDeletionSingle;
-	variationFunctorDeletionSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
-	variationFunctorDeletionSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &deletionSingle));
-	variationFunctorDeletionSingle.setProbability(0.2);
-	variationFunctorDeletionSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorDeletionSingle);
+	variationFunctorDeletionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
+	variationFunctorDeletionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &deletionSingle);
+	variationFunctorDeletionSingle.probability = 0.2;
+	variationFunctorDeletionSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorDeletionSingle);
 	Spec::SVariationFunctor variationFunctorInsertionAll;
-	variationFunctorInsertionAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
-	variationFunctorInsertionAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &insertionAll));
-	variationFunctorInsertionAll.setProbability(0.2);
-	variationFunctorInsertionAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorInsertionAll);
+	variationFunctorInsertionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
+	variationFunctorInsertionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &insertionAll);
+	variationFunctorInsertionAll.probability = 0.2;
+	variationFunctorInsertionAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorInsertionAll);
 	Spec::SVariationFunctor variationFunctorInsertionSingle;
-	variationFunctorInsertionSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>);
-	variationFunctorInsertionSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &insertionSingle));
-	variationFunctorInsertionSingle.setProbability(0.2);
-	variationFunctorInsertionSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorInsertionSingle);
+	variationFunctorInsertionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
+	variationFunctorInsertionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &insertionSingle);
+	variationFunctorInsertionSingle.probability = 0.2;
+	variationFunctorInsertionSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorInsertionSingle);
 	Spec::SVariationFunctor variationFunctorkPointCrossoverAll;
-	variationFunctorkPointCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorkPointCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverAll));
-	variationFunctorkPointCrossoverAll.setProbability(1.0);
-	variationFunctorkPointCrossoverAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorkPointCrossoverAll);
+	variationFunctorkPointCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorkPointCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverAll);
+	variationFunctorkPointCrossoverAll.probability = 1.0;
+	variationFunctorkPointCrossoverAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorkPointCrossoverAll);
 	Spec::SVariationFunctor variationFunctorkPointCrossoverSingle;
-	variationFunctorkPointCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorkPointCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverSingle));
-	variationFunctorkPointCrossoverSingle.setProbability(1.0);
-	variationFunctorkPointCrossoverSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorkPointCrossoverSingle);
+	variationFunctorkPointCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorkPointCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &kPointCrossoverSingle);
+	variationFunctorkPointCrossoverSingle.probability = 1.0;
+	variationFunctorkPointCrossoverSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorkPointCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorSNV;
-	variationFunctorSNV.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
-	variationFunctorSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &snv));
-	variationFunctorSNV.setProbability(1.0);
-	variationFunctorSNV.setRemoveParentFromMatingPool(true);
-	ea.addVariationFunctor(variationFunctorSNV);
+	variationFunctorSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofAll<1>;
+	variationFunctorSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &snv);
+	variationFunctorSNV.probability = 1.0;
+	variationFunctorSNV.removeParentsFromMatingPool = true;
+	ea.variationFunctors.push_back(variationFunctorSNV);
 	Spec::SVariationFunctor variationFunctorUniformCrossoverAll;
-	variationFunctorUniformCrossoverAll.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorUniformCrossoverAll.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverAll));
-	variationFunctorUniformCrossoverAll.setProbability(1.0);
-	variationFunctorUniformCrossoverAll.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorUniformCrossoverAll);
+	variationFunctorUniformCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorUniformCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverAll);
+	variationFunctorUniformCrossoverAll.probability = 1.0;
+	variationFunctorUniformCrossoverAll.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorUniformCrossoverAll);
 	Spec::SVariationFunctor variationFunctorUniformCrossoverSingle;
-	variationFunctorUniformCrossoverSingle.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>);
-	variationFunctorUniformCrossoverSingle.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverSingle));
-	variationFunctorUniformCrossoverSingle.setProbability(1.0);
-	variationFunctorUniformCrossoverSingle.setRemoveParentFromMatingPool(false);
-	ea.addVariationFunctor(variationFunctorUniformCrossoverSingle);
+	variationFunctorUniformCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	variationFunctorUniformCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &uniformCrossoverSingle);
+	variationFunctorUniformCrossoverSingle.probability = 1.0;
+	variationFunctorUniformCrossoverSingle.removeParentsFromMatingPool = false;
+	ea.variationFunctors.push_back(variationFunctorUniformCrossoverSingle);
 	Spec::SVariationFunctor variationFunctorWaveletSNV;
-	variationFunctorWaveletSNV.setParentSelectionFunction(DEvA::StandardParentSelectors<Spec>::bestNofAll<1>);
-	variationFunctorWaveletSNV.setVariationFunction(std::bind_front(&MotionGenerator::computeVariation, this, &waveletSNV));
-	variationFunctorWaveletSNV.setProbability(1.0);
-	variationFunctorWaveletSNV.setRemoveParentFromMatingPool(true);
-	ea.addVariationFunctor(variationFunctorWaveletSNV);
-	ea.setSurvivorSelectionFunction(DEvA::StandardSurvivorSelectors<Spec>::clamp<512>);
-	ea.setConvergenceCheckFunction(std::bind_front(&MotionGenerator::convergenceCheck, this));
+	variationFunctorWaveletSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofAll<1>;
+	variationFunctorWaveletSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &waveletSNV);
+	variationFunctorWaveletSNV.probability = 1.0;
+	variationFunctorWaveletSNV.removeParentsFromMatingPool = true;
+	ea.variationFunctors.push_back(variationFunctorWaveletSNV);
+	ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<512>;
+	ea.convergenceCheckFunction = std::bind_front(&MotionGenerator::convergenceCheck, this);
 
-	ea.setOnEpochStartCallback(std::bind_front(&MotionGenerator::onEpochStart, this));
-	ea.setOnEpochEndCallback(std::bind_front(&MotionGenerator::onEpochEnd, this));
-	ea.setLambda(256);
+	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
+	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
+	ea.lambda = 256;
+	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
 
@@ -138,7 +141,7 @@ void MotionGenerator::exportGenerationData() {
 			if (simInfo.generation != gen) {
 				continue;
 			}
-			Spec::IndividualPtr iptr = std::make_shared<Spec::SIndividual>(simInfo);
+			Spec::IndividualPtr iptr = std::make_shared<Spec::SIndividual>(simInfo.generation, simInfo.identifier, simInfo);
 			generation.emplace_back(iptr);
 		}
 		ea.addGeneration(generation);
@@ -149,8 +152,8 @@ DEvA::StepResult MotionGenerator::search(std::size_t n) {
 	return ea.search(n);
 }
 
-Spec::Generation MotionGenerator::genesisBoundary() {
-	Spec::Generation retVal;
+Spec::GenotypeProxies MotionGenerator::genesisBoundary() {
+	Spec::GenotypeProxies retVal;
 
 	std::vector<double> time(motionParameters.simSamples);
 	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
@@ -169,7 +172,7 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 	std::size_t id(0);
 	for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
 		std::string const & jointName = motionParameters.jointNames[jointIndex];
-		for (std::size_t timeIndex(0); timeIndex != motionParameters.simSamples; ++timeIndex) {
+		for (std::size_t timeIndex(0); timeIndex != motionParameters.simSamples; timeIndex += 16) {
 			auto & jointLimitsPair = motionParameters.jointLimits.at(jointName);
 			std::array<double, 2> jointLimitsArray{jointLimitsPair.first, jointLimitsPair.second};
 			for (auto & jointLimit : jointLimitsArray) {
@@ -192,15 +195,15 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 				SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
 				MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 				// TODO: What to do if startSimulation fails?
-				retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+				retVal.emplace_back(simulationLogPtr->info());
 			}
 		}
 	}
 	return retVal;
 }
 
-Spec::Generation MotionGenerator::genesisBoundaryWavelet() {
-	Spec::Generation retVal;
+Spec::GenotypeProxies MotionGenerator::genesisBoundaryWavelet() {
+	Spec::GenotypeProxies retVal;
 
 	std::vector<double> time(motionParameters.simSamples);
 	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
@@ -242,15 +245,15 @@ Spec::Generation MotionGenerator::genesisBoundaryWavelet() {
 				SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
 				MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 				// TODO: What to do if startSimulation fails?
-				retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+				retVal.emplace_back(simulationLogPtr->info());
 			}
 		}
 	}
 	return retVal;
 }
 
-Spec::Generation MotionGenerator::genesisRandom(std::size_t numIndividuals) {
-	Spec::Generation retVal;
+Spec::GenotypeProxies MotionGenerator::genesisRandom(std::size_t numIndividuals) {
+	Spec::GenotypeProxies retVal;
 
 	std::vector<double> time(motionParameters.simSamples);
 	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
@@ -283,7 +286,7 @@ Spec::Generation MotionGenerator::genesisRandom(std::size_t numIndividuals) {
 		SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
 		MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
 		// TODO: What to do if startSimulation fails?
-		retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+		retVal.emplace_back(simulationLogPtr->info());
 		//spdlog::info("Individual{} created", simInfo);
 	}
 	return retVal;
