@@ -14,6 +14,7 @@
 #include "MotionGeneration/Variations/UniformCrossoverSingle.h"
 #include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Logging/SpdlogCommon.h"
+#include "Wavelet/HaarWavelet.h"
 
 #include <DTimer/DTimer.h>
 
@@ -22,7 +23,7 @@
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
 	//ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
-	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundary, this));
+	ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisBoundaryWavelet, this));
 	ea.setTransformFunction(std::bind_front(&MotionGenerator::transform, this));
 	ea.setEvaluationFunction(std::bind_front(&MotionGenerator::evaluate, this));
 	ea.setFitnessComparisonFunction([](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; });
@@ -168,7 +169,7 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 	std::size_t id(0);
 	for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
 		std::string const & jointName = motionParameters.jointNames[jointIndex];
-		for (std::size_t timeIndex(0); timeIndex * 8 != motionParameters.simSamples; ++timeIndex) {
+		for (std::size_t timeIndex(0); timeIndex != motionParameters.simSamples; ++timeIndex) {
 			auto & jointLimitsPair = motionParameters.jointLimits.at(jointName);
 			std::array<double, 2> jointLimitsArray{jointLimitsPair.first, jointLimitsPair.second};
 			for (auto & jointLimit : jointLimitsArray) {
@@ -180,12 +181,63 @@ Spec::Generation MotionGenerator::genesisBoundary() {
 				simDataPtr->params.emplace("simStep", motionParameters.simStep);
 				simDataPtr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
 				for (auto & jN : motionParameters.jointNames) {
+					std::vector<double> boundaryVector;
 					if (jointName != jN) {
-						simDataPtr->torque.emplace(std::make_pair(jN, zeroVector));
+						boundaryVector = zeroVector;
 					} else {
-						auto boundaryVector = generateBoundaryVector(timeIndex, jointLimit);
-						simDataPtr->torque.emplace(std::make_pair(jN, boundaryVector));
+						boundaryVector = generateBoundaryVector(timeIndex, jointLimit);
 					}
+					simDataPtr->torque.emplace(std::make_pair(jN, boundaryVector));
+				}
+				SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
+				MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
+				// TODO: What to do if startSimulation fails?
+				retVal.emplace_back(new Spec::SIndividual(simulationLogPtr->info()));
+			}
+		}
+	}
+	return retVal;
+}
+
+Spec::Generation MotionGenerator::genesisBoundaryWavelet() {
+	Spec::Generation retVal;
+
+	std::vector<double> time(motionParameters.simSamples);
+	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
+		return (t += motionParameters.simStep);
+	};
+	std::generate(time.begin(), time.end(), timeGenerator);
+
+	auto generateBoundaryWaveletVector = [&](std::size_t timeIndex, double value) -> std::vector<double> {
+		std::vector<double> retVal(motionParameters.simSamples, 0.0);
+		retVal[timeIndex] = value;
+		return haarWaveletDecode(retVal);
+	};
+
+	std::vector<double> const zeroVector(motionParameters.simSamples, 0.0);
+	std::size_t numJoints(motionParameters.jointNames.size());
+	std::size_t id(0);
+	for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
+		std::string const & jointName = motionParameters.jointNames[jointIndex];
+		for (std::size_t timeIndex(0); timeIndex * 8 != motionParameters.simSamples; ++timeIndex) {
+			auto & jointLimitsPair = motionParameters.jointLimits.at(jointName);
+			std::array<double, 2> jointLimitsArray{ jointLimitsPair.first, jointLimitsPair.second };
+			for (auto & jointLimit : jointLimitsArray) {
+				SimulationInfo simInfo{ .generation = 0, .identifier = id++ };
+				auto simDataPtr = database.createSimulation(simInfo);
+				simDataPtr->time = time;
+				simDataPtr->params.emplace("simStart", motionParameters.simStart);
+				simDataPtr->params.emplace("simStop", motionParameters.simStop());
+				simDataPtr->params.emplace("simStep", motionParameters.simStep);
+				simDataPtr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
+				for (auto & jN : motionParameters.jointNames) {
+					std::vector<double> boundaryVector;
+					if (jointName != jN) {
+						boundaryVector = zeroVector;
+					} else {
+						boundaryVector = generateBoundaryWaveletVector(timeIndex, jointLimit);
+					}
+					simDataPtr->torque.emplace(std::make_pair(jN, boundaryVector));
 				}
 				SimulationLogPtr simulationLogPtr = database.getSimulationLog(simInfo);
 				MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());

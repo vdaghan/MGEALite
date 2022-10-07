@@ -33,6 +33,7 @@ class MotionGenerator {
 		void exportGenerationData();
 
 		Spec::Generation genesisBoundary();
+		Spec::Generation genesisBoundaryWavelet();
 		Spec::Generation genesisRandom(std::size_t);
 		Spec::GenotypeProxy createGenotype();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
