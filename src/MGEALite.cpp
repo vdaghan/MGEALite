@@ -8,10 +8,16 @@
 
 #include "mgealite_version.h"
 #include "Database.h"
+#include "GUI/GUIState.h"
+#include "GUI/GUIStateDrawer.h"
+#include "GUI/GUI.h"
 #include "Logging/SpdlogCommon.h"
 #include "MotionGeneration/MotionGenerator.h"
 
 int main() {
+	GUI<GUIState> gui;
+	gui.startLoop();
+
 	initialiseLogger();
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
@@ -32,6 +38,7 @@ int main() {
 	motionParameters.contactParameters = bodyGroundContactParameters();
 
 	MotionGenerator motionGenerator("./data", motionParameters);
+	motionGenerator.onEpochEndCallback = [&](Spec::Genealogy const & g){ gui.state.updateGenealogy(g); };
 	auto result = motionGenerator.search(250);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");
@@ -42,5 +49,6 @@ int main() {
 	}
 
 	spdlog::info("\n{}", DTimer::print());
+	gui.stopLoop();
 	return 0;
 }

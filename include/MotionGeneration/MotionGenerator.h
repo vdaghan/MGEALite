@@ -25,6 +25,7 @@ class MotionGenerator {
 	public:
 		MotionGenerator(std::string, MotionParameters);
 		DEvA::StepResult search(std::size_t);
+		std::function<void(Spec::Genealogy const &)> onEpochEndCallback;
 	private:
 		MotionParameters motionParameters;
 		Database database;
