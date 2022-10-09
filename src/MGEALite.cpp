@@ -38,7 +38,9 @@ int main() {
 	motionParameters.contactParameters = bodyGroundContactParameters();
 
 	MotionGenerator motionGenerator("./data", motionParameters);
-	motionGenerator.onEpochEndCallback = [&](Spec::Genealogy const & g){ gui.state.updateGenealogy(g); };
+	motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){
+		gui.state.updateMotionGenerationState(gen, mGS);
+	};
 	auto result = motionGenerator.search(250);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");

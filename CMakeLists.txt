@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.3.2.4)
+project(MGEALite LANGUAGES CXX VERSION 0.3.2.5)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 20011e6674e2fd9294ca43f556afe85a56cd81e2 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.4.4
@@ -35,7 +35,9 @@ FetchContent_MakeAvailable(spdlog DEvA DTimer json glfw imgui implot)
 
 add_executable(MGEALite)
 set(Logging_SOURCES "${CMAKE_SOURCE_DIR}/src/Logging/SpdlogCommon.cpp")
-set(MotionGeneration_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp"
+set(MotionGeneration_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerationState.cpp"
+							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp"
+							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator_EAFunctions.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionParameters.cpp")
 set(Variations_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverAll.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverSingle.cpp"

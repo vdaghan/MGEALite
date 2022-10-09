@@ -1,38 +1,35 @@
 #pragma once
 
 #include "Database.h"
-#include "MotionParameters.h"
+#include "MotionGeneration/MotionGenerationState.h"
+#include "MotionGeneration/MotionParameters.h"
+#include "MotionGeneration/Specification.h"
 #include "SimulationData.h"
 
 #include "EvolutionaryAlgorithm.h"
-#include "Specialisation.h"
 
 #include <string>
-
-struct Specification {
-	Specification(Database & database_) : database{database_} {};
-	Database & database;
-	using Genotype = SimulationDataPtr;
-	using GenotypeProxy = SimulationInfo;
-	using Phenotype = SimulationDataPtr;
-	using PhenotypeProxy = SimulationInfo;
-	using Fitness = double;
-	using IndividualParameters = DEvA::NullVParameters;
-};
-using Spec = DEvA::Specialisation<Specification>;
 
 class MotionGenerator {
 	public:
 		MotionGenerator(std::string, MotionParameters);
 		DEvA::StepResult search(std::size_t);
-		std::function<void(Spec::Genealogy const &)> onEpochEndCallback;
+		std::function<void(std::size_t, MotionGenerationState const &)> onMotionGenerationStateChange;
 	private:
 		MotionParameters motionParameters;
 		Database database;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
 		std::size_t currentGeneration;
+		std::size_t maxGenerations;
+		EpochProgress epochProgress;
+		MotionGenerationState motionGenerationState;
+		void tryExecute_OnMotionGenerationStateChange();
+		void updateMotionGenerationStateWith(EpochProgress &);
+		void updateMotionGenerationStateWithFitnessStatus();
 		void exportGenerationData();
 
+		// EA Functions
+		std::list<Spec::SVariationFunctor> createVariationFunctors();
 		Spec::GenotypeProxies genesisBoundary();
 		Spec::GenotypeProxies genesisBoundaryWavelet();
 		Spec::GenotypeProxies genesisRandom(std::size_t);

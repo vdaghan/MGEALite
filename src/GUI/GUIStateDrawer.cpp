@@ -2,106 +2,120 @@
 
 #include "GUI/Initialisation.h"
 
-#include "imgui.h"
-#include "implot.h"
-
 #include <algorithm>
 #include <limits>
 
+void GUIStateDrawer::initialise() {
+	defaultPlotWindowStyle = ImGui::GetStyle();
+	defaultPlotWindowStyle.WindowPadding = ImVec2(0, 0);
+	defaultPlotWindowStyle.WindowBorderSize = 0.0;
+	defaultPlotWindowStyle.ChildBorderSize = 0.0;
+	defaultPlotWindowStyle.FramePadding = ImVec2(0, 0);
+	defaultPlotWindowStyle.FrameBorderSize = 0.0;
+	defaultPlotWindowStyle.ItemSpacing = ImVec2(0, 0);
+	defaultPlotWindowStyle.ItemInnerSpacing = ImVec2(5, 5);
+
+	defaultPlotWindowFlags = ImGuiWindowFlags_NoTitleBar
+						   | ImGuiWindowFlags_NoResize
+						   | ImGuiWindowFlags_NoMove
+						   | ImGuiWindowFlags_NoCollapse
+						   | ImGuiWindowFlags_NoSavedSettings;
+
+	defaultPlotStyle = ImPlot::GetStyle();
+	defaultPlotStyle.PlotPadding = ImVec2(1, 1);
+	defaultPlotStyle.LabelPadding = ImVec2(1, 1);
+	defaultPlotStyle.PlotDefaultSize = ImVec2(480 - 10, 270 - 10);
+	defaultPlotStyle.PlotMinSize = ImVec2(480 - 10, 270 - 10);
+
+	defaultPlotFlags = ImPlotFlags_NoTitle
+					 | ImPlotFlags_NoMenus
+					 | ImPlotFlags_Crosshairs;
+	defaultPlotAxisFlags = ImPlotAxisFlags_NoGridLines
+						 | ImPlotAxisFlags_NoMenus
+						 | ImPlotAxisFlags_NoSideSwitch
+						 | ImPlotAxisFlags_NoHighlight;
+	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
+}
+
 void GUIStateDrawer::draw(GUIState & state) {
+	static bool initialised(false);
+	if (!initialised) {
+		initialise();
+		initialised = true;
+	}
 	drawPlots(state);
 }
 
 void GUIStateDrawer::drawPlots(GUIState & state) {
-	std::lock_guard<std::mutex> lock(state.getMutexRef());
+	ImGui::GetStyle() = defaultPlotWindowStyle;
+	ImPlot::GetStyle() = defaultPlotStyle;
 
-	ImPlotFlags defaultPlotFlags = ImPlotFlags_NoTitle
-		| ImPlotFlags_NoMenus
-		| ImPlotFlags_Crosshairs;
-	ImPlotAxisFlags defaultAxisFlags = ImPlotAxisFlags_NoGridLines
-		| ImPlotAxisFlags_NoMenus
-		| ImPlotAxisFlags_NoSideSwitch
-		| ImPlotAxisFlags_NoHighlight;
-	ImPlotLineFlags defaultPlotLineFlags = ImPlotLineFlags_NoClip;
-	//auto & imguiStyle = ImGui::GetStyle();
-	//imguiStyle.WindowMinSize = ImVec2(480, 270);
-	auto & plotStyle = ImPlot::GetStyle();
-	plotStyle.PlotPadding = ImVec2(1, 1);
-	plotStyle.LabelPadding = ImVec2(1, 1);
-	plotStyle.PlotDefaultSize = ImVec2(480 - 8, 270 - 8);
-	plotStyle.PlotMinSize = ImVec2(480 - 8, 270 - 8);
+	std::size_t generations = state.generations();
+	std::size_t lastGeneration(0);
+	if (generations > 0) {
+		lastGeneration = generations - 1;
+	}
 
 	ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(2 * 480, 270), ImGuiCond_Always);
-	ImGui::Begin("##Plots", NULL, ImGuiWindowFlags_NoTitleBar);
-	if (!state.minFitness.empty()) {
-		auto & minFitness = state.minFitness;
-		auto & maxFitness = state.maxFitness;
-		auto & lastFitness = state.lastFitness;
+	ImGui::SetNextWindowSize(ImVec2(3 * 480, 270), ImGuiCond_Always);
+	ImGui::Begin("##Plots", NULL, defaultPlotWindowFlags);
+	auto generationProgressPlotDatum = state.generationProgressPlotDatum(lastGeneration);
+	auto generationFitnessPlotDatum = state.generationFitnessPlotDatum(lastGeneration);
+	auto genealogyFitnessPlotDatum = state.genealogyFitnessPlotDatum(lastGeneration);
 
-		if (ImPlot::BeginPlot("All Generation Plots", ImVec2(0, 0), defaultPlotFlags)) {
-			ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultAxisFlags);
-			ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultAxisFlags);
-			ImPlot::SetupLegend(ImPlotLocation_SouthWest);
+	if (generationProgressPlotDatum and generationFitnessPlotDatum and genealogyFitnessPlotDatum) {
+		auto & minimumOfGenerations = genealogyFitnessPlotDatum->minimumOfGenerations;
+		auto & maximumOfGenerations = genealogyFitnessPlotDatum->maximumOfGenerations;
+		auto & meanOfGenerations = genealogyFitnessPlotDatum->meanOfGenerations;
+		auto & numberOfGenerations = genealogyFitnessPlotDatum->numberOfGenerations;
 
-			double numIndividuals = double(lastFitness.size());
-			auto const & minFitnessIt = std::min_element(lastFitness.begin(), lastFitness.end());
-			auto const & maxFitnessIt = std::max_element(lastFitness.begin(), lastFitness.end());
-			double minSize = *minFitnessIt;
-			double maxSize = *maxFitnessIt;
-			double diff = maxSize - minSize;
-			double offset = diff * 0.05;
-			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numIndividuals);
-			ImPlot::SetupAxisLimits(ImAxis_Y1, minSize - offset, maxSize + offset);
-			ImPlot::SetupFinish();
+		auto & minimumOfIndividuals = genealogyFitnessPlotDatum->minimumOfIndividuals;
+		auto & maximumOfIndividuals = genealogyFitnessPlotDatum->maximumOfIndividuals;
+		auto & meanOfIndividuals = genealogyFitnessPlotDatum->meanOfIndividuals;
+		auto & numberOfIndividuals = genealogyFitnessPlotDatum->numberOfIndividuals;
 
-			auto minGetterLambda = [](int idx, void * user_data) -> ImPlotPoint {
-				std::vector<Spec::Fitness> * minFitness = static_cast<std::vector<Spec::Fitness> *>(user_data);
-				return ImPlotPoint(idx, minFitness->at(idx));
-			};
-			auto maxGetterLambda = [](int idx, void * user_data) -> ImPlotPoint {
-				std::vector<Spec::Fitness> * maxFitness = static_cast<std::vector<Spec::Fitness> *>(user_data);
-				return ImPlotPoint(idx, maxFitness->at(idx));
-			};
-			ImPlot::PlotShadedG("All generations fitness interval", minGetterLambda, &minFitness, maxGetterLambda, &maxFitness, minFitness.size());
-			ImPlot::PlotLine("Last Generation Fitness", &lastFitness[0], lastFitness.size(), 1.0, 0.0, defaultPlotLineFlags);
+		auto & lastGenerationFitnesses = generationFitnessPlotDatum->fitnesses;
+		auto & lastGenerationMinimumFitness = generationFitnessPlotDatum->minimum;
+		auto & lastGenerationMaximumFitness = generationFitnessPlotDatum->maximum;
+		auto & lastGenerationMeanFitness = generationFitnessPlotDatum->mean;
+		auto & lastGenerationIndividualCount = generationFitnessPlotDatum->count;
+		auto lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
+		auto fitnessGetterLambda = [](int idx, void * user_data) -> ImPlotPoint {
+			std::vector<Spec::Fitness> * userDataAsVector = static_cast<std::vector<Spec::Fitness> *>(user_data);
+			return ImPlotPoint(idx, userDataAsVector->at(idx));
+		};
+		if (generations > 0) {
+			if (ImPlot::BeginPlot("All Generation Plots", ImVec2(0, 0), defaultPlotFlags)) {
+				ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
+				ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
+				ImPlot::SetupLegend(ImPlotLocation_SouthWest);
 
-			ImPlot::EndPlot();
+				ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals);
+				ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
+				ImPlot::SetupFinish();
+
+				ImPlot::PlotShadedG("All generations fitness interval", fitnessGetterLambda, &meanOfIndividuals, fitnessGetterLambda, &maximumOfIndividuals, numberOfIndividuals);
+				ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationIndividualCount, 1.0, 0.0, defaultPlotLineFlags);
+
+				ImPlot::EndPlot();
+			}
 		}
-	}
-	ImGui::SameLine();
-	if (!state.minFitnesses.empty()) {
-		auto & minFitnesses = state.minFitnesses;
-		auto & maxFitnesses = state.maxFitnesses;
-		auto & meanFitnesses = state.meanFitnesses;
-		if (ImPlot::BeginPlot("Fitness Evolution", ImVec2(0, 0), defaultPlotFlags)) {
-			ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultAxisFlags);
-			ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultAxisFlags);
-			ImPlot::SetupLegend(ImPlotLocation_SouthEast);
+		ImGui::SameLine();
+		if (generations > 0) {
+			if (ImPlot::BeginPlot("Fitness Evolution", ImVec2(0, 0), defaultPlotFlags)) {
+				ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
+				ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
+				ImPlot::SetupLegend(ImPlotLocation_SouthEast);
 
-			double numIndividuals = double(minFitnesses.size());
-			auto const & minFitnessIt = std::min_element(minFitnesses.begin(), minFitnesses.end());
-			auto const & maxFitnessIt = std::max_element(maxFitnesses.begin(), maxFitnesses.end());
-			double minSize = *minFitnessIt;
-			double maxSize = *maxFitnessIt;
-			double diff = maxSize - minSize;
-			double offset = diff * 0.05;
-			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numIndividuals);
-			ImPlot::SetupAxisLimits(ImAxis_Y1, minSize - offset, maxSize + offset);
-			ImPlot::SetupFinish();
+				ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerations);
+				ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
+				ImPlot::SetupFinish();
 
-			auto minGetterLambda = [](int idx, void * user_data) -> ImPlotPoint {
-				std::vector<Spec::Fitness> * minFitnesses = static_cast<std::vector<Spec::Fitness> *>(user_data);
-				return ImPlotPoint(idx, minFitnesses->at(idx));
-			};
-			auto maxGetterLambda = [](int idx, void * user_data) -> ImPlotPoint {
-				std::vector<Spec::Fitness> * maxFitnesses = static_cast<std::vector<Spec::Fitness> *>(user_data);
-				return ImPlotPoint(idx, maxFitnesses->at(idx));
-			};
-			ImPlot::PlotShadedG("All generations fitness interval", minGetterLambda, &minFitnesses, maxGetterLambda, &maxFitnesses, maxFitnesses.size());
-			ImPlot::PlotLine("All generations mean fitness", &meanFitnesses[0], meanFitnesses.size(), 1.0, 0.0, defaultPlotLineFlags);
+				ImPlot::PlotShadedG("All generations fitness interval", fitnessGetterLambda, &minimumOfGenerations, fitnessGetterLambda, &maximumOfGenerations, numberOfGenerations);
+				ImPlot::PlotLine("All generations mean fitness", &meanOfGenerations[0], numberOfGenerations, 1.0, 0.0, defaultPlotLineFlags);
 
-			ImPlot::EndPlot();
+				ImPlot::EndPlot();
+			}
 		}
 	}
 	ImGui::End();
