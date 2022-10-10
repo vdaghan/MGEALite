@@ -20,6 +20,8 @@ class GUI {
 		void startLoop() {
 			endLoop = false;
 			auto loopLambda = [&](){
+				guiInitialisation.initialise();
+				guiStateDrawer.initialise(guiInitialisation.window);
 				guiInitialisation.GUILoop(std::bind_front(&GUI::loop, this), endLoop);
 			};
 			loopThread = std::thread(loopLambda);
@@ -31,7 +33,6 @@ class GUI {
 			}
 		}
 		State state;
-		//void setStatePtr(std::shared_ptr<State> sPtr) { statePtr = sPtr; };
 	private:
 		GUIInitialisation guiInitialisation;
 		GUIStateDrawer guiStateDrawer;

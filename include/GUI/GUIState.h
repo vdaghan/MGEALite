@@ -19,6 +19,11 @@ struct GenerationProgressPlotDatum {
 	std::size_t total;
 };
 
+struct GenealogyProgressDatum {
+	std::size_t currentGeneration;
+	std::size_t numberOfGenerations;
+};
+
 struct GenerationFitnessPlotDatum {
 	std::vector<Spec::Fitness> fitnesses; // Indexed by individuals
 	Spec::Fitness minimum;
@@ -40,10 +45,12 @@ struct GenealogyFitnessPlotDatum {
 
 class GUIState {
 	public:
+		GUIState();
 		void updateMotionGenerationState(std::size_t, MotionGenerationState const &);
 
 		std::size_t generations();
 		std::optional<GenerationProgressPlotDatum> generationProgressPlotDatum(std::size_t) const;
+		std::optional<GenealogyProgressDatum> genealogyProgressDatum() const;
 		std::optional<GenerationFitnessPlotDatum> generationFitnessPlotDatum(std::size_t) const;
 		std::optional<GenealogyFitnessPlotDatum> genealogyFitnessPlotDatum(std::size_t) const;
 	private:
@@ -51,6 +58,8 @@ class GUIState {
 		std::deque<MotionGenerationState> motionGenerationStates;
 		std::deque<GenerationProgressPlotDatum> generationProgressPlotData;
 		void updateGenerationProgressPlotDatum(std::size_t);
+		GenealogyProgressDatum genealogyProgressData;
+		void updateGenealogyProgressDatum();
 		std::deque<GenerationFitnessPlotDatum> generationFitnessPlotData;
 		void updateGenerationFitnessPlotDatum(std::size_t);
 		GenealogyFitnessPlotDatum genealogyFitnessPlotData;

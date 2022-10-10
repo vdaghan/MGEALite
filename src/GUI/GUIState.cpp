@@ -1,5 +1,10 @@
 #include "GUI/GUIState.h"
 
+GUIState::GUIState() {
+	genealogyProgressData.currentGeneration = 0;
+	genealogyProgressData.numberOfGenerations = 0;
+}
+
 void GUIState::updateMotionGenerationState(std::size_t generation, MotionGenerationState const & mGS) {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	if (motionGenerationStates.size() < generation + 1) {
@@ -9,6 +14,9 @@ void GUIState::updateMotionGenerationState(std::size_t generation, MotionGenerat
 	StateComponentChanged stateComponentChanged = motionGenerationStates.at(generation).changed();
 	if (stateComponentChanged & StateComponentChanged_EpochProgress) {
 		updateGenerationProgressPlotDatum(generation);
+	}
+	if (stateComponentChanged & StateComponentChanged_EAProgress) {
+		updateGenealogyProgressDatum();
 	}
 	if (stateComponentChanged & StateComponentChanged_FitnessStatus) {
 		updateGenerationFitnessPlotDatum(generation);
@@ -27,6 +35,11 @@ std::optional<GenerationProgressPlotDatum> GUIState::generationProgressPlotDatum
 		return generationProgressPlotData.at(generation);
 	}
 	return std::nullopt;
+}
+
+std::optional<GenealogyProgressDatum> GUIState::genealogyProgressDatum() const {
+	std::lock_guard<std::mutex> lock(updateMutex);
+	return genealogyProgressData;
 }
 
 std::optional<GenerationFitnessPlotDatum> GUIState::generationFitnessPlotDatum(std::size_t generation) const {
@@ -57,6 +70,16 @@ void GUIState::updateGenerationProgressPlotDatum(std::size_t generation) {
 		generationProgressPlotData.resize(generation + 1);
 	}
 	generationProgressPlotData.at(generation) = gPPD;
+}
+
+void GUIState::updateGenealogyProgressDatum() {
+	MotionGenerationState & mGS = motionGenerationStates.back();
+	auto const & eP = mGS.eaProgress();
+	GenealogyProgressDatum gPD{
+		.currentGeneration = eP.currentGeneration,
+		.numberOfGenerations = eP.numberOfGenerations
+	};
+	genealogyProgressData = gPD;
 }
 
 void GUIState::updateGenerationFitnessPlotDatum(std::size_t generation) {

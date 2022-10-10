@@ -10,14 +10,13 @@ void setupWindow() {
 	ImGui::ShowDemoWindow(&show_demo_window);
 }
 
-void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) {
+void GUIInitialisation::initialise() {
 	while (true) {
 		// Setup window
 		glfwSetErrorCallback(glfw_error_callback);
 		if (!glfwInit())
 			continue;
 
-		// GL 3.0 + GLSL 130
 		const char * glsl_version = "#version 410";
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
@@ -36,9 +35,10 @@ void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) 
 			window = glfwCreateWindow(mode->width, mode->height, "MGEALite", NULL, NULL);
 			glfwMaximizeWindow(window);
 		}
-		
+
 		if (window == NULL)
 			continue;
+
 		glfwMakeContextCurrent(window);
 		glfwSwapInterval(1); // Enable vsync
 
@@ -50,6 +50,10 @@ void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) 
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
+		ImFontConfig cfg;
+		cfg.SizePixels = 20;
+		io.Fonts->AddFontDefault(&cfg);
+
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
 		//ImGui::StyleColorsLight();
@@ -60,8 +64,10 @@ void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) 
 
 		break;
 	}
-	
-	while (!endLoop) {
+}
+
+void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) {
+	while (!endLoop and !glfwWindowShouldClose(window)) {
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.
@@ -78,10 +84,7 @@ void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) 
 		}
 
 		loop();
-		//setupWindow();
 
-		// renderGUI();
-		// Rendering
 		ImGui::Render();
 		int display_w, display_h;
 		glfwGetFramebufferSize(window, &display_w, &display_h);

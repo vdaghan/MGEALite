@@ -25,6 +25,7 @@ class MotionGenerator {
 		MotionGenerationState motionGenerationState;
 		void tryExecute_OnMotionGenerationStateChange();
 		void updateMotionGenerationStateWith(EpochProgress &);
+		void updateMotionGenerationStateWithEAProgress();
 		void updateMotionGenerationStateWithFitnessStatus();
 		void exportGenerationData();
 

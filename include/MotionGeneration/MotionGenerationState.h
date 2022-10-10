@@ -18,6 +18,14 @@ struct EpochProgress {
 	bool changed;
 };
 
+struct EAProgress {
+	EAProgress();
+	std::size_t currentGeneration;
+	std::size_t numberOfGenerations;
+	void updateWith(EAProgress const &);
+	bool changed;
+};
+
 struct FitnessStatus {
 	FitnessStatus();
 	std::vector<Spec::Fitness> fitnesses;
@@ -33,22 +41,26 @@ struct VariationStatus {
 enum StateComponentChanged : std::size_t {
 	StateComponentChanged_None = 0,
 	StateComponentChanged_EpochProgress = 1,
-	StateComponentChanged_FitnessStatus = 2,
-	StateComponentChanged_VariationStatus = 4
+	StateComponentChanged_EAProgress = 2,
+	StateComponentChanged_FitnessStatus = 4,
+	StateComponentChanged_VariationStatus = 8
 };
 class MotionGenerationState {
 	public:
 		MotionGenerationState();
 		void updateWith(EpochProgress const &);
+		void updateWith(EAProgress const &);
 		void updateWith(FitnessStatus const &);
 		void updateWith(MotionGenerationState const &);
 		StateComponentChanged changed() const;
 
 		EpochProgress const & epochProgress();
+		EAProgress const & eaProgress();
 		FitnessStatus const & fitnessStatus();
 		//VariationStatus const & variationStatus();
 	private:
 		mutable std::mutex changeMutex;
 		EpochProgress m_epochProgress;
+		EAProgress m_eaProgress;
 		FitnessStatus m_fitnessStatus;
 };

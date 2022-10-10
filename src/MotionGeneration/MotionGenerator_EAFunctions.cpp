@@ -401,12 +401,14 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 void MotionGenerator::onEpochStart(std::size_t generation) {
 	currentGeneration = generation;
 	spdlog::info("Epoch {} started.", generation);
+	updateMotionGenerationStateWithEAProgress();
 }
 
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
 	auto & lastGeneration = ea.genealogy.back();
 
+	updateMotionGenerationStateWithEAProgress();
 	updateMotionGenerationStateWithFitnessStatus();
 
 	auto & timer = DTimer::simple("stats").newSample().begin();

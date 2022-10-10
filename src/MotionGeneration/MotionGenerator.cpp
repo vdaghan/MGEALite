@@ -43,6 +43,17 @@ void MotionGenerator::updateMotionGenerationStateWith(EpochProgress & eP) {
 	tryExecute_OnMotionGenerationStateChange();
 }
 
+void MotionGenerator::updateMotionGenerationStateWithEAProgress() {
+	if (ea.genealogy.empty()) [[unlikely]] {
+		return;
+	}
+	EAProgress eP;
+	eP.currentGeneration = currentGeneration;
+	eP.numberOfGenerations = ea.genealogy.size();
+	motionGenerationState.updateWith(eP);
+	tryExecute_OnMotionGenerationStateChange();
+}
+
 void MotionGenerator::updateMotionGenerationStateWithFitnessStatus() {
 	if (ea.genealogy.empty()) [[unlikely]] {
 		return;

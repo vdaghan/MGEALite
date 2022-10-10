@@ -13,10 +13,10 @@ static void glfw_error_callback(int error, const char * description) {
 
 void setupWindow();
 
-class GUIInitialisation {
-	public:
-		void GUILoop(std::function<void(void)> loop, bool & endLoop);
-	private:
-		GLFWwindow * window;
-		ImGuiContext * imguiContext;
+// All methods of this struct should be called from the same thread
+struct GUIInitialisation {
+	void initialise();
+	void GUILoop(std::function<void(void)> loop, bool & endLoop);
+	GLFWwindow * window;
+	ImGuiContext * imguiContext;
 };
