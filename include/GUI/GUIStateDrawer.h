@@ -1,11 +1,15 @@
 #pragma once
 
+#include "GUI/GUILogger.h"
 #include "GUI/GUIState.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "implot.h"
 #include "GLFW/glfw3.h"
+
+#include <list>
+#include <string>
 
 using PlotFunction = std::function<void(GUIState &)>;
 using PlotMap = std::map<std::string, std::pair<bool, PlotFunction>>;
@@ -27,6 +31,7 @@ class GUIStateDrawer {
 		ImVec2 halfGridSize;
 		ImVec2 gridSize;
 		bool hideLog;
+		std::shared_ptr<GUILogger_mt> guiLoggerPtr;
 		bool hidePlotSelection;
 		ImVec2 plotSize;
 		int generationIndex;

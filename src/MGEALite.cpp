@@ -15,10 +15,12 @@
 #include "MotionGeneration/MotionGenerator.h"
 
 int main() {
+	// Logger must be initialised before GUI since GUI needs
+	// the MGEALogger to be available to hook into.
+	initialiseLogger();
 	GUI<GUIState> gui;
 	gui.startLoop();
 
-	initialiseLogger();
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionParameters motionParameters;

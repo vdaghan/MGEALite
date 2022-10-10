@@ -28,7 +28,11 @@ int nearestLesserMultipleOfDivisorToNumber(int divisor, int number) {
 
 GUIStateDrawer::GUIStateDrawer() : generationIndex(0)
 								 , hideLog(false)
-								 , hidePlotSelection(false) {}
+								 , hidePlotSelection(false) {
+	guiLoggerPtr = std::make_shared<GUILogger_mt>();
+	guiLoggerPtr->setLogLength(100);
+	guiLoggerPtr->addToLogger("MGEALogger", guiLoggerPtr);
+}
 
 void GUIStateDrawer::initialise(GLFWwindow * w) {
 	window = w;
@@ -185,7 +189,10 @@ void GUIStateDrawer::draw(GUIState & state) {
 	if (!hideLog) {
 		static float wrapWidth = 1.0;
 		wrapWidth = static_cast<float>(5.5 * boxSize.x);
-		std::string logText("Hello, MGEALight!");
+		std::string logText;
+		for (auto & log : guiLoggerPtr->getLogs()) {
+			logText += log;
+		}
 		ImVec2 textSize(6 * boxSize.x, 6 * boxSize.y);
 		ImGui::SetNextItemWidth(textSize.x);
 		ImGuiWindowFlags logWindowFlags = defaultPlotWindowFlags

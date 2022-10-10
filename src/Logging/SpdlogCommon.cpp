@@ -15,7 +15,7 @@ void initialiseLogger() {
 	file_sink->set_pattern(pattern);
 	file_sink->set_level(spdlog::level::trace);
 	std::vector<spdlog::sink_ptr> sinks{ console_sink, file_sink };
-	auto logger = std::make_shared<spdlog::async_logger>("loggername", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+	auto logger = std::make_shared<spdlog::async_logger>("MGEALogger", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 	logger->flush_on(spdlog::level::trace);
 	spdlog::register_logger(logger);
 	spdlog::set_default_logger(logger);
