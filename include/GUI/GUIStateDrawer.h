@@ -2,6 +2,7 @@
 
 #include "GUI/GUILogger.h"
 #include "GUI/GUIState.h"
+#include "SharedSynchronisation.h"
 
 #include "imgui.h"
 #include "imgui_internal.h"
@@ -17,10 +18,11 @@ std::vector<std::string> getSelectedPlotFunctions(PlotMap const &);
 int nearestLesserMultipleOfDivisorToNumber(int, int);
 class GUIStateDrawer {
 	public:
-		GUIStateDrawer();
+		GUIStateDrawer(SharedSynchronisationToken && sST);
 		void initialise(GLFWwindow *);
 		void draw(GUIState &);
 	private:
+		SharedSynchronisationToken exitFlag;
 		GLFWwindow * window;
 		ImGuiStyle defaultPlotWindowStyle;
 		ImGuiWindowFlags defaultPlotWindowFlags;
@@ -36,6 +38,7 @@ class GUIStateDrawer {
 		ImVec2 plotSize;
 		int generationIndex;
 
+		void drawProgressbarAndSlider(GUIState &);
 		std::size_t getNumGenerations(GUIState &);
 		std::size_t getLastGeneration(GUIState &);
 		void drawFitnessVSIndividualsPlot(GUIState &);

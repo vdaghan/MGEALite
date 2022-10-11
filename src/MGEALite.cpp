@@ -13,12 +13,15 @@
 #include "GUI/GUI.h"
 #include "Logging/SpdlogCommon.h"
 #include "MotionGeneration/MotionGenerator.h"
+#include "SharedSynchronisation.h"
 
 int main() {
 	// Logger must be initialised before GUI since GUI needs
 	// the MGEALogger to be available to hook into.
 	initialiseLogger();
-	GUI<GUIState> gui;
+	SharedSynchronisation exitFlag;
+	GUI<GUIState> gui(std::move(exitFlag.createToken()));
+	exitFlag.freeze();
 	gui.startLoop();
 
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());

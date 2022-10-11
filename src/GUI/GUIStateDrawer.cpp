@@ -26,9 +26,12 @@ int nearestLesserMultipleOfDivisorToNumber(int divisor, int number) {
 	return number - mod;
 }
 
-GUIStateDrawer::GUIStateDrawer() : generationIndex(0)
-								 , hideLog(false)
-								 , hidePlotSelection(false) {
+GUIStateDrawer::GUIStateDrawer(SharedSynchronisationToken && sST)
+	: exitFlag(std::move(sST))
+	, generationIndex(0)
+	, hideLog(false)
+	, hidePlotSelection(false)
+{
 	guiLoggerPtr = std::make_shared<GUILogger_mt>();
 	guiLoggerPtr->setLogLength(100);
 	guiLoggerPtr->addToLogger("MGEALogger", guiLoggerPtr);
@@ -68,6 +71,10 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 }
 
 void GUIStateDrawer::draw(GUIState & state) {
+	if (glfwWindowShouldClose(window)) {
+		exitFlag.sync();
+	}
+
 	int windowWidth, windowHeight;
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
 	double windowWidthDouble = static_cast<double>(windowWidth);
@@ -137,52 +144,13 @@ void GUIStateDrawer::draw(GUIState & state) {
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to stop simulation and quit application");
 	}
+	if (exitButtonClicked) {
+		exitFlag.sync();
+	}
 
 	ImGui::NewLine();
 
-	bool selectAllGenerationsButtonClicked = ImGui::Button("Select\nAll\nGenerations", ImVec2(boxSize.x, boxSize.y));
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Press to select all generations for generation-dependent plots");
-	}
-	ImGui::SameLine();
-
-	bool selectLastGenerationButtonClicked = ImGui::Button("Select\nLast\nGeneration", ImVec2(boxSize.x, boxSize.y));
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Press to select last generation for generation-dependent plots");
-	}
-	ImGui::SameLine();
-
-	ImGui::Dummy(ImVec2(halfBoxSize.x, halfBoxSize.y));
-	ImGui::SameLine();
-
-	ImGui::BeginGroup();
-	float progress(0.0);
-	if (progressPlotDataReady) {
-		float failed = static_cast<float>(generationProgressPlotDatum->failed);
-		float evaluated = static_cast<float>(generationProgressPlotDatum->evaluated);
-		float total = static_cast<float>(generationProgressPlotDatum->total);
-		if (0.0 != total) {
-			progress = (failed + evaluated) / total;
-		}
-	}
-	std::string progressStr = std::format("{}%", progress);
-	ImGui::ProgressBar(progress, ImVec2(15 * boxSize.x, halfBoxSize.y), progressStr.c_str());
-
-	ImGui::NewLine();
-
-	int numberOfGenerations = 0;
-	if (genealogyProgressDataReady) {
-		numberOfGenerations = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
-		if (selectLastGenerationButtonClicked) {
-			generationIndex = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
-		}
-	}
-	ImGui::SetNextWindowSize(ImVec2(12 * boxSize.x, halfBoxSize.y));
-	ImGui::SliderInt("##Generation", &generationIndex, 0, numberOfGenerations);
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Select target generation for generation-dependent plots");
-	}
-	ImGui::EndGroup();
+	drawProgressbarAndSlider(state);
 
 	ImGui::NewLine();
 
@@ -266,6 +234,57 @@ void GUIStateDrawer::draw(GUIState & state) {
 	}
 	ImGui::EndChild();
 	ImGui::End();
+}
+
+void GUIStateDrawer::drawProgressbarAndSlider(GUIState & state) {
+	auto generationProgressPlotDatum = state.generationProgressPlotDatum(generationIndex);
+	auto genealogyProgressDatum = state.genealogyProgressDatum();
+	bool genealogyProgressDataReady = genealogyProgressDatum.has_value();
+	bool progressPlotDataReady = generationProgressPlotDatum.has_value();
+
+	bool selectAllGenerationsButtonClicked = ImGui::Button("Select\nAll\nGenerations", ImVec2(gridSize.x, gridSize.y));
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Press to select all generations for generation-dependent plots");
+	}
+	ImGui::SameLine();
+
+	bool selectLastGenerationButtonClicked = ImGui::Button("Select\nLast\nGeneration", ImVec2(gridSize.x, gridSize.y));
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Press to select last generation for generation-dependent plots");
+	}
+	ImGui::SameLine();
+
+	ImGui::Dummy(ImVec2(halfGridSize.x, halfGridSize.y));
+	ImGui::SameLine();
+
+	ImGui::BeginGroup();
+	float progress(0.0);
+	if (progressPlotDataReady) {
+		float failed = static_cast<float>(generationProgressPlotDatum->failed);
+		float evaluated = static_cast<float>(generationProgressPlotDatum->evaluated);
+		float total = static_cast<float>(generationProgressPlotDatum->total);
+		if (0.0 != total) {
+			progress = (failed + evaluated) / total;
+		}
+	}
+	std::string progressStr = std::format("{}%", progress);
+	ImGui::ProgressBar(progress, ImVec2(15 * gridSize.x, halfGridSize.y), progressStr.c_str());
+
+	ImGui::NewLine();
+
+	int numberOfGenerations = 0;
+	if (genealogyProgressDataReady) {
+		numberOfGenerations = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
+		if (selectLastGenerationButtonClicked) {
+			generationIndex = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
+		}
+	}
+	ImGui::SetNextWindowSize(ImVec2(12 * gridSize.x, halfGridSize.y));
+	ImGui::SliderInt("##Generation", &generationIndex, 0, numberOfGenerations);
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Select target generation for generation-dependent plots");
+	}
+	ImGui::EndGroup();
 }
 
 std::size_t GUIStateDrawer::getNumGenerations(GUIState & state) {

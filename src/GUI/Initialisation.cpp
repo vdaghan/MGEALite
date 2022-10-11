@@ -10,6 +10,10 @@ void setupWindow() {
 	ImGui::ShowDemoWindow(&show_demo_window);
 }
 
+GUIInitialisation::GUIInitialisation(SharedSynchronisationToken && sST)
+	: exitFlag(std::move(sST))
+{};
+
 void GUIInitialisation::initialise() {
 	while (true) {
 		// Setup window
@@ -67,7 +71,7 @@ void GUIInitialisation::initialise() {
 }
 
 void GUIInitialisation::GUILoop(std::function<void(void)> loop, bool & endLoop) {
-	while (!endLoop and !glfwWindowShouldClose(window)) {
+	while (!exitFlag.check()) {
 		// Poll and handle events (inputs, window resize, etc.)
 		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
 		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application, or clear/overwrite your copy of the mouse data.

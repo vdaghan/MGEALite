@@ -2,6 +2,7 @@
 
 #include "GUI/GUIStateDrawer.h"
 #include "GUI/Initialisation.h"
+#include "SharedSynchronisation.h"
 
 #include <chrono>
 #include <functional>
@@ -14,7 +15,7 @@ template <typename State> void draw(State);
 template <typename State>
 class GUI {
 	public:
-		GUI() {};
+		GUI(SharedSynchronisationToken && sST) : guiInitialisation(std::move(sST.createToken())), guiStateDrawer(std::move(sST)) {};
 		~GUI() { stopLoop(); }
 
 		void startLoop() {
