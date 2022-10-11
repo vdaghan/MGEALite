@@ -1,6 +1,8 @@
+#include <chrono>
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "EvolutionaryAlgorithm.h"
@@ -19,10 +21,14 @@ int main() {
 	// Logger must be initialised before GUI since GUI needs
 	// the MGEALogger to be available to hook into.
 	initialiseLogger();
-	SharedSynchronisation exitFlag;
-	GUI<GUIState> gui(std::move(exitFlag.createToken()));
-	exitFlag.freeze();
+	SharedSynchronisation sharedSync;
+	sharedSync.registerEvent("start", false);
+	sharedSync.registerEvent("pause", false);
+	sharedSync.registerEvent("stop", false);
+	sharedSync.registerEvent("exit", false);
+	GUI<GUIState> gui(std::move(sharedSync.createToken()));
 	gui.startLoop();
+	sharedSync.finaliseAll();
 
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
@@ -43,9 +49,14 @@ int main() {
 	motionParameters.contactParameters = bodyGroundContactParameters();
 
 	MotionGenerator motionGenerator("./data", motionParameters);
+	sharedSync.addCallback("stop", CallbackType::OnTrue, [&]() {motionGenerator.stop(); });
 	motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){
 		gui.state.updateMotionGenerationState(gen, mGS);
 	};
+
+	while (!sharedSync.get("start") and !sharedSync.get("stop")) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(250));
+	}
 	auto result = motionGenerator.search(250);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");

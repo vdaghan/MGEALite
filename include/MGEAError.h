@@ -10,7 +10,8 @@ namespace MGEA {
 		FileNotFound,
 		NoInput,
 		NoOutput,
-		SimulationError
+		SimulationError,
+		Stopped
 	};
 	template <typename T> using Maybe = std::expected<T, ErrorCode>;
 }

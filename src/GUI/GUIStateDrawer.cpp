@@ -72,7 +72,8 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 
 void GUIStateDrawer::draw(GUIState & state) {
 	if (glfwWindowShouldClose(window)) {
-		exitFlag.sync();
+		exitFlag.setAndCall("stop", FlagSetType::True);
+		exitFlag.setAndCall("exit", FlagSetType::True);
 	}
 
 	int windowWidth, windowHeight;
@@ -126,17 +127,26 @@ void GUIStateDrawer::draw(GUIState & state) {
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to start simulation");
 	}
+	if (startButtonClicked) {
+		exitFlag.setAndCall("start", FlagSetType::True);
+	}
 	ImGui::SameLine();
 
 	bool pauseButtonClicked = ImGui::Button("Pause", ImVec2(boxSize.x, boxSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to pause simulation");
 	}
+	if (pauseButtonClicked) {
+		exitFlag.setAndCall("pause", FlagSetType::Toggle);
+	}
 	ImGui::SameLine();
 
 	bool stopButtonClicked = ImGui::Button("Stop", ImVec2(boxSize.x, boxSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to stop simulation");
+	}
+	if (stopButtonClicked) {
+		exitFlag.setAndCall("stop", FlagSetType::True);
 	}
 	ImGui::SameLine();
 
@@ -145,7 +155,8 @@ void GUIStateDrawer::draw(GUIState & state) {
 		ImGui::SetTooltip("Press to stop simulation and quit application");
 	}
 	if (exitButtonClicked) {
-		exitFlag.sync();
+		exitFlag.setAndCall("stop", FlagSetType::True);
+		exitFlag.setAndCall("exit", FlagSetType::True);
 	}
 
 	ImGui::NewLine();
@@ -158,8 +169,9 @@ void GUIStateDrawer::draw(GUIState & state) {
 		static float wrapWidth = 1.0;
 		wrapWidth = static_cast<float>(5.5 * boxSize.x);
 		std::string logText;
-		for (auto & log : guiLoggerPtr->getLogs()) {
-			logText += log;
+		auto logs = guiLoggerPtr->getLogs();
+		for (auto it(logs.rbegin()); it != logs.rend(); ++it) {
+			logText += *it;
 		}
 		ImVec2 textSize(6 * boxSize.x, 6 * boxSize.y);
 		ImGui::SetNextItemWidth(textSize.x);
@@ -307,39 +319,59 @@ ImPlotPoint fitnessGetter(int idx, void * user_data) {
 
 void GUIStateDrawer::drawFitnessVSIndividualsPlot(GUIState & state) {
 	std::size_t numGenerations(getNumGenerations(state));
-	if (0 == numGenerations) {
-		return;
-	}
-	std::size_t lastGeneration(getLastGeneration(state));
-	auto generationFPD = state.generationFitnessPlotDatum(lastGeneration);
-	auto genealogyFPD = state.genealogyFitnessPlotDatum(lastGeneration);
 	bool ghostRun = false;
-	if (!generationFPD.has_value() or !genealogyFPD.has_value()) {
+	if (0 == numGenerations) {
 		ghostRun = true;
 	}
+	std::size_t lastGeneration;
+	std::optional<GenerationFitnessPlotDatum> generationFPD;
+	std::optional<GenealogyFitnessPlotDatum> genealogyFPD;
+	if (!ghostRun) {
+		lastGeneration = getLastGeneration(state);
+		generationFPD = state.generationFitnessPlotDatum(lastGeneration);
+		genealogyFPD = state.genealogyFitnessPlotDatum(lastGeneration);
+		if (!generationFPD.has_value() or !genealogyFPD.has_value()) {
+			ghostRun = true;
+		}
+	}
 
-	std::vector<Spec::Fitness> minimumOfIndividuals = genealogyFPD->minimumOfIndividuals;
-	std::vector<Spec::Fitness> maximumOfIndividuals = genealogyFPD->maximumOfIndividuals;
-	std::vector<Spec::Fitness> meanOfIndividuals = genealogyFPD->meanOfIndividuals;
-	double numberOfIndividuals = static_cast<double>(genealogyFPD->numberOfIndividuals);
+	std::vector<Spec::Fitness> minimumOfIndividuals;
+	std::vector<Spec::Fitness> maximumOfIndividuals;
+	std::vector<Spec::Fitness> meanOfIndividuals;
+	double numberOfIndividuals;
 
-	std::vector<Spec::Fitness> lastGenerationFitnesses = generationFPD->fitnesses;
-	Spec::Fitness lastGenerationMinimumFitness = generationFPD->minimum;
-	Spec::Fitness lastGenerationMaximumFitness = generationFPD->maximum;
-	int lastGenerationIndividualCount = static_cast<int>(generationFPD->count);
-	Spec::Fitness lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
+	std::vector<Spec::Fitness> lastGenerationFitnesses;
+	Spec::Fitness lastGenerationMinimumFitness;
+	Spec::Fitness lastGenerationMaximumFitness;
+	int lastGenerationIndividualCount;
+	Spec::Fitness lastGenerationDiff;
+
+	if (!ghostRun) {
+		minimumOfIndividuals = genealogyFPD->minimumOfIndividuals;
+		maximumOfIndividuals = genealogyFPD->maximumOfIndividuals;
+		meanOfIndividuals = genealogyFPD->meanOfIndividuals;
+		numberOfIndividuals = static_cast<double>(genealogyFPD->numberOfIndividuals);
+
+		lastGenerationFitnesses = generationFPD->fitnesses;
+		lastGenerationMinimumFitness = generationFPD->minimum;
+		lastGenerationMaximumFitness = generationFPD->maximum;
+		lastGenerationIndividualCount = static_cast<int>(generationFPD->count);
+		lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
+	}
 
 	if (ImPlot::BeginPlot("All Generation Plots", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
 		ImPlot::SetupLegend(ImPlotLocation_SouthWest);
 
-		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
-		ImPlot::SetupFinish();
+		if (!ghostRun) {
+			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
+			ImPlot::SetupFinish();
 
-		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &meanOfIndividuals, fitnessGetter, &maximumOfIndividuals, numberOfIndividuals);
-		ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationIndividualCount, 1.0, 0.0, defaultPlotLineFlags);
+			ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &meanOfIndividuals, fitnessGetter, &maximumOfIndividuals, numberOfIndividuals);
+			ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationIndividualCount, 1.0, 0.0, defaultPlotLineFlags);
+		}
 
 		ImPlot::EndPlot();
 	}

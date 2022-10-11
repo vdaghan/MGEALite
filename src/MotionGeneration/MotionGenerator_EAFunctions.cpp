@@ -257,6 +257,9 @@ Spec::GenotypeProxies MotionGenerator::genesisRandom(std::size_t numIndividuals)
 	};
 
 	for (size_t n(0); n != numIndividuals; ++n) {
+		if (checkStopFlagAndMaybeWait()) {
+			return {};
+		}
 		SimulationInfo simInfo{.generation = 0, .identifier = n};
 		auto simDataPtr = database.createSimulation(simInfo);
 		simDataPtr->time = time;
@@ -283,7 +286,7 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	if (simLogPtr->outputExists()) {
 		return genPx;
 	}
-	while (true) {
+	while (!checkStopFlagAndMaybeWait()) {
 		auto maybeSimulationDataPtr = database.getSimulationResult(simLogPtr->info());
 		if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
 			++epochProgress.failed;
@@ -299,7 +302,7 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 		}
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
-	std::unreachable();
+	return std::unexpected(DEvA::ErrorCode::OK);
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
@@ -385,6 +388,9 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 
 	Spec::GenotypeProxies childProxies;
 	for (auto & child : children) {
+		if (checkStopFlagAndMaybeWait()) {
+			return {};
+		}
 		SimulationInfo childInfo{.generation = currentGeneration, .identifier = database.nextId()};
 		auto createResult = database.createSimulation(childInfo);
 		// TODO Check if we could successfully create a new input?

@@ -8,7 +8,12 @@
 #include <algorithm>
 #include <functional>
 
-MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : motionParameters(mP), database(folder, motionParameters) {
+MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) 
+: motionParameters(mP)
+, database(folder, motionParameters)
+, pauseFlag(false)
+, stopFlag(false)
+{
 	maxGenerations = 0;
 	ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundary, this);
 	//ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundaryWavelet, this);
@@ -22,6 +27,8 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
+	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
+	ea.onStopCallback = [&]() { stopFlag.store(true); };
 	ea.lambda = 10;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
@@ -30,6 +37,21 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) : moti
 DEvA::StepResult MotionGenerator::search(std::size_t n) {
 	maxGenerations = n;
 	return ea.search(n);
+}
+
+void MotionGenerator::pause() {
+	ea.pause();
+}
+
+void MotionGenerator::stop() {
+	ea.stop();
+}
+
+bool MotionGenerator::checkStopFlagAndMaybeWait() {
+	while (pauseFlag.load() and !stopFlag.load()) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	}
+	return stopFlag.load();
 }
 
 void MotionGenerator::tryExecute_OnMotionGenerationStateChange() {

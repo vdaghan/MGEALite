@@ -14,6 +14,8 @@ class MotionGenerator {
 	public:
 		MotionGenerator(std::string, MotionParameters);
 		DEvA::StepResult search(std::size_t);
+		void pause();
+		void stop();
 		std::function<void(std::size_t, MotionGenerationState const &)> onMotionGenerationStateChange;
 	private:
 		MotionParameters motionParameters;
@@ -23,6 +25,9 @@ class MotionGenerator {
 		std::size_t maxGenerations;
 		EpochProgress epochProgress;
 		MotionGenerationState motionGenerationState;
+		std::atomic<bool> pauseFlag;
+		bool checkStopFlagAndMaybeWait();
+		std::atomic<bool> stopFlag;
 		void tryExecute_OnMotionGenerationStateChange();
 		void updateMotionGenerationStateWith(EpochProgress &);
 		void updateMotionGenerationStateWithEAProgress();
