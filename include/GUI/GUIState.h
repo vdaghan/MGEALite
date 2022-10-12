@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MotionGeneration/MotionGenerator.h"
+//#include "MotionGeneration/MotionGenerator.h"
 #include "MotionGeneration/MotionGenerationState.h"
 #include "MotionGeneration/Specification.h"
 #include "EvolutionaryAlgorithm.h"
@@ -46,6 +46,12 @@ struct GenealogyFitnessPlotDatum {
 class GUIState {
 	public:
 		GUIState();
+		void updateEAStatistics(DEvA::EAStatistics eaS);
+		void updateEAStatisticsHistory(DEvA::EAStatisticsHistory eaSH);
+		std::optional<DEvA::EAStatistics> getEAStatistics();
+		std::optional<DEvA::EAStatisticsHistory> getEAStatisticsHistory();
+
+
 		void updateMotionGenerationState(std::size_t, MotionGenerationState const &);
 
 		std::size_t generations();
@@ -55,6 +61,9 @@ class GUIState {
 		std::optional<GenealogyFitnessPlotDatum> genealogyFitnessPlotDatum(std::size_t) const;
 	private:
 		mutable std::mutex updateMutex;
+		std::optional<DEvA::EAStatistics> eaStatistics;
+		std::optional<DEvA::EAStatisticsHistory> eaStatisticsHistory;
+
 		std::deque<MotionGenerationState> motionGenerationStates;
 		std::deque<GenerationProgressPlotDatum> generationProgressPlotData;
 		void updateGenerationProgressPlotDatum(std::size_t);

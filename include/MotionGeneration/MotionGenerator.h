@@ -16,6 +16,7 @@ class MotionGenerator {
 		DEvA::StepResult search(std::size_t);
 		void pause();
 		void stop();
+		template<typename T> void hookCallbacks(T &);
 		std::function<void(std::size_t, MotionGenerationState const &)> onMotionGenerationStateChange;
 	private:
 		MotionParameters motionParameters;
@@ -52,3 +53,9 @@ class MotionGenerator {
 		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);
 };
+
+template<typename T>
+void MotionGenerator::hookCallbacks(T & t) {
+	ea.onEAStatsHistoryUpdateCallback = std::bind_front(&T::updateEAStatisticsHistory, &t);
+	ea.onEAStatsUpdateCallback = std::bind_front(&T::updateEAStatistics, &t);
+}

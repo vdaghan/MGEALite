@@ -1,6 +1,7 @@
 #include "GUI/GUIStateDrawer.h"
 
 #include "GUI/Initialisation.h"
+#include "GUI/ImPlotRewrites.h"
 
 #include <algorithm>
 #include <limits>
@@ -29,8 +30,7 @@ int nearestLesserMultipleOfDivisorToNumber(int divisor, int number) {
 GUIStateDrawer::GUIStateDrawer(SharedSynchronisationToken && sST)
 	: exitFlag(std::move(sST))
 	, generationIndex(0)
-	, hideLog(false)
-	, hidePlotSelection(false)
+	, logOrPlot(LogOrPlot::Log)
 {
 	guiLoggerPtr = std::make_shared<GUILogger_mt>();
 	guiLoggerPtr->setLogLength(100);
@@ -64,10 +64,9 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 						 | ImPlotAxisFlags_NoHighlight;
 	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
 
-	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(false, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
-	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(false, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
-	plotMap.emplace(std::make_pair("Variation Success at Generation", std::make_pair(false, [](GUIState &){})));
-	plotMap.emplace(std::make_pair("Variation Success Throughout Genealogy", std::make_pair(false, [](GUIState &) {})));
+	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
+	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
+	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
 }
 
 void GUIStateDrawer::draw(GUIState & state) {
@@ -91,12 +90,10 @@ void GUIStateDrawer::draw(GUIState & state) {
 	ImVec2 offset(windowWidthDouble - static_cast<double>(windowWidth), windowHeightDouble - static_cast<double>(windowHeight));
 	offset.x /= 2;
 	offset.y /= 2;
-	ImVec2 boxSize(windowWidth / 16, windowHeight / 9);
-	ImVec2 halfBoxSize(boxSize.x / 2, boxSize.y / 2);
-	gridSize = boxSize;
-	halfGridSize = halfBoxSize;
+	gridSize = ImVec2(windowWidth / 16, windowHeight / 9);
+	halfGridSize = ImVec2(gridSize.x / 2, gridSize.y / 2);
 
-	plotSize = gridSize;
+	plotSize = ImVec2(4 * gridSize.x, 3 * gridSize.y);
 	defaultPlotStyle = ImPlot::GetStyle();
 	defaultPlotStyle.PlotPadding = ImVec2(1, 1);
 	defaultPlotStyle.LabelPadding = ImVec2(1, 1);
@@ -106,24 +103,22 @@ void GUIStateDrawer::draw(GUIState & state) {
 	ImGui::GetStyle() = defaultPlotWindowStyle;
 	ImPlot::GetStyle() = defaultPlotStyle;
 
-	auto generationProgressPlotDatum = state.generationProgressPlotDatum(generationIndex);
-	auto genealogyProgressDatum = state.genealogyProgressDatum();
-	//auto generationFitnessPlotDatum = state.generationFitnessPlotDatum(generationIndex);
-	//auto genealogyFitnessPlotDatum = state.genealogyFitnessPlotDatum(generationIndex);
-
-	bool genealogyProgressDataReady = genealogyProgressDatum.has_value();
-	bool progressPlotDataReady = generationProgressPlotDatum.has_value();
-	//bool fitnessPlotDataReady = generationFitnessPlotDatum.has_value()
-	//						  and genealogyFitnessPlotDatum.has_value();
-
 	ImGui::SetNextWindowPos(ImVec2(offset.x, offset.y), ImGuiCond_Always);
-	ImGui::SetNextWindowSize(ImVec2(16 * boxSize.x, 9 * boxSize.y), ImGuiCond_Always);
+	ImGui::SetNextWindowSize(ImVec2(16 * gridSize.x, 9 * gridSize.y), ImGuiCond_Always);
 	ImGui::Begin("##Main", NULL, defaultPlotWindowFlags);
+	drawTopRow(state);
+	ImGui::NewLine();
+	drawProgressbarAndSlider(state);
+	ImGui::NewLine();
+	drawLogsOrPlots(state);
+	ImGui::End();
+}
 
-	ImGui::Dummy(ImVec2(12 * boxSize.x, boxSize.y));
+void GUIStateDrawer::drawTopRow(GUIState &) {
+	ImGui::Dummy(ImVec2(12 * gridSize.x, gridSize.y));
 	ImGui::SameLine();
 
-	bool startButtonClicked = ImGui::Button("Start", ImVec2(boxSize.x, boxSize.y));
+	bool startButtonClicked = ImGui::Button("Start", ImVec2(gridSize.x, gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to start simulation");
 	}
@@ -132,7 +127,7 @@ void GUIStateDrawer::draw(GUIState & state) {
 	}
 	ImGui::SameLine();
 
-	bool pauseButtonClicked = ImGui::Button("Pause", ImVec2(boxSize.x, boxSize.y));
+	bool pauseButtonClicked = ImGui::Button("Pause", ImVec2(gridSize.x, gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to pause simulation");
 	}
@@ -141,7 +136,7 @@ void GUIStateDrawer::draw(GUIState & state) {
 	}
 	ImGui::SameLine();
 
-	bool stopButtonClicked = ImGui::Button("Stop", ImVec2(boxSize.x, boxSize.y));
+	bool stopButtonClicked = ImGui::Button("Stop", ImVec2(gridSize.x, gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to stop simulation");
 	}
@@ -150,7 +145,7 @@ void GUIStateDrawer::draw(GUIState & state) {
 	}
 	ImGui::SameLine();
 
-	bool exitButtonClicked = ImGui::Button("Exit", ImVec2(boxSize.x, boxSize.y));
+	bool exitButtonClicked = ImGui::Button("Exit", ImVec2(gridSize.x, gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to stop simulation and quit application");
 	}
@@ -158,57 +153,134 @@ void GUIStateDrawer::draw(GUIState & state) {
 		exitFlag.setAndCall("stop", FlagSetType::True);
 		exitFlag.setAndCall("exit", FlagSetType::True);
 	}
+}
+
+void GUIStateDrawer::drawProgressbarAndSlider(GUIState & state) {
+	std::optional<DEvA::EAStatistics> eaStatistics = state.getEAStatistics();
+
+	bool progressbarDataReady = eaStatistics.has_value();
+	DEvA::EAProgress eaProgress = progressbarDataReady ? eaStatistics->eaProgress : DEvA::EAProgress{};
+	DEvA::VariationStatisticsMap vSM = progressbarDataReady ? eaStatistics->variationStatisticsMap : DEvA::VariationStatisticsMap{};
+
+	auto generationProgressPlotDatum = state.generationProgressPlotDatum(generationIndex);
+	auto genealogyProgressDatum = state.genealogyProgressDatum();
+	bool genealogyProgressDataReady = genealogyProgressDatum.has_value();
+	bool progressPlotDataReady = generationProgressPlotDatum.has_value();
+
+	static bool lastGenerationSelected(true);
+	ImVec4 activeButtonColor(GImGui->Style.Colors[ImGuiCol_ButtonActive]);
+	ImVec4 buttonColor(GImGui->Style.Colors[ImGuiCol_Button]);
+	if (lastGenerationSelected) {
+		ImGui::PushStyleColor(ImGuiCol_Button, activeButtonColor);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, buttonColor);
+	} else {
+		ImGui::PushStyleColor(ImGuiCol_Button, buttonColor);
+		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeButtonColor);
+	}
+	bool trackLastGenerationButtonClicked = ImGui::Button("Select\nLast\nGeneration", ImVec2(gridSize.x, gridSize.y));
+	ImGui::PopStyleColor(2);
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Press to select last generation for generation-dependent plots");
+	}
+	if (trackLastGenerationButtonClicked) {
+		lastGenerationSelected = not lastGenerationSelected;
+	}
+	ImGui::SameLine();
+
+	ImGui::Dummy(ImVec2(halfGridSize.x, halfGridSize.y));
+	ImGui::SameLine();
+
+	ImGui::BeginGroup();
+	float progress(0.0);
+	if (progressPlotDataReady) {
+		float processed;
+		if (eaProgress.numberOfTransformedIndividualsInGeneration != eaProgress.numberOfIndividualsInGeneration) {
+			processed = static_cast<float>(eaProgress.numberOfTransformedIndividualsInGeneration);
+		} else {
+			processed = static_cast<float>(eaProgress.numberOfEvaluatedIndividualsInGeneration);
+		} 
+		float total = static_cast<float>(eaProgress.numberOfIndividualsInGeneration);
+		if (0.0 != total) {
+			progress = processed / total;
+		}
+	}
+	std::string progressStr = std::format("{}%", progress);
+	ImGui::ProgressBar(progress, ImVec2(15 * gridSize.x, halfGridSize.y), progressStr.c_str());
 
 	ImGui::NewLine();
 
-	drawProgressbarAndSlider(state);
+	int numberOfGenerations = 0;
+	if (genealogyProgressDataReady) {
+		numberOfGenerations = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
+		if (lastGenerationSelected) {
+			generationIndex = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
+		}
+	}
+	ImGui::SetNextWindowSize(ImVec2(12 * gridSize.x, halfGridSize.y));
+	ImGui::SliderInt("##Generation", &generationIndex, 0, numberOfGenerations);
+	if (ImGui::IsItemHovered()) {
+		ImGui::SetTooltip("Select target generation for generation-dependent plots");
+	}
+	ImGui::EndGroup();
+}
 
-	ImGui::NewLine();
-
-	if (!hideLog) {
+void GUIStateDrawer::drawLogsOrPlots(GUIState & state) {
+	if (LogOrPlot::Log == logOrPlot) {
 		static float wrapWidth = 1.0;
-		wrapWidth = static_cast<float>(5.5 * boxSize.x);
+		wrapWidth = static_cast<float>(5.5 * gridSize.x);
 		std::string logText;
+		std::size_t totalLength(0);
 		auto logs = guiLoggerPtr->getLogs();
+		for (auto it(logs.begin()); it != logs.end(); ++it) {
+			if (totalLength + it->size() >= static_cast<std::size_t>(256 * 10)) {
+				logs.erase(it, logs.end());
+				break;
+			}
+			totalLength += it->size();
+		}
 		for (auto it(logs.rbegin()); it != logs.rend(); ++it) {
 			logText += *it;
 		}
-		ImVec2 textSize(6 * boxSize.x, 6 * boxSize.y);
-		ImGui::SetNextItemWidth(textSize.x);
+		ImVec2 textSize(15 * gridSize.x, 6 * gridSize.y);
+		//ImGui::SetNextItemWidth(textSize.x);
 		ImGuiWindowFlags logWindowFlags = defaultPlotWindowFlags
 			| ImGuiWindowFlags_HorizontalScrollbar;
 		ImGui::BeginChild("##LogWindow", textSize, false, logWindowFlags);
 		ImGui::Text(logText.c_str(), wrapWidth);
-		{
-			auto * drawList = ImGui::GetWindowDrawList();
-			auto textRectMin = ImGui::GetItemRectMin();
-			auto textRectMax = ImGui::GetItemRectMax();
-			textRectMax = ImVec2(textRectMin.x + textSize.x, textRectMin.y + textSize.y);
-			drawList->AddRect(textRectMin, textRectMax, IM_COL32(128, 128, 128, 128));
-		}
+		//{
+		//	auto * drawList = ImGui::GetWindowDrawList();
+		//	auto textRectMin = ImGui::GetItemRectMin();
+		//	auto textRectMax = ImGui::GetItemRectMax();
+		//	textRectMax = ImVec2(textRectMin.x + textSize.x, textRectMin.y + textSize.y);
+		//	drawList->AddRect(textRectMin, textRectMax, IM_COL32(128, 128, 128, 128));
+		//}
 		ImGui::EndChild();
 
 		ImGui::SameLine();
 	}
 
-	std::string hideLogText = hideLog ? ">##HideLog" : "<##HideLog";
-	bool hideLogClicked = ImGui::Button(hideLogText.c_str(), ImVec2(halfBoxSize.x, 6 * boxSize.y));
+	std::string hideLogText = (LogOrPlot::Log == logOrPlot) ? "<##HideLog" : ">##HideLog";
+	bool hideLogClicked = ImGui::Button(hideLogText.c_str(), ImVec2(gridSize.x, 6 * gridSize.y));
 	if (ImGui::IsItemHovered()) {
-		if (hideLog) {
-			ImGui::SetTooltip("Press to show log window");
+		if (LogOrPlot::Log == logOrPlot) {
+			ImGui::SetTooltip("Press to show plots");
 		} else {
-			ImGui::SetTooltip("Press to hide log window");
+			ImGui::SetTooltip("Press to show logs");
 		}
 	}
 	if (hideLogClicked) {
-		hideLog = !hideLog;
+		if (LogOrPlot::Log == logOrPlot) {
+			logOrPlot = LogOrPlot::Plot;
+		} else {
+			logOrPlot = LogOrPlot::Log;
+		}
 	}
 
 	ImGui::SameLine();
 
-	if (!hidePlotSelection) {
+	if (LogOrPlot::Plot == logOrPlot) {
 		ImGuiWindowFlags plotSelectionWindowFlags = defaultPlotWindowFlags;
-		ImGui::BeginChild("##PlotSelectionWindow", ImVec2(3.5 * boxSize.x, 6 * boxSize.y), false, plotSelectionWindowFlags);
+		ImGui::BeginChild("##PlotSelectionWindow", ImVec2(3 * gridSize.x, 6 * gridSize.y), false, plotSelectionWindowFlags);
 		ImGui::BeginGroup();
 		for (auto & plotNamePair : plotMap) {
 			auto & plotName = plotNamePair.first;
@@ -220,83 +292,30 @@ void GUIStateDrawer::draw(GUIState & state) {
 		ImGui::EndChild();
 
 		ImGui::SameLine();
-	}
 
-	std::string hidePlotSelectionText = hidePlotSelection ? ">##HidePlotSelection" : "<##HidePlotSelection";
-	bool hidePlotSelectionClicked = ImGui::Button(hidePlotSelectionText.c_str(), ImVec2(halfBoxSize.x, 6 * boxSize.y));
-	if (ImGui::IsItemHovered()) {
-		if (hidePlotSelection) {
-			ImGui::SetTooltip("Press to show plot selection window");
-		} else {
-			ImGui::SetTooltip("Press to hide plot selection window");
+		ImGuiWindowFlags plotWindowFlags = defaultPlotWindowFlags;
+		ImGui::BeginChild("##PlotWindow", ImVec2(12 * gridSize.x, 6 * gridSize.y), false, plotWindowFlags);
+		size_t col(0);
+		size_t row(0);
+		auto selected = getSelectedPlotFunctions(plotMap);
+		for (auto & plotName : selected) {
+			auto & plotPair = plotMap.at(plotName);
+			auto & plotFunction = plotPair.second;
+			plotFunction(state);
+			++col;
+			if (col > 2) {
+				col = 0;
+				++row;
+				ImGui::NewLine();
+			} else {
+				ImGui::SameLine();
+			}
+			if (row > 2) {
+				break;
+			}
 		}
+		ImGui::EndChild();
 	}
-	if (hidePlotSelectionClicked) {
-		hidePlotSelection = !hidePlotSelection;
-	}
-
-	ImGuiWindowFlags plotWindowFlags = defaultPlotWindowFlags;
-	ImGui::BeginChild("##PlotWindow", ImVec2(6 * boxSize.x, 6 * boxSize.y), false, plotWindowFlags);
-	auto selected = getSelectedPlotFunctions(plotMap);
-	for (auto & plotName : selected) {
-		auto & plotPair = plotMap.at(plotName);
-		auto & plotFunction = plotPair.second;
-		plotFunction(state);
-		ImGui::SameLine();
-	}
-	ImGui::EndChild();
-	ImGui::End();
-}
-
-void GUIStateDrawer::drawProgressbarAndSlider(GUIState & state) {
-	auto generationProgressPlotDatum = state.generationProgressPlotDatum(generationIndex);
-	auto genealogyProgressDatum = state.genealogyProgressDatum();
-	bool genealogyProgressDataReady = genealogyProgressDatum.has_value();
-	bool progressPlotDataReady = generationProgressPlotDatum.has_value();
-
-	bool selectAllGenerationsButtonClicked = ImGui::Button("Select\nAll\nGenerations", ImVec2(gridSize.x, gridSize.y));
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Press to select all generations for generation-dependent plots");
-	}
-	ImGui::SameLine();
-
-	bool selectLastGenerationButtonClicked = ImGui::Button("Select\nLast\nGeneration", ImVec2(gridSize.x, gridSize.y));
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Press to select last generation for generation-dependent plots");
-	}
-	ImGui::SameLine();
-
-	ImGui::Dummy(ImVec2(halfGridSize.x, halfGridSize.y));
-	ImGui::SameLine();
-
-	ImGui::BeginGroup();
-	float progress(0.0);
-	if (progressPlotDataReady) {
-		float failed = static_cast<float>(generationProgressPlotDatum->failed);
-		float evaluated = static_cast<float>(generationProgressPlotDatum->evaluated);
-		float total = static_cast<float>(generationProgressPlotDatum->total);
-		if (0.0 != total) {
-			progress = (failed + evaluated) / total;
-		}
-	}
-	std::string progressStr = std::format("{}%", progress);
-	ImGui::ProgressBar(progress, ImVec2(15 * gridSize.x, halfGridSize.y), progressStr.c_str());
-
-	ImGui::NewLine();
-
-	int numberOfGenerations = 0;
-	if (genealogyProgressDataReady) {
-		numberOfGenerations = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
-		if (selectLastGenerationButtonClicked) {
-			generationIndex = static_cast<int>(genealogyProgressDatum->numberOfGenerations);
-		}
-	}
-	ImGui::SetNextWindowSize(ImVec2(12 * gridSize.x, halfGridSize.y));
-	ImGui::SliderInt("##Generation", &generationIndex, 0, numberOfGenerations);
-	if (ImGui::IsItemHovered()) {
-		ImGui::SetTooltip("Select target generation for generation-dependent plots");
-	}
-	ImGui::EndGroup();
 }
 
 std::size_t GUIStateDrawer::getNumGenerations(GUIState & state) {
@@ -347,9 +366,6 @@ void GUIStateDrawer::drawFitnessVSIndividualsPlot(GUIState & state) {
 	Spec::Fitness lastGenerationDiff;
 
 	if (!ghostRun) {
-		minimumOfIndividuals = genealogyFPD->minimumOfIndividuals;
-		maximumOfIndividuals = genealogyFPD->maximumOfIndividuals;
-		meanOfIndividuals = genealogyFPD->meanOfIndividuals;
 		numberOfIndividuals = static_cast<double>(genealogyFPD->numberOfIndividuals);
 
 		lastGenerationFitnesses = generationFPD->fitnesses;
@@ -362,14 +378,13 @@ void GUIStateDrawer::drawFitnessVSIndividualsPlot(GUIState & state) {
 	if (ImPlot::BeginPlot("All Generation Plots", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
-		ImPlot::SetupLegend(ImPlotLocation_SouthWest);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
 		if (!ghostRun) {
-			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals);
-			ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
+			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals, ImPlotCond_Always);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff, ImPlotCond_Always);
 			ImPlot::SetupFinish();
 
-			ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &meanOfIndividuals, fitnessGetter, &maximumOfIndividuals, numberOfIndividuals);
 			ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationIndividualCount, 1.0, 0.0, defaultPlotLineFlags);
 		}
 
@@ -401,10 +416,10 @@ void GUIStateDrawer::drawFitnessVSGenerationsPlot(GUIState & state) {
 	if (ImPlot::BeginPlot("Fitness Evolution", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
-		ImPlot::SetupLegend(ImPlotLocation_SouthEast);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerations);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 3 * lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff);
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerations, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff, ImPlotCond_Always);
 		ImPlot::SetupFinish();
 
 		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerations);
@@ -413,4 +428,40 @@ void GUIStateDrawer::drawFitnessVSGenerationsPlot(GUIState & state) {
 		ImPlot::EndPlot();
 	}
 	
+}
+
+void GUIStateDrawer::drawVariationVSVariationStatistics(GUIState & state) {
+
+	if (ImPlot::BeginPlot("Variation Success", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Variation", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Variation Success", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+		{
+			std::optional<DEvA::EAStatistics> eaStatistics = state.getEAStatistics();
+
+			bool plotDataReady = eaStatistics.has_value();
+			if (plotDataReady) {
+				DEvA::EAProgress eaProgress = eaStatistics->eaProgress;
+				DEvA::VariationStatisticsMap vSM = eaStatistics->variationStatisticsMap;
+
+				if (!vSM.empty()) {
+					std::vector<std::string> variationNames;
+					std::vector<double> successRates;
+					for (auto & varStatPair : vSM) {
+						auto & variationName = varStatPair.first;
+						double successRate = varStatPair.second.successRate();
+
+						variationNames.push_back(variationName);
+						successRates.push_back(successRate);
+					}
+					ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, 1.0, ImPlotCond_Always);
+					ImPlot::SetupAxisTicks(ImAxis_Y1, successRates, variationNames, false);
+					ImPlot::SetupFinish();
+
+					ImPlot::PlotBars("Variation Success per VariationFunctor", &successRates[0], successRates.size(), 0.0, ImPlotBarsFlags_Horizontal);
+				}
+			}
+		}
+		ImPlot::EndPlot();
+	}
 }

@@ -55,7 +55,7 @@ void GUIInitialisation::initialise() {
 		//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
 		ImFontConfig cfg;
-		cfg.SizePixels = 20;
+		cfg.SizePixels = 16;
 		io.Fonts->AddFontDefault(&cfg);
 
 		// Setup Dear ImGui style

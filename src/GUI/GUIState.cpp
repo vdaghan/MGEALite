@@ -5,6 +5,26 @@ GUIState::GUIState() {
 	genealogyProgressData.numberOfGenerations = 0;
 }
 
+void GUIState::updateEAStatistics(DEvA::EAStatistics eaS) {
+	std::lock_guard<std::mutex> lock(updateMutex);
+	eaStatistics = eaS;
+};
+
+void GUIState::updateEAStatisticsHistory(DEvA::EAStatisticsHistory eaSH) {
+	std::lock_guard<std::mutex> lock(updateMutex);
+	eaStatisticsHistory = eaSH;
+};
+
+std::optional<DEvA::EAStatistics> GUIState::getEAStatistics() {
+	std::lock_guard<std::mutex> lock(updateMutex);
+	return eaStatistics;
+}
+
+std::optional<DEvA::EAStatisticsHistory> GUIState::getEAStatisticsHistory() {
+	std::lock_guard<std::mutex> lock(updateMutex);
+	return eaStatisticsHistory;
+}
+
 void GUIState::updateMotionGenerationState(std::size_t generation, MotionGenerationState const & mGS) {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	if (motionGenerationStates.size() < generation + 1) {

@@ -9,6 +9,7 @@
 #include <DTimer/DTimer.h>
 
 #include "mgealite_version.h"
+#include "deva_version.h"
 #include "Database.h"
 #include "GUI/GUIState.h"
 #include "GUI/GUIStateDrawer.h"
@@ -30,6 +31,7 @@ int main() {
 	gui.startLoop();
 	sharedSync.finaliseAll();
 
+	spdlog::info("DEvA version: {}", getDEvAVersion());
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionParameters motionParameters;
@@ -50,6 +52,7 @@ int main() {
 
 	MotionGenerator motionGenerator("./data", motionParameters);
 	sharedSync.addCallback("stop", CallbackType::OnTrue, [&]() {motionGenerator.stop(); });
+	motionGenerator.hookCallbacks<GUIState>(gui.state);
 	motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){
 		gui.state.updateMotionGenerationState(gen, mGS);
 	};
