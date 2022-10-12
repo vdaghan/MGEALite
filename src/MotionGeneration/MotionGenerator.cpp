@@ -1,5 +1,6 @@
 #include "MotionGeneration/MotionGenerator.h"
 
+#include "MotionGeneration/Initialisers/Initialisers.h"
 #include "Logging/SpdlogCommon.h"
 #include "Wavelet/HaarWavelet.h"
 
@@ -15,9 +16,9 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 , stopFlag(false)
 {
 	maxGenerations = 0;
-	ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundary, this);
-	//ea.genesisFunction = std::bind_front(&MotionGenerator::genesisBoundaryWavelet, this);
-	//ea.setGenesisFunction(std::bind_front(&MotionGenerator::genesisRandom, this, 256));
+	//ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 256)); };
+	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundary); };
+	ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundaryWavelet); };
 	ea.transformFunction = std::bind_front(&MotionGenerator::transform, this);
 	ea.evaluationFunction = std::bind_front(&MotionGenerator::evaluate, this);
 	ea.fitnessComparisonFunction = [](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; };

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Database.h"
+#include "MotionGeneration/Initialisers/Initialisers.h"
+#include "MotionGeneration/Variations/Variations.h"
 #include "MotionGeneration/MotionGenerationState.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/Specification.h"
@@ -43,12 +45,10 @@ class MotionGenerator {
 		Spec::GenotypeProxy createGenotype();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::Fitness evaluate(Spec::GenotypeProxy);
-		template <std::size_t, std::size_t>
-		Spec::IndividualPtrs parentSelection(Spec::IndividualPtrs);
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
-		using VariationInterface = std::function<SimulationDataPtrs(MotionParameters const &, SimulationDataPtrs)>;
-		[[nodiscard]] Spec::GenotypeProxies computeVariation(VariationInterface, Spec::GenotypeProxies);
+		[[nodiscard]] Spec::GenotypeProxies computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies);
+		[[nodiscard]] Spec::GenotypeProxies computeGenesis(std::function<Spec::GenotypeProxies(MGEA::InitialiserParams)> gFunc);
 
 		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);

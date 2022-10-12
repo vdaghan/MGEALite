@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.4.0.0)
+project(MGEALite LANGUAGES CXX VERSION 0.4.0.1)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 242d57188cece02c9adab1005320182ee06fc0ed GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.4.7
@@ -39,6 +39,9 @@ set(MotionGeneration_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGen
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator_EAFunctions.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionParameters.cpp")
+set(Initialisers_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/Boundary.cpp"
+						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/BoundaryWavelet.cpp"
+						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/Random.cpp")
 set(Variations_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverAll.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverSingle.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CutAndCrossfillAll.cpp"
@@ -78,6 +81,7 @@ set(GUI_SOURCES "${CMAKE_SOURCE_DIR}/src/GUI/GUIState.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/ImPlotExtensions.cpp")
 target_sources(MGEALite PUBLIC ${Logging_SOURCES})
 target_sources(MGEALite PUBLIC ${MotionGeneration_SOURCES})
+target_sources(MGEALite PUBLIC ${Initialisers_SOURCES})
 target_sources(MGEALite PUBLIC ${Variations_SOURCES})
 target_sources(MGEALite PUBLIC ${Wavelet_SOURCES})
 target_sources(MGEALite PUBLIC ${MGEALite_SOURCES})
