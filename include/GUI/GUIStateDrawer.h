@@ -34,7 +34,7 @@ class GUIStateDrawer {
 		ImVec2 halfGridSize;
 		ImVec2 gridSize;
 
-		int generationIndex;
+		std::size_t generationIndex;
 
 		LogOrPlot logOrPlot;
 		std::shared_ptr<GUILogger_mt> guiLoggerPtr;
