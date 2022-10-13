@@ -6,7 +6,7 @@
 #include <iostream>
 #include <ranges>
 
-Database::Database(std::string pathName, MotionParameters & mP) : motionParameters(mP), datastore(pathName), m_nextId(0) {
+Database::Database(std::string pathName, MotionParameters & mP) : motionParameters(mP), datastore(pathName) {
 	syncWithDatastore();
 	auto const & datastoreHistory = datastore.history();
 	for (auto const & simInfo : datastoreHistory) {
@@ -51,22 +51,18 @@ SimulationStatus Database::status(SimulationInfo simInfo) const {
 	return simulationHistory.at(simInfo)->status();
 }
 
-SimulationDataPtr Database::createSimulation(SimulationInfo simInfo) {
+SimulationLogPtr Database::registerSimulation(SimulationInfo simInfo) {
 	if (SimulationStatus::NonExistent != status(simInfo)) {
-		return getSimulationLog(simInfo)->data();
+		return getSimulationLog(simInfo);
 	}
 	SimulationLogPtr simulationLogPtr = std::make_shared<SimulationLog>(simInfo);
-	simulationLogPtr->data()->alignment = motionParameters.alignment;
-	simulationLogPtr->data()->timeout = motionParameters.timeout;
-	simulationLogPtr->data()->contacts = motionParameters.contactParameters;
 	auto emplaceResult = simulationHistory.emplace(std::make_pair(simInfo, simulationLogPtr));
 	if (!simulationHistory.contains(simInfo)) {
-		return nullptr;
+		throw;
 	}
-	++m_nextId;
 	simulationLogPtr->updateStatus(SimulationStatus::Uninitialised);
 	addToList(uninitialised, simInfo);
-	return simulationLogPtr->data();
+	return simulationLogPtr;
 }
 
 MGEA::ErrorCode Database::startSimulation(SimulationInfo simInfo) {
@@ -134,14 +130,6 @@ SimulationLogPtr Database::getSimulationLog(SimulationInfo simInfo) {
 }
 
 SimulationHistory const & Database::getSimulationHistory() {
-	std::size_t maxId(0);
-	for (auto const& historyPair : simulationHistory) {
-		auto const& simInfo = historyPair.first;
-		if (simInfo.identifier >= maxId) {
-			maxId = simInfo.identifier;
-		}
-	}
-	m_nextId = maxId + 1;
 	return simulationHistory;
 }
 

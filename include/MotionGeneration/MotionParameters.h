@@ -28,6 +28,13 @@ struct MotionParameters {
 	double simStep;
 	std::size_t simSamples;
 	double simStop() { return simStart + simStep * static_cast<double>(simSamples); };
+	std::vector<double> time() {
+		std::vector<double> timeVec(simSamples);
+		std::generate(timeVec.begin(), timeVec.end(), [this, t = simStart]() mutable {
+			return (t += simStep);
+		});
+		return timeVec;
+	}
 	int alignment;
 	double timeout;
 	std::vector<std::string> jointNames;

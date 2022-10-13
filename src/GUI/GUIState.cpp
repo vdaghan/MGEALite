@@ -1,26 +1,28 @@
 #include "GUI/GUIState.h"
 
+#include "MotionGeneration/Specification.h"
+
 GUIState::GUIState() {
 	genealogyProgressData.currentGeneration = 0;
 	genealogyProgressData.numberOfGenerations = 0;
 }
 
-void GUIState::updateEAStatistics(DEvA::EAStatistics eaS) {
+void GUIState::updateEAStatistics(DEvA::EAStatistics<Spec> eaS) {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	eaStatistics = eaS;
 };
 
-void GUIState::updateEAStatisticsHistory(DEvA::EAStatisticsHistory eaSH) {
+void GUIState::updateEAStatisticsHistory(DEvA::EAStatisticsHistory<Spec> eaSH) {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	eaStatisticsHistory = eaSH;
 };
 
-std::optional<DEvA::EAStatistics> GUIState::getEAStatistics() {
+std::optional<DEvA::EAStatistics<Spec>> GUIState::getEAStatistics() {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	return eaStatistics;
 }
 
-std::optional<DEvA::EAStatisticsHistory> GUIState::getEAStatisticsHistory() {
+std::optional<DEvA::EAStatisticsHistory<Spec>> GUIState::getEAStatisticsHistory() {
 	std::lock_guard<std::mutex> lock(updateMutex);
 	return eaStatisticsHistory;
 }

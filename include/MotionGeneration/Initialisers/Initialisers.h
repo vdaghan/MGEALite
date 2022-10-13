@@ -12,14 +12,13 @@
 
 namespace MGEA {
 	struct InitialiserParams {
-		std::vector<double> & time;
 		MotionParameters & motionParameters;
 		std::atomic<bool> & pauseFlag;
 		std::atomic<bool> & stopFlag;
 		Database & database;
 	};
 
-	Spec::GenotypeProxies genesisRandom(std::size_t, InitialiserParams);
-	Spec::GenotypeProxies genesisBoundary(InitialiserParams);
-	Spec::GenotypeProxies genesisBoundaryWavelet(InitialiserParams);
+	SimulationDataPtrs genesisRandom(std::size_t, InitialiserParams);
+	SimulationDataPtrs genesisBoundary(InitialiserParams);
+	SimulationDataPtrs genesisBoundaryWavelet(InitialiserParams);
 }

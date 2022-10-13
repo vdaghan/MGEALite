@@ -50,19 +50,29 @@ void Datastore::syncWithFilesystem() {
 	deleteAllArtifacts();
 	Progress progress = getProgress();
 
+	std::unique(progress.idsWithInputs.begin(), progress.idsWithInputs.end());
+	std::stable_sort(progress.idsWithInputs.begin(), progress.idsWithInputs.end());
+	std::unique(progress.idsWithOutputs.begin(), progress.idsWithOutputs.end());
+	std::stable_sort(progress.idsWithOutputs.begin(), progress.idsWithOutputs.end());
 	std::set_intersection(progress.idsWithInputs.begin(), progress.idsWithInputs.end(),
 		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
 		std::back_inserter(progress.idsWithInputsAndOutputs));
+	std::unique(progress.idsWithInputsAndOutputs.begin(), progress.idsWithInputsAndOutputs.end());
+	std::stable_sort(progress.idsWithInputsAndOutputs.begin(), progress.idsWithInputsAndOutputs.end());
 	for (auto & idWithInputAndOutput : progress.idsWithInputsAndOutputs) {
 		simulationQueue.remove(idWithInputAndOutput);
 		evaluationQueue.push_back(idWithInputAndOutput);
 	}
 
 	std::list<std::size_t> tmp;
+	std::unique(evaluationQueue.begin(), evaluationQueue.end());
+	std::stable_sort(evaluationQueue.begin(), evaluationQueue.end());
 	std::set_union(evaluationQueue.begin(), evaluationQueue.end(),
 		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
 		std::back_inserter(tmp));
 	std::list<std::size_t> updatedEvaluationQueue;
+	std::unique(deleteQueue.begin(), deleteQueue.end());
+	std::stable_sort(deleteQueue.begin(), deleteQueue.end());
 	std::set_difference(tmp.begin(), tmp.end(),
 		deleteQueue.begin(), deleteQueue.end(),
 		std::back_inserter(updatedEvaluationQueue));

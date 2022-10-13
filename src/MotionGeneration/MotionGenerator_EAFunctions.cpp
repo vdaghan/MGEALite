@@ -150,10 +150,10 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
-	auto & timer = DTimer::simple("evaluate()").newSample().begin();
+	//auto & timer = DTimer::simple("evaluate()").newSample().begin();
 	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->fitnessExists()) {
-		timer.end();
+		//timer.end();
 		return simLogPtr->data()->fitness;
 	}
 	SimulationDataPtr simDataPtr = simLogPtr->data();
@@ -164,7 +164,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	bool hasPalmHeight = simDataPtr->outputs.contains("palmHeight");
 	if (!hasToeHeight or !hasFingertipHeight or !hasHeelHeight or !hasPalmHeight) {
 		spdlog::error("There is no position named \"heelHeight\" or \"toeHeight\" or \"fingertipHeight\" or \"palmHeight\" in simulation output {}", genPx);
-		timer.end();
+		//timer.end();
 		return 0.0;
 	}
 	double timeStep = motionParameters.simStep;
@@ -177,7 +177,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		and fingertipHeight.size() == palmHeight.size();
 	if (!sameSize) {
 		spdlog::error("\"heelHeight\", \"toeHeight\", \"palmHeight\" and \"fingertipHeight\" are not of same size");
-		timer.end();
+		//timer.end();
 		return 0.0;
 	}
 	//double diff(0.0);
@@ -201,12 +201,49 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
 	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
-	timer.end();
+	//timer.end();
 	return fitness;
+}
+
+Spec::Distance MotionGenerator::calculateDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
+	auto simLogPtr1(database.getSimulationLog(id1));
+	auto simLogPtr2(database.getSimulationLog(id2));
+	auto simDataPtr1(simLogPtr1->data());
+	auto simDataPtr2(simLogPtr2->data());
+
+	auto numSamples(motionParameters.simSamples);
+	auto jointNames(motionParameters.jointNames);
+	std::size_t distance(0);
+	for (auto& jointName : jointNames) {
+		auto& torque1(simDataPtr1->torque.at(jointName));
+		auto& torque2(simDataPtr2->torque.at(jointName));
+		for (std::size_t i(0); i != numSamples; ++i) {
+			auto t1(torque1.at(i));
+			auto t2(torque2.at(i));
+			if (0.0 == t1 or 0.0 == t2) {
+				continue;
+			}
+			if (t1 * t2 < 0.0) {
+				++distance;
+			}
+		}
+	}
+	return distance;
 }
 
 bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
 	return f > 1.5 * motionParameters.simStop();
+}
+
+void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
+	sptr->time = motionParameters.time();
+	sptr->params.emplace("simStart", motionParameters.simStart);
+	sptr->params.emplace("simStop", motionParameters.simStop());
+	sptr->params.emplace("simStep", motionParameters.simStep);
+	sptr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
+	sptr->alignment = motionParameters.alignment;
+	sptr->timeout = motionParameters.timeout;
+	sptr->contacts = motionParameters.contactParameters;
 }
 
 Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies) {
@@ -237,42 +274,41 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 		if (checkStopFlagAndMaybeWait()) {
 			return {};
 		}
-		SimulationInfo childInfo{ .generation = currentGeneration, .identifier = database.nextId() };
-		auto createResult = database.createSimulation(childInfo);
+		applyMotionParameters(child);
+		auto childIndividualIdentifier = ea.reserveNewIndividualIdentifier();
+		auto childIndividualPtr = ea.createNewIndividual(childIndividualIdentifier);
+		auto childLogPtr = database.registerSimulation(childIndividualIdentifier);
 		// TODO Check if we could successfully create a new input?
-		SimulationLogPtr childLogPtr = database.getSimulationLog(childInfo);
 		updateSimulationDataPtr({ .source = child, .target = childLogPtr->data() });
-		MGEA::ErrorCode startError = database.startSimulation(childLogPtr->info());
+		MGEA::ErrorCode startError = database.startSimulation(childIndividualIdentifier);
 		// TODO Check if start was successful?
-		childProxies.push_back(childInfo);
+		childProxies.push_back(childIndividualIdentifier);
 	}
 	timer.end();
 	return childProxies;
 }
 
-Spec::GenotypeProxies MotionGenerator::computeGenesis(std::function<Spec::GenotypeProxies(MGEA::InitialiserParams)> gFunc) {
-	std::vector<double> time(motionParameters.simSamples);
-	auto timeGenerator = [this, t = motionParameters.simStart]() mutable {
-		return (t += motionParameters.simStep);
-	};
-	std::generate(time.begin(), time.end(), timeGenerator);
-
+Spec::GenotypeProxies MotionGenerator::computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc) {
 	MGEA::InitialiserParams initialiserParams{
-		.time = time,
 		.motionParameters = motionParameters,
 		.pauseFlag = pauseFlag,
 		.stopFlag = stopFlag,
 		.database = database
 	};
 
-	auto retVal(gFunc(initialiserParams));
+	auto simDataPtrs(gFunc(initialiserParams));
 
-	for (auto& genotypeProxy : retVal) {
-		SimulationLogPtr simulationLogPtr = database.getSimulationLog(genotypeProxy);
-		MGEA::ErrorCode startError = database.startSimulation(simulationLogPtr->info());
+	Spec::GenotypeProxies genotypeProxies;
+	for (auto& simDataPtr : simDataPtrs) {
+		applyMotionParameters(simDataPtr);
+		auto individualIdentifier = ea.reserveNewIndividualIdentifier();
+		auto logPtr = database.registerSimulation(individualIdentifier);
+		*logPtr->data() = *simDataPtr;
+		MGEA::ErrorCode startError = database.startSimulation(individualIdentifier);
+		genotypeProxies.push_back(individualIdentifier);
 	}
 
-	return retVal;
+	return genotypeProxies;
 }
 
 void MotionGenerator::onEpochStart(std::size_t generation) {

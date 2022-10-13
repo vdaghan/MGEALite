@@ -29,7 +29,7 @@ class Database {
 		void stopSyncLoop();
 
 		[[nodiscard]] SimulationStatus status(SimulationInfo) const;
-		[[nodiscard]] SimulationDataPtr createSimulation(SimulationInfo);
+		[[nodiscard]] SimulationLogPtr registerSimulation(SimulationInfo);
 		[[nodiscard]] MGEA::ErrorCode startSimulation(SimulationInfo);
 		[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
 		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
@@ -37,13 +37,11 @@ class Database {
 		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();
-		[[nodiscard]] std::size_t nextId() { return m_nextId; };
 
 		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
 	private:
 		MotionParameters & motionParameters;
 		Datastore datastore;
-		std::size_t m_nextId;
 		std::mutex dbMutex;
 		void syncWithDatastore();
 		bool keepSyncing;

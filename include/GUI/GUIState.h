@@ -46,10 +46,10 @@ struct GenealogyFitnessPlotDatum {
 class GUIState {
 	public:
 		GUIState();
-		void updateEAStatistics(DEvA::EAStatistics eaS);
-		void updateEAStatisticsHistory(DEvA::EAStatisticsHistory eaSH);
-		std::optional<DEvA::EAStatistics> getEAStatistics();
-		std::optional<DEvA::EAStatisticsHistory> getEAStatisticsHistory();
+		void updateEAStatistics(DEvA::EAStatistics<Spec> eaS);
+		void updateEAStatisticsHistory(DEvA::EAStatisticsHistory<Spec> eaSH);
+		std::optional<DEvA::EAStatistics<Spec>> getEAStatistics();
+		std::optional<DEvA::EAStatisticsHistory<Spec>> getEAStatisticsHistory();
 
 
 		void updateMotionGenerationState(std::size_t, MotionGenerationState const &);
@@ -61,8 +61,8 @@ class GUIState {
 		std::optional<GenealogyFitnessPlotDatum> genealogyFitnessPlotDatum(std::size_t) const;
 	private:
 		mutable std::mutex updateMutex;
-		std::optional<DEvA::EAStatistics> eaStatistics;
-		std::optional<DEvA::EAStatisticsHistory> eaStatisticsHistory;
+		std::optional<DEvA::EAStatistics<Spec>> eaStatistics;
+		std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory;
 
 		std::deque<MotionGenerationState> motionGenerationStates;
 		std::deque<GenerationProgressPlotDatum> generationProgressPlotData;

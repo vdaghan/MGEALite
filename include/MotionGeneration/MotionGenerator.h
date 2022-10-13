@@ -42,13 +42,14 @@ class MotionGenerator {
 		Spec::GenotypeProxies genesisBoundary();
 		Spec::GenotypeProxies genesisBoundaryWavelet();
 		Spec::GenotypeProxies genesisRandom(std::size_t);
-		Spec::GenotypeProxy createGenotype();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::Fitness evaluate(Spec::GenotypeProxy);
+		Spec::Distance calculateDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
+		void applyMotionParameters(SimulationDataPtr);
 		[[nodiscard]] Spec::GenotypeProxies computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies);
-		[[nodiscard]] Spec::GenotypeProxies computeGenesis(std::function<Spec::GenotypeProxies(MGEA::InitialiserParams)> gFunc);
+		[[nodiscard]] Spec::GenotypeProxies computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc);
 
 		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);

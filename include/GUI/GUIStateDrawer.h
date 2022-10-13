@@ -48,6 +48,7 @@ class GUIStateDrawer {
 		std::size_t getLastGeneration(GUIState &);
 		void drawFitnessVSIndividualsPlot(GUIState &);
 		void drawFitnessVSGenerationsPlot(GUIState &);
-		void drawVariationVSVariationStatistics(GUIState &);
+		void drawVariationVSVariationStatistics(GUIState&);
+		void drawDistancesVSGenerations(GUIState&);
 		PlotMap plotMap;
 };

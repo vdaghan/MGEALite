@@ -46,8 +46,9 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 	defaultPlotWindowStyle.ChildBorderSize = 0.0;
 	defaultPlotWindowStyle.FramePadding = ImVec2(0, 0);
 	defaultPlotWindowStyle.FrameBorderSize = 0.0;
+	defaultPlotWindowStyle.CellPadding = ImVec2(0, 0);
 	defaultPlotWindowStyle.ItemSpacing = ImVec2(0, 0);
-	defaultPlotWindowStyle.ItemInnerSpacing = ImVec2(5, 5);
+	defaultPlotWindowStyle.ItemInnerSpacing = ImVec2(0, 0);
 	defaultPlotWindowStyle.ButtonTextAlign = ImVec2(0.5f, 0.5f);
 
 	defaultPlotWindowFlags = ImGuiWindowFlags_NoTitleBar
@@ -68,6 +69,7 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
 	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
 	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
+	plotMap.emplace(std::make_pair("Distances vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawDistancesVSGenerations, this))));
 }
 
 void GUIStateDrawer::draw(GUIState & state) {
@@ -96,8 +98,8 @@ void GUIStateDrawer::draw(GUIState & state) {
 
 	plotSize = ImVec2(4 * gridSize.x, 3 * gridSize.y);
 	defaultPlotStyle = ImPlot::GetStyle();
-	defaultPlotStyle.PlotPadding = ImVec2(1, 1);
-	defaultPlotStyle.LabelPadding = ImVec2(1, 1);
+	defaultPlotStyle.PlotPadding = ImVec2(10, 10);
+	defaultPlotStyle.LabelPadding = ImVec2(10, 10);
 	defaultPlotStyle.PlotDefaultSize = plotSize;
 	defaultPlotStyle.PlotMinSize = plotSize;
 	
@@ -157,7 +159,7 @@ void GUIStateDrawer::drawTopRow(GUIState &) {
 }
 
 void GUIStateDrawer::drawProgressbarAndSlider(GUIState & state) {
-	std::optional<DEvA::EAStatistics> eaStatistics = state.getEAStatistics();
+	std::optional<DEvA::EAStatistics<Spec>> eaStatistics = state.getEAStatistics();
 
 	bool progressbarDataReady = eaStatistics.has_value();
 	bool sliderDataReady = eaStatistics.has_value();
@@ -290,20 +292,20 @@ void GUIStateDrawer::drawLogsOrPlots(GUIState & state) {
 
 		ImGuiWindowFlags plotWindowFlags = defaultPlotWindowFlags;
 		ImGui::BeginChild("##PlotWindow", ImVec2(12 * gridSize.x, 6 * gridSize.y), false, plotWindowFlags);
-		size_t col(0);
-		size_t row(0);
+		ImVec2 ImGui::GetCursorPos();
+		int col(0);
+		int row(0);
 		auto selected = getSelectedPlotFunctions(plotMap);
 		for (auto & plotName : selected) {
 			auto & plotPair = plotMap.at(plotName);
 			auto & plotFunction = plotPair.second;
+			ImVec2 cursorPos(col * plotSize.x, row * plotSize.y);
+			ImGui::SetCursorPos(cursorPos);
 			plotFunction(state);
 			++col;
 			if (col > 2) {
 				col = 0;
 				++row;
-				ImGui::NewLine();
-			} else {
-				ImGui::SameLine();
 			}
 			if (row > 2) {
 				break;
@@ -332,121 +334,97 @@ ImPlotPoint fitnessGetter(int idx, void * user_data) {
 };
 
 void GUIStateDrawer::drawFitnessVSIndividualsPlot(GUIState & state) {
-	std::size_t numGenerations(getNumGenerations(state));
-	bool ghostRun = false;
-	if (0 == numGenerations) {
-		ghostRun = true;
-	}
-	std::size_t lastGeneration;
-	std::optional<GenerationFitnessPlotDatum> generationFPD;
-	std::optional<GenealogyFitnessPlotDatum> genealogyFPD;
-	if (!ghostRun) {
-		lastGeneration = getLastGeneration(state);
-		generationFPD = state.generationFitnessPlotDatum(lastGeneration);
-		genealogyFPD = state.genealogyFitnessPlotDatum(lastGeneration);
-		if (!generationFPD.has_value() or !genealogyFPD.has_value()) {
-			ghostRun = true;
-		}
-	}
-
-	std::vector<Spec::Fitness> minimumOfIndividuals;
-	std::vector<Spec::Fitness> maximumOfIndividuals;
-	std::vector<Spec::Fitness> meanOfIndividuals;
-	double numberOfIndividuals;
-
-	std::vector<Spec::Fitness> lastGenerationFitnesses;
-	Spec::Fitness lastGenerationMinimumFitness;
-	Spec::Fitness lastGenerationMaximumFitness;
-	int lastGenerationIndividualCount;
-	Spec::Fitness lastGenerationDiff;
-
-	if (!ghostRun) {
-		numberOfIndividuals = static_cast<double>(genealogyFPD->numberOfIndividuals);
-
-		lastGenerationFitnesses = generationFPD->fitnesses;
-		lastGenerationMinimumFitness = generationFPD->minimum;
-		lastGenerationMaximumFitness = generationFPD->maximum;
-		lastGenerationIndividualCount = static_cast<int>(generationFPD->count);
-		lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
-	}
-
-	if (ImPlot::BeginPlot("All Generation Plots", plotSize, defaultPlotFlags)) {
+	if (ImPlot::BeginPlot("FitnessVSIndividuals", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
 		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		if (!ghostRun) {
-			ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividuals, ImPlotCond_Always);
-			ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 0.1 * lastGenerationDiff, lastGenerationMaximumFitness + 0.1 * lastGenerationDiff, ImPlotCond_Always);
-			ImPlot::SetupFinish();
-
-			ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationIndividualCount, 1.0, 0.0, defaultPlotLineFlags);
+		std::optional<DEvA::EAStatistics<Spec>> eaStatistics = state.getEAStatistics();
+		if (!eaStatistics or eaStatistics->fitnesses.empty()) {
+			ImPlot::EndPlot();
+			return;
 		}
+		auto & fitnessesList = eaStatistics->fitnesses;
+		std::vector<Spec::Fitness> fitnessesVector(fitnessesList.begin(), fitnessesList.end());
+		double lastGenerationMinimumFitness(*std::min_element(fitnessesList.begin(), fitnessesList.end()));
+		double lastGenerationMaximumFitness(*std::max_element(fitnessesList.begin(), fitnessesList.end()));
+		double lastGenerationDiff(lastGenerationMaximumFitness - lastGenerationMinimumFitness);
+		int numberOfIndividualsInt(static_cast<int>(fitnessesVector.size()));
+		double numberOfIndividualsDouble(static_cast<double>(numberOfIndividualsInt));
 
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividualsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 0.1 * lastGenerationDiff, lastGenerationMaximumFitness + 0.1 * lastGenerationDiff, ImPlotCond_Always);
+		ImPlot::SetupFinish();
+
+		ImPlot::PlotLine("Last Generation Fitness", &fitnessesVector[0], numberOfIndividualsInt, 1.0, 0.0, defaultPlotLineFlags);
 		ImPlot::EndPlot();
 	}
 }
 
 void GUIStateDrawer::drawFitnessVSGenerationsPlot(GUIState & state) {
-	std::size_t numGenerations(getNumGenerations(state));
-	if (0 == numGenerations) {
-		return;
-	}
-	std::size_t lastGeneration(getLastGeneration(state));
-	auto generationFPD = state.generationFitnessPlotDatum(lastGeneration);
-	auto genealogyFPD = state.genealogyFitnessPlotDatum(lastGeneration);
-	if (!generationFPD.has_value() or !genealogyFPD.has_value()) {
-		return;
-	}
-
-	auto & minimumOfGenerations = genealogyFPD->minimumOfGenerations;
-	auto & maximumOfGenerations = genealogyFPD->maximumOfGenerations;
-	auto & meanOfGenerations = genealogyFPD->meanOfGenerations;
-	auto numberOfGenerations = static_cast<double>(genealogyFPD->numberOfGenerations);
-
-	auto & lastGenerationMinimumFitness = generationFPD->minimum;
-	auto & lastGenerationMaximumFitness = generationFPD->maximum;
-	auto lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
-
 	if (ImPlot::BeginPlot("Fitness Evolution", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
 		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerations, ImPlotCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff, ImPlotCond_Always);
+		std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
+		if (!eaStatisticsHistory or eaStatisticsHistory->empty()) {
+			ImPlot::EndPlot();
+			return;
+		}
+		std::vector<double> minimumOfGenerations;
+		std::vector<double> maximumOfGenerations;
+		std::vector<double> meanOfGenerations;
+		double lastMinimumFitness{};
+		double lastMaximumFitness{};
+		for (auto& eaStatistics : *eaStatisticsHistory) {
+			auto& fitnessesList = eaStatistics.fitnesses;
+			if (fitnessesList.empty()) {
+				continue;
+			}
+			double numberOfIndividuals(static_cast<double>(fitnessesList.size()));
+			double minimumFitness(*std::min_element(fitnessesList.begin(), fitnessesList.end()));
+			double maximumFitness(*std::max_element(fitnessesList.begin(), fitnessesList.end()));
+			double totalFitness(std::accumulate(fitnessesList.begin(), fitnessesList.end(), 0.0));
+			double meanFitness(totalFitness / numberOfIndividuals);
+			minimumOfGenerations.push_back(minimumFitness);
+			maximumOfGenerations.push_back(maximumFitness);
+			meanOfGenerations.push_back(meanFitness);
+			lastMinimumFitness = minimumFitness;
+			lastMaximumFitness = maximumFitness;
+		}
+		if (minimumOfGenerations.empty()) {
+			ImPlot::EndPlot();
+			return;
+		}
+		double lastDiff(lastMaximumFitness - lastMinimumFitness);
+		int numberOfGenerationsInt(static_cast<int>(eaStatisticsHistory->size()));
+		double numberOfGenerationsDouble(static_cast<double>(eaStatisticsHistory->size()));
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerationsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastMinimumFitness - lastDiff, lastMaximumFitness + lastDiff, ImPlotCond_Always);
 		ImPlot::SetupFinish();
 
-		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerations);
-		ImPlot::PlotLine("All generations mean fitness", &meanOfGenerations[0], numberOfGenerations, 1.0, 0.0, defaultPlotLineFlags);
+		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerationsInt);
+		ImPlot::PlotLine("All generations mean fitness", &meanOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
 
 		ImPlot::EndPlot();
 	}
-	
 }
 
 void GUIStateDrawer::drawVariationVSVariationStatistics(GUIState & state) {
-
 	if (ImPlot::BeginPlot("Variation Success", plotSize, defaultPlotFlags)) {
-
-		ImPlotAxisFlags xAxisFlags =
+		ImPlotAxisFlags axisFlags =
 			ImPlotAxisFlags_NoGridLines
 			| ImPlotAxisFlags_NoMenus
 			| ImPlotAxisFlags_NoSideSwitch
 			| ImPlotAxisFlags_NoHighlight
 			| ImPlotAxisFlags_AutoFit;
-		ImPlotAxisFlags yAxisFlags =
-			ImPlotAxisFlags_NoGridLines
-			| ImPlotAxisFlags_NoMenus
-			| ImPlotAxisFlags_NoSideSwitch
-			| ImPlotAxisFlags_NoHighlight
-			| ImPlotAxisFlags_AutoFit;
-		ImPlot::SetupAxis(ImAxis_X1, "Variation Success", xAxisFlags);
-		ImPlot::SetupAxis(ImAxis_Y1, "Variation", yAxisFlags);
+		ImPlot::SetupAxis(ImAxis_X1, "Variation Success", axisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Variation", axisFlags);
 		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 		{
-			std::optional<DEvA::EAStatistics> eaStatistics = state.getEAStatistics();
-			std::optional<DEvA::EAStatisticsHistory> eaStatisticsHistory = state.getEAStatisticsHistory();
+			std::optional<DEvA::EAStatistics<Spec>> eaStatistics = state.getEAStatistics();
+			std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
 
 			if (eaStatistics) {
 				DEvA::EAProgress eaProgress = eaStatistics->eaProgress;
@@ -477,11 +455,67 @@ void GUIStateDrawer::drawVariationVSVariationStatistics(GUIState & state) {
 					ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, double(tickValues.size()), ImPlotCond_Always);
 					ImPlot::SetupFinish();
 
-					ImPlot::PlotBars("Variation Success per VariationFunctor", &successRates[0], successRates.size(), 1.0, 0.0, ImPlotBarsFlags_Horizontal);
-					//ImPlot::PlotBars("Variation Success per VariationFunctor", successRates, 1.0, 0.0, ImPlotBarsFlags_Horizontal);
+					ImPlot::PlotBars("Variation Success in Generation", &successRates[0], successRates.size(), 1.0, 0.0, ImPlotBarsFlags_Horizontal);
 				}
 			}
 		}
+		ImPlot::EndPlot();
+	}
+}
+
+void GUIStateDrawer::drawDistancesVSGenerations(GUIState& state) {
+	if (ImPlot::BeginPlot("DistancesVSGenerations", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+
+		std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
+		if (!eaStatisticsHistory or eaStatisticsHistory->empty()) {
+			ImPlot::EndPlot();
+			return;
+		}
+		std::vector<double> minimumsOfGenerations;
+		std::vector<double> maximumsOfGenerations;
+		std::vector<double> meansOfGenerations;
+		double minimumOfGenerations(std::numeric_limits<double>::max());
+		double maximumOfGenerations(std::numeric_limits<double>::lowest());
+		double diffOfGenerations{};
+		for (auto& eaStatistics : *eaStatisticsHistory) {
+			auto& distanceMatrix = eaStatistics.distanceMatrix;
+			double numberOfIndividuals(static_cast<double>(distanceMatrix.size()));
+			std::size_t minimumOfGenerationSizeT(std::numeric_limits<std::size_t>::max());
+			std::size_t maximumOfGenerationSizeT(std::numeric_limits<std::size_t>::lowest());
+			std::size_t totalOfGenerationSizeT(0);
+			for (auto& aa : distanceMatrix) {
+				auto& bb(aa.second);
+				for (auto& cc : bb) {
+					auto& dd(cc.second);
+					minimumOfGenerationSizeT = std::min(dd, minimumOfGenerationSizeT);
+					maximumOfGenerationSizeT = std::max(dd, maximumOfGenerationSizeT);
+					totalOfGenerationSizeT += dd;
+				}
+			}
+			totalOfGenerationSizeT /= 2;
+			double totalOfGeneration(static_cast<double>(totalOfGenerationSizeT));
+			double minimumOfGeneration(static_cast<double>(minimumOfGenerationSizeT));
+			double maximumOfGeneration(static_cast<double>(maximumOfGenerationSizeT));
+			double meanOfGeneration(totalOfGeneration / (std::pow(numberOfIndividuals, 2)));
+			minimumsOfGenerations.push_back(minimumOfGeneration);
+			maximumsOfGenerations.push_back(maximumOfGeneration);
+			meansOfGenerations.push_back(meanOfGeneration);
+			minimumOfGenerations = std::min(minimumOfGenerations, minimumOfGeneration);
+			maximumOfGenerations = std::max(maximumOfGenerations, maximumOfGeneration);
+			diffOfGenerations = maximumOfGenerations - minimumOfGenerations;
+		}
+		int numberOfGenerationsInt(static_cast<int>(eaStatisticsHistory->size()));
+		double numberOfGenerationsDouble(static_cast<double>(eaStatisticsHistory->size()));
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - diffOfGenerations, maximumOfGenerations + diffOfGenerations, ImPlotCond_Always);
+		ImPlot::SetupFinish();
+
+		ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);
+		ImPlot::PlotLine("All generations mean distance", &meansOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+
 		ImPlot::EndPlot();
 	}
 }

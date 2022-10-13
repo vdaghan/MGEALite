@@ -1,6 +1,4 @@
 #include "MotionGeneration/Variations/Variations.h"
-
-#include "MotionGeneration/Variations/WaveletSNV.h"
 #include "Wavelet/HaarWavelet.h"
 
 namespace MGEA {
