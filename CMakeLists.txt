@@ -17,10 +17,10 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.4.0.2)
+project(MGEALite LANGUAGES CXX VERSION 0.4.0.3)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
-FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 2fe9f4e5b559c3cc7a5717b4869c42c4ab6a883a GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.5.2
+FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 7c82ade950a2a8583d5cf438efef853499146e0d GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.5.3
 FetchContent_Declare(DTimer GIT_REPOSITORY https://github.com/vdaghan/DTimer.git GIT_TAG 03c3a8cd8f3d0c5976a2d596c41979318c5a6a08 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DTimer) # 0.1.0.1
 FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG eb3220622e73a4889eee355ffa37972b3cac3df5 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.9.2
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 7482de6071d21db77a7236155da44c172a7f6c9e GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/glfw) # release-3.3.8
@@ -78,7 +78,8 @@ set(GUI_SOURCES "${CMAKE_SOURCE_DIR}/src/GUI/GUIState.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/GUIStateDrawer.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/Initialisation.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/ImGuiExtensions.cpp"
-				"${CMAKE_SOURCE_DIR}/src/GUI/ImPlotExtensions.cpp")
+				"${CMAKE_SOURCE_DIR}/src/GUI/ImPlotExtensions.cpp"
+				"${CMAKE_SOURCE_DIR}/src/GUI/PlotData.cpp")
 target_sources(MGEALite PUBLIC ${Logging_SOURCES})
 target_sources(MGEALite PUBLIC ${MotionGeneration_SOURCES})
 target_sources(MGEALite PUBLIC ${Initialisers_SOURCES})

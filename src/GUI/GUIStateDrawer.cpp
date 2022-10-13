@@ -66,16 +66,20 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 						 | ImPlotAxisFlags_NoHighlight;
 	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
 
-	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
-	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
-	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
-	plotMap.emplace(std::make_pair("Distances vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawDistancesVSGenerations, this))));
+	//plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
+	//plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
+	//plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
+	plotMap.emplace(std::make_pair("Distances vs Generations", std::make_pair(true, [&]() {drawDistancesVSGenerations(); })));
 }
 
 void GUIStateDrawer::draw(GUIState & state) {
 	if (glfwWindowShouldClose(window)) {
 		exitFlag.setAndCall("stop", FlagSetType::True);
 		exitFlag.setAndCall("exit", FlagSetType::True);
+	}
+	std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
+	if (eaStatisticsHistory) {
+		plotData.update(*eaStatisticsHistory);
 	}
 
 	int windowWidth, windowHeight;
@@ -301,7 +305,8 @@ void GUIStateDrawer::drawLogsOrPlots(GUIState & state) {
 			auto & plotFunction = plotPair.second;
 			ImVec2 cursorPos(col * plotSize.x, row * plotSize.y);
 			ImGui::SetCursorPos(cursorPos);
-			plotFunction(state);
+			//plotFunction(state);
+			plotFunction();
 			++col;
 			if (col > 2) {
 				col = 0;
@@ -509,6 +514,37 @@ void GUIStateDrawer::drawDistancesVSGenerations(GUIState& state) {
 		}
 		int numberOfGenerationsInt(static_cast<int>(eaStatisticsHistory->size()));
 		double numberOfGenerationsDouble(static_cast<double>(eaStatisticsHistory->size()));
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - diffOfGenerations, maximumOfGenerations + diffOfGenerations, ImPlotCond_Always);
+		ImPlot::SetupFinish();
+
+		ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);
+		ImPlot::PlotLine("All generations mean distance", &meansOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+
+		ImPlot::EndPlot();
+	}
+}
+
+void GUIStateDrawer::drawDistancesVSGenerations() {
+	if (ImPlot::BeginPlot("DistancesVSGenerations", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+
+		DistanceData distanceData = plotData.copyDistanceData();
+		if (0 == distanceData.nextGeneration) {
+			ImPlot::EndPlot();
+			return;
+		}
+		auto & numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
+		auto & minimumOfGenerations(distanceData.minimumOfGenerations);
+		auto & maximumOfGenerations(distanceData.maximumOfGenerations);
+		auto & diffOfGenerations(distanceData.diffOfGenerations);
+		auto & minimumsOfGenerations(distanceData.minimumsOfGenerations);
+		auto & maximumsOfGenerations(distanceData.maximumsOfGenerations);
+		auto & meansOfGenerations(distanceData.meansOfGenerations);
+		auto & numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
+
 		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
 		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - diffOfGenerations, maximumOfGenerations + diffOfGenerations, ImPlotCond_Always);
 		ImPlot::SetupFinish();

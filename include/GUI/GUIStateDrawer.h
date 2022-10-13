@@ -2,6 +2,7 @@
 
 #include "GUI/GUILogger.h"
 #include "GUI/GUIState.h"
+#include "GUI/PlotData.h"
 #include "SharedSynchronisation.h"
 
 #include "imgui.h"
@@ -12,7 +13,8 @@
 #include <list>
 #include <string>
 
-using PlotFunction = std::function<void(GUIState &)>;
+//using PlotFunction = std::function<void(GUIState&)>;
+using PlotFunction = std::function<void(void)>;
 using PlotMap = std::map<std::string, std::pair<bool, PlotFunction>>;
 std::vector<std::string> getSelectedPlotFunctions(PlotMap const &);
 int nearestLesserMultipleOfDivisorToNumber(int, int);
@@ -41,6 +43,7 @@ class GUIStateDrawer {
 		ImVec2 plotSize;
 		ImVec2 plotGridShape;
 
+		PlotData plotData;
 		void drawTopRow(GUIState &);
 		void drawProgressbarAndSlider(GUIState &);
 		void drawLogsOrPlots(GUIState &);
@@ -50,5 +53,6 @@ class GUIStateDrawer {
 		void drawFitnessVSGenerationsPlot(GUIState &);
 		void drawVariationVSVariationStatistics(GUIState&);
 		void drawDistancesVSGenerations(GUIState&);
+		void drawDistancesVSGenerations();
 		PlotMap plotMap;
 };
