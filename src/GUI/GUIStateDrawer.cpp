@@ -66,10 +66,11 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 						 | ImPlotAxisFlags_NoHighlight;
 	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
 
-	//plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
-	//plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
-	//plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
+	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
+	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
+	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
 	plotMap.emplace(std::make_pair("Distances vs Generations", std::make_pair(true, [&]() {drawDistancesVSGenerations(); })));
+	plotMap.emplace(std::make_pair("VariationStatisticsOverGenealogy", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationStatisticsOverGenealogy, this))));
 }
 
 void GUIStateDrawer::draw() {
@@ -270,16 +271,15 @@ void GUIStateDrawer::drawLogsOrPlots() {
 
 		ImGuiWindowFlags plotWindowFlags = defaultPlotWindowFlags;
 		ImGui::BeginChild("##PlotWindow", ImVec2(12 * gridSize.x, 6 * gridSize.y), false, plotWindowFlags);
-		ImVec2 ImGui::GetCursorPos();
+		ImVec2 origin = ImGui::GetCursorPos();
 		int col(0);
 		int row(0);
 		auto selected = getSelectedPlotFunctions(plotMap);
 		for (auto & plotName : selected) {
 			auto & plotPair = plotMap.at(plotName);
 			auto & plotFunction = plotPair.second;
-			ImVec2 cursorPos(col * plotSize.x, row * plotSize.y);
+			ImVec2 cursorPos(origin.x + col * plotSize.x, origin.y + row * plotSize.y);
 			ImGui::SetCursorPos(cursorPos);
-			//plotFunction(state);
 			plotFunction();
 			++col;
 			if (col > 2) {
@@ -300,133 +300,124 @@ ImPlotPoint fitnessGetter(int idx, void * user_data) {
 };
 
 void GUIStateDrawer::drawFitnessVSIndividualsPlot() {
-	//if (ImPlot::BeginPlot("FitnessVSIndividuals", plotSize, defaultPlotFlags)) {
-	//	ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
-	//	ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
-	//	ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+	if (ImPlot::BeginPlot("FitnessVSIndividuals", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-	//	std::optional<DEvA::EAStatistics<Spec>> eaStatistics = state.getEAStatistics();
-	//	if (!eaStatistics or eaStatistics->fitnesses.empty()) {
-	//		ImPlot::EndPlot();
-	//		return;
-	//	}
-	//	auto & fitnessesList = eaStatistics->fitnesses;
-	//	std::vector<Spec::Fitness> fitnessesVector(fitnessesList.begin(), fitnessesList.end());
-	//	double lastGenerationMinimumFitness(*std::min_element(fitnessesList.begin(), fitnessesList.end()));
-	//	double lastGenerationMaximumFitness(*std::max_element(fitnessesList.begin(), fitnessesList.end()));
-	//	double lastGenerationDiff(lastGenerationMaximumFitness - lastGenerationMinimumFitness);
-	//	int numberOfIndividualsInt(static_cast<int>(fitnessesVector.size()));
-	//	double numberOfIndividualsDouble(static_cast<double>(numberOfIndividualsInt));
+		MGEA::FitnessData & fitnessData = plotData.fitnessData;
+		if (0 == fitnessData.numberOfGenerations) {
+			ImPlot::EndPlot();
+			return;
+		}
 
-	//	ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfIndividualsDouble, ImPlotCond_Always);
-	//	ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 0.1 * lastGenerationDiff, lastGenerationMaximumFitness + 0.1 * lastGenerationDiff, ImPlotCond_Always);
-	//	ImPlot::SetupFinish();
+		double lastGenerationNumberOfIndividualsDouble(static_cast<double>(fitnessData.lastGenerationNumberOfIndividuals));
+		double & lastGenerationMinimumFitness(fitnessData.lastGenerationMinimumFitness);
+		double & lastGenerationMaximumFitness(fitnessData.lastGenerationMaximumFitness);
+		double & lastGenerationDiff(fitnessData.lastGenerationDiff);
+		auto & lastGenerationFitnesses(fitnessData.lastGenerationFitnesses);
+		int lastGenerationNumberOfIndividualsInt(static_cast<int>(fitnessData.lastGenerationNumberOfIndividuals));
 
-	//	ImPlot::PlotLine("Last Generation Fitness", &fitnessesVector[0], numberOfIndividualsInt, 1.0, 0.0, defaultPlotLineFlags);
-	//	ImPlot::EndPlot();
-	//}
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0, lastGenerationNumberOfIndividualsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 0.1 * lastGenerationDiff, lastGenerationMaximumFitness + 0.1 * lastGenerationDiff, ImPlotCond_Always);
+		ImPlot::SetupFinish();
+
+		ImPlot::PlotLine("Last Generation Fitness", &lastGenerationFitnesses[0], lastGenerationNumberOfIndividualsInt, 1.0, 0.0, defaultPlotLineFlags);
+		ImPlot::EndPlot();
+	}
 }
 
 void GUIStateDrawer::drawFitnessVSGenerationsPlot() {
-	//if (ImPlot::BeginPlot("Fitness Evolution", plotSize, defaultPlotFlags)) {
-	//	ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
-	//	ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
-	//	ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+	if (ImPlot::BeginPlot("Fitness Evolution", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Fitness", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-	//	std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
-	//	if (!eaStatisticsHistory or eaStatisticsHistory->empty()) {
-	//		ImPlot::EndPlot();
-	//		return;
-	//	}
-	//	std::vector<double> minimumOfGenerations;
-	//	std::vector<double> maximumOfGenerations;
-	//	std::vector<double> meanOfGenerations;
-	//	double lastMinimumFitness{};
-	//	double lastMaximumFitness{};
-	//	for (auto& eaStatistics : *eaStatisticsHistory) {
-	//		auto& fitnessesList = eaStatistics.fitnesses;
-	//		if (fitnessesList.empty()) {
-	//			continue;
-	//		}
-	//		double numberOfIndividuals(static_cast<double>(fitnessesList.size()));
-	//		double minimumFitness(*std::min_element(fitnessesList.begin(), fitnessesList.end()));
-	//		double maximumFitness(*std::max_element(fitnessesList.begin(), fitnessesList.end()));
-	//		double totalFitness(std::accumulate(fitnessesList.begin(), fitnessesList.end(), 0.0));
-	//		double meanFitness(totalFitness / numberOfIndividuals);
-	//		minimumOfGenerations.push_back(minimumFitness);
-	//		maximumOfGenerations.push_back(maximumFitness);
-	//		meanOfGenerations.push_back(meanFitness);
-	//		lastMinimumFitness = minimumFitness;
-	//		lastMaximumFitness = maximumFitness;
-	//	}
-	//	if (minimumOfGenerations.empty()) {
-	//		ImPlot::EndPlot();
-	//		return;
-	//	}
-	//	double lastDiff(lastMaximumFitness - lastMinimumFitness);
-	//	int numberOfGenerationsInt(static_cast<int>(eaStatisticsHistory->size()));
-	//	double numberOfGenerationsDouble(static_cast<double>(eaStatisticsHistory->size()));
-	//	ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerationsDouble, ImPlotCond_Always);
-	//	ImPlot::SetupAxisLimits(ImAxis_Y1, lastMinimumFitness - lastDiff, lastMaximumFitness + lastDiff, ImPlotCond_Always);
-	//	ImPlot::SetupFinish();
+		MGEA::FitnessData & fitnessData = plotData.fitnessData;
+		if (0 == fitnessData.numberOfGenerations) {
+			ImPlot::EndPlot();
+			return;
+		}
+		auto numberOfGenerationsDouble(static_cast<double>(fitnessData.numberOfGenerations));
+		auto & lastGenerationMinimumFitness(fitnessData.lastGenerationMinimumFitness);
+		auto & lastGenerationMaximumFitness(fitnessData.lastGenerationMaximumFitness);
+		auto & lastGenerationDiff(fitnessData.lastGenerationDiff);
+		auto & minimumOfGenerations(fitnessData.minimumOfGenerations);
+		auto & maximumOfGenerations(fitnessData.maximumOfGenerations);
+		auto & meanOfGenerations(fitnessData.meanOfGenerations);
+		auto numberOfGenerationsInt(static_cast<int>(fitnessData.numberOfGenerations));
 
-	//	ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerationsInt);
-	//	ImPlot::PlotLine("All generations mean fitness", &meanOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerationsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff, ImPlotCond_Always);
+		ImPlot::SetupFinish();
 
-	//	ImPlot::EndPlot();
-	//}
+		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerationsInt);
+		ImPlot::PlotLine("All generations mean fitness", &meanOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+
+		ImPlot::EndPlot();
+	}
 }
 
 void GUIStateDrawer::drawVariationVSVariationStatistics() {
-	//if (ImPlot::BeginPlot("Variation Success", plotSize, defaultPlotFlags)) {
-	//	ImPlotAxisFlags axisFlags =
-	//		ImPlotAxisFlags_NoGridLines
-	//		| ImPlotAxisFlags_NoMenus
-	//		| ImPlotAxisFlags_NoSideSwitch
-	//		| ImPlotAxisFlags_NoHighlight
-	//		| ImPlotAxisFlags_AutoFit;
-	//	ImPlot::SetupAxis(ImAxis_X1, "Variation Success", axisFlags);
-	//	ImPlot::SetupAxis(ImAxis_Y1, "Variation", axisFlags);
-	//	ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
-	//	{
-	//		std::optional<DEvA::EAStatistics<Spec>> eaStatistics = state.getEAStatistics();
-	//		std::optional<DEvA::EAStatisticsHistory<Spec>> eaStatisticsHistory = state.getEAStatisticsHistory();
+	if (ImPlot::BeginPlot("Variation Success", plotSize, defaultPlotFlags)) {
+		ImPlotAxisFlags axisFlags =
+			ImPlotAxisFlags_NoGridLines
+			| ImPlotAxisFlags_NoMenus
+			| ImPlotAxisFlags_NoSideSwitch
+			| ImPlotAxisFlags_NoHighlight
+			| ImPlotAxisFlags_AutoFit;
+		ImPlot::SetupAxis(ImAxis_X1, "Variation Success", axisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Variation", axisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-	//		if (eaStatistics) {
-	//			DEvA::EAProgress eaProgress = eaStatistics->eaProgress;
-	//			DEvA::VariationStatisticsMap vSM;
-	//			if (generationIndex == eaProgress.currentGeneration) {
-	//				vSM = eaStatistics->variationStatisticsMap;
-	//			} else if (eaStatisticsHistory and eaStatisticsHistory->size() > generationIndex) {
-	//				eaProgress = eaStatisticsHistory->at(generationIndex).eaProgress;
-	//				vSM = eaStatisticsHistory->at(generationIndex).variationStatisticsMap;
-	//			}
+		MGEA::VariationData & variationData = plotData.variationData;
 
-	//			if (!vSM.empty()) {
-	//				std::vector<std::string> variationNames;
-	//				std::vector<double> successRates;
-	//				for (auto & varStatPair : vSM) {
-	//					auto & variationName = varStatPair.first;
-	//					double successRate = varStatPair.second.successRate();
+		if (!variationData.lastGenerationVariationNames.empty()) {
+			auto & tickValues(variationData.lastGenerationTicks);
+			auto & variationNames(variationData.lastGenerationVariationNames);
+			auto & successRates(variationData.lastGenerationSuccessRate);
 
-	//					variationNames.push_back(variationName);
-	//					successRates.push_back(successRate);
-	//				}
-	//				std::vector<double> tickValues;
-	//				for (std::size_t i(0); i != variationNames.size(); ++i) {
-	//					tickValues.push_back(double(i));
-	//				}
-	//				ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, 1.0, ImPlotCond_Always);
-	//				ImPlot::SetupAxisTicks(ImAxis_Y1, tickValues, variationNames, false);
-	//				ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, double(tickValues.size()), ImPlotCond_Always);
-	//				ImPlot::SetupFinish();
+			ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, 1.0, ImPlotCond_Always);
+			ImPlot::SetupAxisTicks(ImAxis_Y1, tickValues, variationNames, false);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, double(tickValues.size()), ImPlotCond_Always);
+			ImPlot::SetupFinish();
 
-	//				ImPlot::PlotBars("Variation Success in Generation", &successRates[0], successRates.size(), 1.0, 0.0, ImPlotBarsFlags_Horizontal);
-	//			}
-	//		}
-	//	}
-	//	ImPlot::EndPlot();
-	//}
+			ImPlot::PlotBars("Variation Success over Generation", &successRates[0], successRates.size(), 1.0, 0.0, ImPlotBarsFlags_Horizontal);
+		}
+
+		ImPlot::EndPlot();
+	}
+}
+
+void GUIStateDrawer::drawVariationStatisticsOverGenealogy() {
+	if (ImPlot::BeginPlot("Variation Success over Genealogy", plotSize, defaultPlotFlags)) {
+		ImPlotAxisFlags axisFlags =
+			ImPlotAxisFlags_NoGridLines
+			| ImPlotAxisFlags_NoMenus
+			| ImPlotAxisFlags_NoSideSwitch
+			| ImPlotAxisFlags_NoHighlight
+			| ImPlotAxisFlags_AutoFit;
+		ImPlot::SetupAxis(ImAxis_X1, "Variation Success", axisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Variation", axisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+
+		MGEA::VariationData & variationData = plotData.variationData;
+
+		if (!variationData.allGenerationsVariationNames.empty()) {
+			auto & tickValues(variationData.allGenerationsTicks);
+			auto & variationNames(variationData.allGenerationsVariationNames);
+			auto & successRates(variationData.allGenerationsSuccessRate);
+
+			ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, 1.0, ImPlotCond_Always);
+			ImPlot::SetupAxisTicks(ImAxis_Y1, tickValues, variationNames, false);
+			ImPlot::SetupAxisLimits(ImAxis_Y1, -1.0, double(tickValues.size()), ImPlotCond_Always);
+			ImPlot::SetupFinish();
+
+			ImPlot::PlotBars("Variation Success over Genealogy", &successRates[0], successRates.size(), 1.0, 0.0, ImPlotBarsFlags_Horizontal);
+		}
+
+		ImPlot::EndPlot();
+	}
 }
 
 void GUIStateDrawer::drawDistancesVSGenerations() {
@@ -435,7 +426,7 @@ void GUIStateDrawer::drawDistancesVSGenerations() {
 		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
 		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		DistanceData& distanceData = plotData.distanceData;
+		MGEA::DistanceData& distanceData = plotData.distanceData;
 		if (0 == distanceData.maximumsOfGenerations.size()) {
 			ImPlot::EndPlot();
 			return;

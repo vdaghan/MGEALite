@@ -50,6 +50,7 @@ class GUIStateDrawer {
 		void drawFitnessVSIndividualsPlot();
 		void drawFitnessVSGenerationsPlot();
 		void drawVariationVSVariationStatistics();
+		void drawVariationStatisticsOverGenealogy();
 		void drawDistancesVSGenerations();
 		PlotMap plotMap;
 };
