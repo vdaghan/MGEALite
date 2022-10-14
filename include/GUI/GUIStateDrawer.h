@@ -1,7 +1,6 @@
 #pragma once
 
 #include "GUI/GUILogger.h"
-#include "GUI/GUIState.h"
 #include "GUI/PlotData.h"
 #include "SharedSynchronisation.h"
 
@@ -23,7 +22,9 @@ class GUIStateDrawer {
 	public:
 		GUIStateDrawer(SharedSynchronisationToken && sST);
 		void initialise(GLFWwindow *);
-		void draw(GUIState &);
+		
+		void draw();
+		PlotData plotData;
 	private:
 		SharedSynchronisationToken exitFlag;
 		GLFWwindow * window;
@@ -43,16 +44,12 @@ class GUIStateDrawer {
 		ImVec2 plotSize;
 		ImVec2 plotGridShape;
 
-		PlotData plotData;
-		void drawTopRow(GUIState &);
-		void drawProgressbarAndSlider(GUIState &);
-		void drawLogsOrPlots(GUIState &);
-		std::size_t getNumGenerations(GUIState &);
-		std::size_t getLastGeneration(GUIState &);
-		void drawFitnessVSIndividualsPlot(GUIState &);
-		void drawFitnessVSGenerationsPlot(GUIState &);
-		void drawVariationVSVariationStatistics(GUIState&);
-		void drawDistancesVSGenerations(GUIState&);
+		void drawTopRow();
+		void drawProgressbarAndSlider();
+		void drawLogsOrPlots();
+		void drawFitnessVSIndividualsPlot();
+		void drawFitnessVSGenerationsPlot();
+		void drawVariationVSVariationStatistics();
 		void drawDistancesVSGenerations();
 		PlotMap plotMap;
 };

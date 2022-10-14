@@ -4,31 +4,26 @@ PlotData::PlotData() : nextGeneration(0) {
 
 }
 
-void PlotData::update(DEvA::EAStatisticsHistory<Spec> const & eaStatisticsHistory) {
-	std::size_t const newHistorySize(eaStatisticsHistory.size());
-	bool updated(false);
-	for (std::size_t gen(nextGeneration); gen < newHistorySize; ++gen) {
-		updateForGeneration(eaStatisticsHistory, gen);
-		++nextGeneration;
+void PlotData::updateEAStatistics(DEvA::EAStatistics<Spec> eaS, DEvA::EAStatisticsUpdateType updateType) {
+	if (eaS.eaProgress.currentGeneration == nextGeneration) {
+		sliderData.update(eaS);
+		progressbarData.update(eaS);
+		updateDistanceMatrix(eaS, updateType, eaS.eaProgress.currentGeneration);
+		if (updateType == DEvA::EAStatisticsUpdateType::Final) {
+			++nextGeneration;
+		}
 	}
 }
 
-DistanceData PlotData::copyDistanceData() {
-	return distanceData;
+DEvA::EAProgress PlotData::copyProgress() {
+	return m_eaStatistics.eaProgress;
 }
 
-void PlotData::updateForGeneration(DEvA::EAStatisticsHistory<Spec> const & eaStatisticsHistory, std::size_t generation) {
-	m_eaStatisticsHistory.push_back(eaStatisticsHistory[generation]);
-	auto const & eaStatistics(m_eaStatisticsHistory[generation]);
-
-	updateDistanceMatrix(eaStatistics, generation);
-}
-
-void PlotData::updateDistanceMatrix(DEvA::EAStatistics<Spec> const & eaStatistics, std::size_t generation) {
+void PlotData::updateDistanceMatrix(DEvA::EAStatistics<Spec> const & eaStatistics, DEvA::EAStatisticsUpdateType updateType, std::size_t generation) {
+	if (DEvA::EAStatisticsUpdateType::Distance != updateType) {
+		return;
+	}
 	auto const & distanceMatrix = eaStatistics.distanceMatrix;
-	if (distanceData.nextGeneration != generation) {
-		throw;
-	}
 
 	double numberOfIndividuals(static_cast<double>(distanceMatrix.size()));
 	std::size_t minimumOfGenerationSizeT(std::numeric_limits<std::size_t>::max());
@@ -55,7 +50,6 @@ void PlotData::updateDistanceMatrix(DEvA::EAStatistics<Spec> const & eaStatistic
 	distanceData.minimumOfGenerations = std::min(distanceData.minimumOfGenerations, minimumOfGeneration);
 	distanceData.maximumOfGenerations = std::max(distanceData.maximumOfGenerations, maximumOfGeneration);
 	distanceData.diffOfGenerations = distanceData.maximumOfGenerations - distanceData.minimumOfGenerations;
-	++distanceData.nextGeneration;
-	distanceData.numberOfGenerationsDouble = static_cast<double>(distanceData.nextGeneration);
-	distanceData.numberOfGenerationsInt = static_cast<int>(distanceData.nextGeneration);
+	distanceData.numberOfGenerationsDouble = static_cast<double>(nextGeneration+1);
+	distanceData.numberOfGenerationsInt = static_cast<int>(nextGeneration+1);
 }

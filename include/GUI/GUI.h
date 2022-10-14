@@ -10,9 +10,6 @@
 #include <mutex>
 #include <thread>
 
-template <typename State> void draw(State);
-
-template <typename State>
 class GUI {
 	public:
 		GUI(SharedSynchronisationToken && sST) : guiInitialisation(std::move(sST.createToken())), guiStateDrawer(std::move(sST)) {};
@@ -33,14 +30,13 @@ class GUI {
 				loopThread.join();
 			}
 		}
-		State state;
+		GUIStateDrawer guiStateDrawer;
 	private:
 		GUIInitialisation guiInitialisation;
-		GUIStateDrawer guiStateDrawer;
 		bool endLoop;
 		std::thread loopThread;
 		void loop() {
-			guiStateDrawer.draw(state);
+			guiStateDrawer.draw();
 			std::this_thread::sleep_for(std::chrono::milliseconds(33));
 		}
 };

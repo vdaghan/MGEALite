@@ -19,7 +19,7 @@ class SharedSynchronisationToken;
 class SharedSynchronisation {
 	public:
 		SharedSynchronisation();
-		SharedSynchronisationToken && createToken();
+		SharedSynchronisationToken createToken();
 		void registerEvent(SyncEvent sE, bool flagValue);
 		void finalise(SyncEvent sE);
 		void finaliseAll();
@@ -44,8 +44,8 @@ class SharedSynchronisation {
 
 class SharedSynchronisationToken {
 	public:
-		SharedSynchronisationToken(SharedSynchronisationToken && sST);
-		SharedSynchronisationToken && createToken();
+		SharedSynchronisationToken(SharedSynchronisationToken && sST) noexcept;
+		SharedSynchronisationToken createToken();
 		bool addCallback(SyncEvent sE, CallbackType cT, std::function<void(void)> cB);
 		bool setAndCall(SyncEvent sE, FlagSetType fST);
 		bool get(SyncEvent sE);

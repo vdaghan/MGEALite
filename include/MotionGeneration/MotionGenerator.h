@@ -57,6 +57,5 @@ class MotionGenerator {
 
 template<typename T>
 void MotionGenerator::hookCallbacks(T & t) {
-	ea.onEAStatsHistoryUpdateCallback = std::bind_front(&T::updateEAStatisticsHistory, &t);
 	ea.onEAStatsUpdateCallback = std::bind_front(&T::updateEAStatistics, &t);
 }

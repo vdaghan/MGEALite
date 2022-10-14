@@ -3,6 +3,9 @@
 #include "MotionGeneration/Specification.h"
 #include "EvolutionaryAlgorithm.h"
 
+#include "GUI/GUIData/ProgressbarData.h"
+#include "GUI/GUIData/SliderData.h"
+
 struct DistanceData {
 	DistanceData()
 		: minimumsOfGenerations({})
@@ -28,13 +31,15 @@ struct DistanceData {
 class PlotData {
 	public:
 		PlotData();
-		void update(DEvA::EAStatisticsHistory<Spec> const &);
-		DistanceData copyDistanceData();
+		void updateEAStatistics(DEvA::EAStatistics<Spec>, DEvA::EAStatisticsUpdateType);
+
+		DEvA::EAProgress copyProgress();
+		DistanceData distanceData;
+		MGEA::ProgressbarData progressbarData;
+		MGEA::SliderData sliderData;
 	private:
-		void updateForGeneration(DEvA::EAStatisticsHistory<Spec> const & , std::size_t);
-		DEvA::EAStatisticsHistory<Spec> m_eaStatisticsHistory;
+		DEvA::EAStatistics<Spec> m_eaStatistics;
 		std::size_t nextGeneration;
 
-		void updateDistanceMatrix(DEvA::EAStatistics<Spec> const &, std::size_t);
-		DistanceData distanceData;
+		void updateDistanceMatrix(DEvA::EAStatistics<Spec> const &, DEvA::EAStatisticsUpdateType, std::size_t);
 };

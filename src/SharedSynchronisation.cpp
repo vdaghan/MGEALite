@@ -4,12 +4,13 @@ SharedSynchronisation::SharedSynchronisation()
 : nextTokenId(0) {
 }
 
-SharedSynchronisationToken && SharedSynchronisation::createToken() {
-	std::lock_guard<std::mutex> lock(creationMutex);
+SharedSynchronisationToken SharedSynchronisation::createToken() {
+	//std::lock_guard<std::mutex> lock(creationMutex);
 	//if (finalised.load()) {
 	//    throw std::logic_error("SharedSynchronisation should not be asked for a new Token once it was frozen.");
 	//}
-	return std::move(SharedSynchronisationToken(*this, nextTokenId++));
+	auto tokenId(nextTokenId++);
+	return std::move(SharedSynchronisationToken(*this, tokenId));
 }
 
 void SharedSynchronisation::registerEvent(SyncEvent sE, bool flagValue) {
@@ -106,13 +107,13 @@ void SharedSynchronisation::callCallbacks(SyncEvent sE) {
 	}
 }
 
-SharedSynchronisationToken::SharedSynchronisationToken(SharedSynchronisationToken && sST)
+SharedSynchronisationToken::SharedSynchronisationToken(SharedSynchronisationToken && sST) noexcept
 : sharedSynchronisation(sST.sharedSynchronisation)
 , tokenId(sST.tokenId)
 {}
 
-SharedSynchronisationToken && SharedSynchronisationToken::createToken() {
-	return sharedSynchronisation.createToken();
+SharedSynchronisationToken SharedSynchronisationToken::createToken() {
+	return std::move(sharedSynchronisation.createToken());
 }
 
 bool SharedSynchronisationToken::addCallback(SyncEvent sE, CallbackType cT, std::function<void(void)> cB) {

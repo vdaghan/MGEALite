@@ -11,7 +11,6 @@
 #include "mgealite_version.h"
 #include "deva_version.h"
 #include "Database.h"
-#include "GUI/GUIState.h"
 #include "GUI/GUIStateDrawer.h"
 #include "GUI/GUI.h"
 #include "Logging/SpdlogCommon.h"
@@ -27,7 +26,7 @@ int main() {
 	sharedSync.registerEvent("pause", false);
 	sharedSync.registerEvent("stop", false);
 	sharedSync.registerEvent("exit", false);
-	GUI<GUIState> gui(std::move(sharedSync.createToken()));
+	GUI gui(sharedSync.createToken());
 	gui.startLoop();
 	sharedSync.finaliseAll();
 
@@ -52,10 +51,10 @@ int main() {
 
 	MotionGenerator motionGenerator("./data", motionParameters);
 	sharedSync.addCallback("stop", CallbackType::OnTrue, [&]() {motionGenerator.stop(); });
-	motionGenerator.hookCallbacks<GUIState>(gui.state);
-	motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){
-		gui.state.updateMotionGenerationState(gen, mGS);
-	};
+	motionGenerator.hookCallbacks<PlotData>(gui.guiStateDrawer.plotData);
+	//motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){
+	//	gui.state.updateMotionGenerationState(gen, mGS);
+	//};
 
 	while (!sharedSync.get("start") and !sharedSync.get("stop")) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
