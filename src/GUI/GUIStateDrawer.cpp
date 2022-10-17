@@ -68,7 +68,7 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
 
 	guiFrameCounter.setFPSLimit(30.0);
-	guiFrameCounter.setMeasurementSamples(10);
+	guiFrameCounter.setMeasurementInterval(5000);
 
 	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
 	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));

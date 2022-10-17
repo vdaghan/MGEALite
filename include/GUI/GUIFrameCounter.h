@@ -18,7 +18,7 @@ namespace MGEA {
 				lastTimepoints.push_front(std::chrono::high_resolution_clock::now());
 				lastTimepoints.resize(std::min(lastTimepoints.size(), measurementSamples));
 				double timeDiff(timeDifference(lastTimepoints.front(), lastTimepoints.back()));
-				double limitedFrameTime(timeDiff / static_cast<double>(lastTimepoints.size()));
+				double limitedFrameTime(timeDiff / static_cast<double>(lastTimepoints.size()-1));
 				double limitedFPS(1000.0 / limitedFrameTime);
 
 				std::size_t totalSleepDuration(0);
@@ -26,17 +26,21 @@ namespace MGEA {
 					totalSleepDuration += sleepDuration.count();
 				}
 				double averageSleepDuration(static_cast<double>(totalSleepDuration) / static_cast<double>(lastSleepDurations.size()));
-				double unlimitedFrameTime(averageSleepDuration + limitedFrameTime);
+				double unlimitedFrameTime(limitedFrameTime - averageSleepDuration);
 				double unlimitedFPS(1000.0 / unlimitedFrameTime);
 
-				double sleepDurationDouble((1000.0 / fpsLimit) - limitedFrameTime);
-				if (sleepDurationDouble < 0.0) {
+				double lastTimeDiff(0.0);
+				if (lastTimepoints.size() >= 2) [[likely]] {
+					lastTimeDiff = timeDifference(*lastTimepoints.begin(), *std::next(lastTimepoints.begin()));
+				}
+				double sleepDurationDouble((1000.0 / fpsLimit) - lastTimeDiff);
+				if (sleepDurationDouble < 0.0) [[unlikely]] {
 					sleepDurationDouble = 0.0;
 				}
 				auto sleepDuration(MillisecondsType(static_cast<std::size_t>(sleepDurationDouble)));
 				lastSleepDurations.push_front(sleepDuration);
 				lastSleepDurations.resize(lastTimepoints.size());
-				if (sleepDuration.count() > 0) {
+				if (sleepDuration.count() > 0) [[likely]] {
 					std::this_thread::sleep_for(sleepDuration);
 				}
 
@@ -46,7 +50,9 @@ namespace MGEA {
 				};
 			};
 			void setFPSLimit(double limit) { fpsLimit = limit; };
-			void setMeasurementSamples(double interval) { measurementSamples = interval; };
+			void setMeasurementInterval(double intervalInMilliseconds) {
+				measurementSamples = static_cast<std::size_t>(intervalInMilliseconds / (1000.0 / fpsLimit));
+			};
 		private:
 			std::list<TimePoint> lastTimepoints;
 			std::list<MillisecondsType> lastSleepDurations;

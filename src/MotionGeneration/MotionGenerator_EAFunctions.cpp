@@ -137,7 +137,7 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	if (maybeSimulationDataPtr and maybeSimulationDataPtr.value()) {
 		return genPx;
 	}
-	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
+	return std::unexpected(DEvA::ErrorCode::Fail);
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {

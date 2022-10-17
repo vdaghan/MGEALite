@@ -16,7 +16,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 , stopFlag(false)
 {
 	maxGenerations = 0;
-	ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 256)); };
+	ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 512)); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundary); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundaryWavelet); };
 	ea.transformFunction = std::bind_front(&MotionGenerator::transform, this);
@@ -31,7 +31,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 256;
+	ea.lambda = 512;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
