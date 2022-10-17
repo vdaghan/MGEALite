@@ -34,8 +34,10 @@ class GUIStateDrawer {
 		ImPlotFlags defaultPlotFlags;
 		ImPlotAxisFlags defaultPlotAxisFlags;
 		ImPlotLineFlags defaultPlotLineFlags;
-		ImVec2 halfGridSize;
 		ImVec2 gridSize;
+		ImVec2 halfGridSize;
+		ImVec2 windowTopLeft;
+		ImVec2 toGridPosition(float x, float y);
 
 		std::size_t generationIndex;
 

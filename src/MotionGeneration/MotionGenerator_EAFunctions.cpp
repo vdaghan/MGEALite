@@ -130,23 +130,14 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	if (simLogPtr->outputExists()) {
 		return genPx;
 	}
-	while (!checkStopFlagAndMaybeWait()) {
-		auto maybeSimulationDataPtr = database.getSimulationResult(simLogPtr->info());
-		if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
-			++epochProgress.failed;
-			++epochProgress.total;
-			updateMotionGenerationStateWith(epochProgress);
-			return std::unexpected(DEvA::ErrorCode::InvalidTransform);
-		}
-		if (maybeSimulationDataPtr and maybeSimulationDataPtr.value()) {
-			++epochProgress.evaluated;
-			++epochProgress.total;
-			updateMotionGenerationStateWith(epochProgress);
-			return genPx;
-		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+	auto maybeSimulationDataPtr = database.requestSimulationResult(simLogPtr->info()).get();
+	if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
+		return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 	}
-	return std::unexpected(DEvA::ErrorCode::OK);
+	if (maybeSimulationDataPtr and maybeSimulationDataPtr.value()) {
+		return genPx;
+	}
+	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {

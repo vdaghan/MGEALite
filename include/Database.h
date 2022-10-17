@@ -34,6 +34,8 @@ class Database {
 		[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
 		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
 
+		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(SimulationInfo simInfo);
+
 		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();
@@ -42,7 +44,7 @@ class Database {
 	private:
 		MotionParameters & motionParameters;
 		Datastore datastore;
-		std::mutex dbMutex;
+		mutable std::recursive_mutex dbMutex;
 		void syncWithDatastore();
 		bool keepSyncing;
 		std::jthread scanThread;
@@ -51,6 +53,10 @@ class Database {
 		SimulationInfoList pendingSimulation;
 		SimulationInfoList pendingEvaluation;
 		SimulationInfoList computed;
+
+		mutable std::mutex promiseMutex;
+		std::map<SimulationInfo, std::promise<MaybeSimulationDataPtr>> simulationResultPromises;
+		bool fullfillSimulationResultPromise(SimulationInfo);
 		bool listContains(SimulationInfoList &, SimulationInfo);
 		void removeFromList(SimulationInfoList &, SimulationInfo);
 		void addToList(SimulationInfoList &, SimulationInfo);

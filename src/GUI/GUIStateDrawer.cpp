@@ -46,6 +46,7 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 	defaultPlotWindowStyle.ChildBorderSize = 0.0;
 	defaultPlotWindowStyle.FramePadding = ImVec2(0, 0);
 	defaultPlotWindowStyle.FrameBorderSize = 0.0;
+	//defaultPlotWindowStyle.FrameRounding = 100.;
 	defaultPlotWindowStyle.CellPadding = ImVec2(0, 0);
 	defaultPlotWindowStyle.ItemSpacing = ImVec2(0, 0);
 	defaultPlotWindowStyle.ItemInnerSpacing = ImVec2(0, 0);
@@ -110,6 +111,7 @@ void GUIStateDrawer::draw() {
 	ImGui::SetNextWindowPos(ImVec2(offset.x, offset.y), ImGuiCond_Always);
 	ImGui::SetNextWindowSize(ImVec2(16 * gridSize.x, 9 * gridSize.y), ImGuiCond_Always);
 	ImGui::Begin("##Main", NULL, defaultPlotWindowFlags);
+	windowTopLeft = ImGui::GetCursorPos();
 	drawTopRow();
 	ImGui::NewLine();
 	drawProgressbarAndSlider();
@@ -118,10 +120,16 @@ void GUIStateDrawer::draw() {
 	ImGui::End();
 }
 
-void GUIStateDrawer::drawTopRow() {
-	ImGui::Dummy(ImVec2(12 * gridSize.x, gridSize.y));
-	ImGui::SameLine();
+ImVec2 GUIStateDrawer::toGridPosition(float x, float y) {
+	return ImVec2(x * gridSize.x + windowTopLeft.x, y * gridSize.y + windowTopLeft.y);
+};
 
+void GUIStateDrawer::drawTopRow() {
+	ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 2 * gridSize . x);
+	std::string framerateText(std::format("Framerate: {:5.2f}fps", ImGui::GetIO().Framerate));
+	ImGui::Text(framerateText.c_str());
+
+	ImGui::SetCursorPos(toGridPosition(12.0, 0.0));
 	bool startButtonClicked = ImGui::Button("Start", ImVec2(gridSize.x, gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Press to start simulation");
@@ -176,6 +184,7 @@ void GUIStateDrawer::drawProgressbarAndSlider() {
 		ImGui::PushStyleColor(ImGuiCol_Button, buttonColor);
 		ImGui::PushStyleColor(ImGuiCol_ButtonActive, activeButtonColor);
 	}
+	ImGui::SetCursorPos(toGridPosition(0.0, 1.0));
 	bool trackLastGenerationButtonClicked = ImGui::Button("Track\nLast\nGeneration", ImVec2(gridSize.x, gridSize.y));
 	ImGui::PopStyleColor(2);
 	if (ImGui::IsItemHovered()) {
@@ -184,18 +193,13 @@ void GUIStateDrawer::drawProgressbarAndSlider() {
 	if (trackLastGenerationButtonClicked) {
 		lastGenerationSelected = not lastGenerationSelected;
 	}
-	ImGui::SameLine();
 
-	ImGui::Dummy(ImVec2(halfGridSize.x, halfGridSize.y));
-	ImGui::SameLine();
-
-	ImGui::BeginGroup();
+	ImGui::SetCursorPos(toGridPosition(1.5, 1.0));
 	auto fraction(plotData.progressbarData.fraction());
 	auto progressText(plotData.progressbarData.text());
 	ImGui::ProgressBar(fraction, ImVec2(14.5 * gridSize.x, halfGridSize.y), progressText.c_str());
 
-	ImGui::NewLine();
-
+	ImGui::SetCursorPos(toGridPosition(1.5, 1.5));
 	auto& generationIndex(plotData.sliderData.generationIndex(lastGenerationSelected));
 	auto currentGeneration(plotData.sliderData.currentGeneration());
 	ImGui::PushItemWidth(14.5 * gridSize.x);
@@ -203,10 +207,11 @@ void GUIStateDrawer::drawProgressbarAndSlider() {
 	if (ImGui::IsItemHovered()) {
 		ImGui::SetTooltip("Select target generation for generation-dependent plots");
 	}
-	ImGui::EndGroup();
 }
 
 void GUIStateDrawer::drawLogsOrPlots() {
+	ImGui::SetCursorPos(toGridPosition(0.0, 2.0));
+
 	if (LogOrPlot::Log == logOrPlot) {
 		static float wrapWidth = 1.0;
 		wrapWidth = static_cast<float>(5.5 * gridSize.x);
@@ -216,7 +221,7 @@ void GUIStateDrawer::drawLogsOrPlots() {
 		for (auto it(logs.rbegin()); it != logs.rend(); ++it) {
 			logText += *it;
 		}
-		ImVec2 textSize(15 * gridSize.x, 6 * gridSize.y);
+		ImVec2 textSize(15 * gridSize.x, 7 * gridSize.y);
 		ImGuiWindowFlags logWindowFlags = defaultPlotWindowFlags
 			| ImGuiWindowFlags_HorizontalScrollbar;
 		ImGuiInputTextFlags loggerFlags =
@@ -224,19 +229,11 @@ void GUIStateDrawer::drawLogsOrPlots() {
 			| ImGuiInputTextFlags_NoUndoRedo;
 		ImGui::InputTextMultiline("##Logger", &logText, textSize, loggerFlags);
 		ImGui::SetScrollHereY(1.0f);
-		//{
-		//	auto * drawList = ImGui::GetWindowDrawList();
-		//	auto textRectMin = ImGui::GetItemRectMin();
-		//	auto textRectMax = ImGui::GetItemRectMax();
-		//	textRectMax = ImVec2(textRectMin.x + textSize.x, textRectMin.y + textSize.y);
-		//	drawList->AddRect(textRectMin, textRectMax, IM_COL32(128, 128, 128, 128));
-		//}
-
-		ImGui::SameLine();
+		ImGui::SetCursorPos(toGridPosition(15.0, 2.0));
 	}
 
 	std::string hideLogText = (LogOrPlot::Log == logOrPlot) ? "<##HideLog" : ">##HideLog";
-	bool hideLogClicked = ImGui::Button(hideLogText.c_str(), ImVec2(gridSize.x, 6 * gridSize.y));
+	bool hideLogClicked = ImGui::Button(hideLogText.c_str(), ImVec2(gridSize.x, 7 * gridSize.y));
 	if (ImGui::IsItemHovered()) {
 		if (LogOrPlot::Log == logOrPlot) {
 			ImGui::SetTooltip("Press to show plots");
@@ -252,11 +249,10 @@ void GUIStateDrawer::drawLogsOrPlots() {
 		}
 	}
 
-	ImGui::SameLine();
-
 	if (LogOrPlot::Plot == logOrPlot) {
 		ImGuiWindowFlags plotSelectionWindowFlags = defaultPlotWindowFlags;
-		ImGui::BeginChild("##PlotSelectionWindow", ImVec2(3 * gridSize.x, 6 * gridSize.y), false, plotSelectionWindowFlags);
+		ImGui::SetCursorPos(toGridPosition(1.0, 2.0));
+		ImGui::BeginChild("##PlotSelectionWindow", ImVec2(3 * gridSize.x, 7 * gridSize.y), false, plotSelectionWindowFlags);
 		ImGui::BeginGroup();
 		for (auto & plotNamePair : plotMap) {
 			auto & plotName = plotNamePair.first;
@@ -267,10 +263,9 @@ void GUIStateDrawer::drawLogsOrPlots() {
 		ImGui::EndGroup();
 		ImGui::EndChild();
 
-		ImGui::SameLine();
-
 		ImGuiWindowFlags plotWindowFlags = defaultPlotWindowFlags;
-		ImGui::BeginChild("##PlotWindow", ImVec2(12 * gridSize.x, 6 * gridSize.y), false, plotWindowFlags);
+		ImGui::SetCursorPos(toGridPosition(4.0, 2.0));
+		ImGui::BeginChild("##PlotWindow", ImVec2(12 * gridSize.x, 7 * gridSize.y), false, plotWindowFlags);
 		ImVec2 origin = ImGui::GetCursorPos();
 		int col(0);
 		int row(0);
@@ -348,7 +343,7 @@ void GUIStateDrawer::drawFitnessVSGenerationsPlot() {
 		auto numberOfGenerationsInt(static_cast<int>(fitnessData.numberOfGenerations));
 
 		ImPlot::SetupAxisLimits(ImAxis_X1, 0, numberOfGenerationsDouble, ImPlotCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - lastGenerationDiff, lastGenerationMaximumFitness + lastGenerationDiff, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, lastGenerationMinimumFitness - 0.5 * lastGenerationDiff, lastGenerationMaximumFitness + 0.5 * lastGenerationDiff, ImPlotCond_Always);
 		ImPlot::SetupFinish();
 
 		ImPlot::PlotShadedG("All generations fitness interval", fitnessGetter, &minimumOfGenerations, fitnessGetter, &maximumOfGenerations, numberOfGenerationsInt);
@@ -441,7 +436,7 @@ void GUIStateDrawer::drawDistancesVSGenerations() {
 		auto & numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
 
 		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - diffOfGenerations, maximumOfGenerations + diffOfGenerations, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - 0.1 * diffOfGenerations, maximumOfGenerations + 0.1 * diffOfGenerations, ImPlotCond_Always);
 		ImPlot::SetupFinish();
 
 		ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);

@@ -12,7 +12,7 @@
 class PlotData {
 	public:
 		PlotData();
-		void updateEAStatistics(DEvA::EAStatistics<Spec>, DEvA::EAStatisticsUpdateType);
+		void updateEAStatistics(DEvA::EAStatistics<Spec> const &, DEvA::EAStatisticsUpdateType);
 
 		DEvA::EAProgress copyProgress();
 		MGEA::DistanceData distanceData;

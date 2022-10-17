@@ -47,32 +47,33 @@ Datastore::~Datastore() {
 }
 
 void Datastore::syncWithFilesystem() {
+	std::lock_guard<std::mutex> lock(queueMutex);
 	deleteAllArtifacts();
 	Progress progress = getProgress();
 
-	std::unique(progress.idsWithInputs.begin(), progress.idsWithInputs.end());
-	std::stable_sort(progress.idsWithInputs.begin(), progress.idsWithInputs.end());
-	std::unique(progress.idsWithOutputs.begin(), progress.idsWithOutputs.end());
-	std::stable_sort(progress.idsWithOutputs.begin(), progress.idsWithOutputs.end());
+	auto sortAndRemoveLambda = [](std::list<std::size_t>& list) {
+		std::stable_sort(list.begin(), list.end());
+		auto last = std::unique(list.begin(), list.end());
+		list.erase(last, list.end());
+	};
+	sortAndRemoveLambda(progress.idsWithInputs);
+	sortAndRemoveLambda(progress.idsWithOutputs);
 	std::set_intersection(progress.idsWithInputs.begin(), progress.idsWithInputs.end(),
 		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
 		std::back_inserter(progress.idsWithInputsAndOutputs));
-	std::unique(progress.idsWithInputsAndOutputs.begin(), progress.idsWithInputsAndOutputs.end());
-	std::stable_sort(progress.idsWithInputsAndOutputs.begin(), progress.idsWithInputsAndOutputs.end());
+	sortAndRemoveLambda(progress.idsWithInputsAndOutputs);
 	for (auto & idWithInputAndOutput : progress.idsWithInputsAndOutputs) {
 		simulationQueue.remove(idWithInputAndOutput);
 		evaluationQueue.push_back(idWithInputAndOutput);
 	}
 
 	std::list<std::size_t> tmp;
-	std::unique(evaluationQueue.begin(), evaluationQueue.end());
-	std::stable_sort(evaluationQueue.begin(), evaluationQueue.end());
+	sortAndRemoveLambda(evaluationQueue);
 	std::set_union(evaluationQueue.begin(), evaluationQueue.end(),
 		progress.idsWithOutputs.begin(), progress.idsWithOutputs.end(),
 		std::back_inserter(tmp));
 	std::list<std::size_t> updatedEvaluationQueue;
-	std::unique(deleteQueue.begin(), deleteQueue.end());
-	std::stable_sort(deleteQueue.begin(), deleteQueue.end());
+	sortAndRemoveLambda(deleteQueue);
 	std::set_difference(tmp.begin(), tmp.end(),
 		deleteQueue.begin(), deleteQueue.end(),
 		std::back_inserter(updatedEvaluationQueue));
@@ -131,6 +132,7 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 	if (MGEA::ErrorCode::OK != exportError) {
 		return exportError;
 	}
+	std::lock_guard<std::mutex> lock(queueMutex);
 	addToHistory(simInfo);
 	deleteQueue.push_back(simInfo.identifier);
 	return MGEA::ErrorCode::OK;
@@ -145,8 +147,14 @@ MaybeSimulationDataPtr Datastore::importCombinedFile(SimulationInfo simInfo) {
 }
 
 bool Datastore::existsInHistory(SimulationInfo simInfo) {
-	auto it = std::find(m_history.begin(), m_history.end(), simInfo);
-	return it != m_history.end();
+	std::lock_guard<std::recursive_mutex> lock(historyMutex);
+	auto & gen(simInfo.generation);
+	if (m_history.size() <= gen) {
+		return false;
+	}
+	auto & generationHistory(m_history.at(gen));
+	auto it = std::find(generationHistory.begin(), generationHistory.end(), simInfo);
+	return it != generationHistory.end();
 }
 
 MGEA::ErrorCode Datastore::saveVisualisationTarget(SimulationInfo simInfo) {
@@ -236,11 +244,15 @@ void Datastore::deleteAllArtifacts() {
 }
 
 void Datastore::addToHistory(SimulationInfo simInfo) {
+	std::lock_guard<std::recursive_mutex> lock(historyMutex);
 	if (existsInHistory(simInfo)) {
 		return;
 	}
-	m_history.push_back(simInfo);
-	m_history.sort();
+	if (m_history.size() <= simInfo.generation) {
+		m_history.resize(simInfo.generation + 1);
+	}
+	m_history.at(simInfo.generation).push_back(simInfo);
+	m_history.at(simInfo.generation).sort();
 }
 
 std::filesystem::path Datastore::toInputPath(std::size_t id) {

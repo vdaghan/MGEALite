@@ -4,7 +4,7 @@ PlotData::PlotData() : nextGeneration(0) {
 
 }
 
-void PlotData::updateEAStatistics(DEvA::EAStatistics<Spec> eaS, DEvA::EAStatisticsUpdateType updateType) {
+void PlotData::updateEAStatistics(DEvA::EAStatistics<Spec> const & eaS, DEvA::EAStatisticsUpdateType updateType) {
 	if (eaS.eaProgress.currentGeneration == nextGeneration) {
 		sliderData.update(eaS);
 		progressbarData.update(eaS);

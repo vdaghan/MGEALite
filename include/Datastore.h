@@ -3,6 +3,7 @@
 #include "MGEAError.h"
 #include "SimulationLog.h"
 
+#include <deque>
 #include <filesystem>
 #include <list>
 #include <mutex>
@@ -10,7 +11,8 @@
 #include <utility>
 #include <vector>
 
-using DatastoreHistory = std::list<SimulationInfo>;
+using DatastoreGeneration = std::list<SimulationInfo>;
+using DatastoreHistory = std::deque<DatastoreGeneration>;
 using DatastoreHistoryIterator = decltype(std::declval<DatastoreHistory>().begin());
 
 struct Progress {
@@ -39,12 +41,15 @@ class Datastore {
 		std::filesystem::path const m_queuePath;
 		std::filesystem::path const m_visualisationPath;
 
+		std::mutex queueMutex;
 		std::list<std::size_t> simulationQueue;
 		std::list<std::size_t> evaluationQueue;
 		std::list<std::size_t> deleteQueue;
 		Progress getProgress();
 		bool deleteArtifacts(std::size_t);
 		void deleteAllArtifacts();
+
+		std::recursive_mutex historyMutex;
 		DatastoreHistory m_history;
 		void addToHistory(SimulationInfo);
 
