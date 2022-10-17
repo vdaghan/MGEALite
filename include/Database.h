@@ -5,6 +5,7 @@
 #include <map>
 #include <mutex>
 #include <optional>
+#include <set>
 #include <string>
 #include <thread>
 
@@ -18,7 +19,7 @@ using Generation = std::size_t;
 using SimulationId = std::size_t;
 using UpdatedSimulationList = std::list<SimulationInfo>;
 
-using SimulationInfoList = std::list<SimulationInfo>;
+using SimulationInfoList = std::set<SimulationInfo>;
 using SimulationHistory = std::map<SimulationInfo, SimulationLogPtr>;
 class Database {
 	public:

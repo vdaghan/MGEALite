@@ -1,5 +1,6 @@
 #pragma once
 
+#include "GUI/GUIFrameCounter.h"
 #include "GUI/GUILogger.h"
 #include "GUI/PlotData.h"
 #include "SharedSynchronisation.h"
@@ -34,6 +35,9 @@ class GUIStateDrawer {
 		ImPlotFlags defaultPlotFlags;
 		ImPlotAxisFlags defaultPlotAxisFlags;
 		ImPlotLineFlags defaultPlotLineFlags;
+
+		MGEA::GUIFrameCounter guiFrameCounter;
+		MGEA::FPSInfo fpsInfo;
 		ImVec2 gridSize;
 		ImVec2 halfGridSize;
 		ImVec2 windowTopLeft;

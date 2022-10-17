@@ -206,12 +206,11 @@ bool Database::listContains(SimulationInfoList & list, SimulationInfo simInfo) {
 }
 
 void Database::removeFromList(SimulationInfoList & list, SimulationInfo simInfo) {
-	list.remove(simInfo);
+	list.erase(simInfo);
 }
 
 void Database::addToList(SimulationInfoList & list, SimulationInfo simInfo) {
-	list.push_back(simInfo);
-	list.sort();
+	list.insert(simInfo);
 }
 
 void Database::moveFromListToList(SimulationInfoList & source, SimulationInfoList & target, SimulationInfo simInfo) {

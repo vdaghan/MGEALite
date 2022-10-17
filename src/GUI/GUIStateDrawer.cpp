@@ -67,6 +67,9 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 						 | ImPlotAxisFlags_NoHighlight;
 	defaultPlotLineFlags = ImPlotLineFlags_NoClip;
 
+	guiFrameCounter.setFPSLimit(30.0);
+	guiFrameCounter.setMeasurementSamples(10);
+
 	plotMap.emplace(std::make_pair("Fitness vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSIndividualsPlot, this))));
 	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
 	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
@@ -79,6 +82,7 @@ void GUIStateDrawer::draw() {
 		exitFlag.setAndCall("stop", FlagSetType::True);
 		exitFlag.setAndCall("exit", FlagSetType::True);
 	}
+	fpsInfo = guiFrameCounter.tickAndWait();
 
 	int windowWidth, windowHeight;
 	glfwGetWindowSize(window, &windowWidth, &windowHeight);
@@ -125,9 +129,13 @@ ImVec2 GUIStateDrawer::toGridPosition(float x, float y) {
 };
 
 void GUIStateDrawer::drawTopRow() {
-	ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 2 * gridSize . x);
-	std::string framerateText(std::format("Framerate: {:5.2f}fps", ImGui::GetIO().Framerate));
-	ImGui::Text(framerateText.c_str());
+	ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 3 * gridSize . x);
+	std::string limitedFramerateText(std::format("Limited Framerate: {:5.2f}fps", fpsInfo.limitedFPS));
+	ImGui::Text(limitedFramerateText.c_str());
+	ImGui::NewLine();
+	ImGui::PushTextWrapPos(ImGui::GetCursorPos().x + 3 * gridSize.x);
+	std::string unlimitedFramerateText(std::format("Unlimited Framerate: {:5.2f}fps", fpsInfo.unlimitedFPS));
+	ImGui::Text(unlimitedFramerateText.c_str());
 
 	ImGui::SetCursorPos(toGridPosition(12.0, 0.0));
 	bool startButtonClicked = ImGui::Button("Start", ImVec2(gridSize.x, gridSize.y));

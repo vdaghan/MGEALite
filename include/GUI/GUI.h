@@ -37,6 +37,5 @@ class GUI {
 		std::thread loopThread;
 		void loop() {
 			guiStateDrawer.draw();
-			std::this_thread::sleep_for(std::chrono::milliseconds(33));
 		}
 };
