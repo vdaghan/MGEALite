@@ -247,7 +247,11 @@ Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifie
 	auto numSamples(motionParameters.simSamples);
 	std::vector<std::string> outputNames{};
 	for (auto & outputPair : simDataPtr1->outputs) {
-		outputNames.push_back(outputPair.first);
+		auto& outputName(outputPair.first);
+		if (!outputName.contains("Angle")) {
+			continue;
+		}
+		outputNames.push_back(outputName);
 	}
 	std::size_t distance(0);
 	for (auto & outputName : outputNames) {

@@ -13,12 +13,8 @@ void initialiseLogger() {
 	std::vector<spdlog::sink_ptr> sinks{ console_sink, file_sink };
 
 	std::string pattern("[%Y%m%d:%H%M%S.%f][MGEA][%l] %v");
-	//spdlog::init_thread_pool(8192, 1);
-	//logger = std::make_shared<spdlog::async_logger>("MGEA", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
 	spdlog::default_logger()->sinks().push_back(console_sink);
 	spdlog::default_logger()->sinks().push_back(file_sink);
-	/*spdlog::register_logger(logger);
-	spdlog::set_default_logger(logger);*/
 	spdlog::default_logger()->set_pattern(pattern);
 	spdlog::default_logger()->set_level(spdlog::level::trace);
 	spdlog::default_logger()->flush_on(spdlog::level::trace);

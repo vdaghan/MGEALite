@@ -74,6 +74,7 @@ void GUIStateDrawer::initialise(GLFWwindow * w) {
 	plotMap.emplace(std::make_pair("Fitness vs Generations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawFitnessVSGenerationsPlot, this))));
 	plotMap.emplace(std::make_pair("VariationSuccess vs Variations", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationVSVariationStatistics, this))));
 	plotMap.emplace(std::make_pair("Distances vs Generations", std::make_pair(true, [&]() {drawDistancesVSGenerations(); })));
+	plotMap.emplace(std::make_pair("Distances vs Individuals", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawDistancesVSIndividuals, this))));
 	plotMap.emplace(std::make_pair("VariationStatisticsOverGenealogy", std::make_pair(true, std::bind_front(&GUIStateDrawer::drawVariationStatisticsOverGenealogy, this))));
 }
 
@@ -449,6 +450,44 @@ void GUIStateDrawer::drawDistancesVSGenerations() {
 
 		ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);
 		ImPlot::PlotLine("All generations mean distance", &meansOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+
+		ImPlot::EndPlot();
+	}
+}
+
+void GUIStateDrawer::drawDistancesVSIndividuals() {
+	if (ImPlot::BeginPlot("drawDistancesVSIndividuals", plotSize, defaultPlotFlags)) {
+		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
+		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
+		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+
+		MGEA::DistanceData& distanceData = plotData.distanceData;
+		if (0 == distanceData.maximumsOfGenerations.size()) {
+			ImPlot::EndPlot();
+			return;
+		}
+		auto& numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
+		auto& minimumOfGenerations(distanceData.minimumOfGenerations);
+		auto& maximumOfGenerations(distanceData.maximumOfGenerations);
+		auto& diffOfGenerations(distanceData.diffOfGenerations);
+		auto& minimumsOfGenerations(distanceData.minimumsOfGenerations);
+		auto& maximumsOfGenerations(distanceData.maximumsOfGenerations);
+		auto& meansOfGenerations(distanceData.meansOfGenerations);
+		auto& numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
+
+		auto& minimumOfIndividuals(distanceData.minimumOfIndividuals);
+		auto& maximumOfIndividuals(distanceData.maximumOfIndividuals);
+		auto& diffOfIndividuals(distanceData.diffOfIndividuals);
+		auto& minimumsOfIndividuals(distanceData.minimumsOfIndividuals);
+		auto& maximumsOfIndividuals(distanceData.maximumsOfIndividuals);
+		std::size_t numberOfIndividualsSizeT(distanceData.numberOfIndividuals);
+		double numberOfIndividualsDouble(static_cast<double>(distanceData.numberOfIndividuals));
+
+		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfIndividualsDouble, ImPlotCond_Always);
+		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfIndividuals - 0.1 * diffOfIndividuals, maximumOfIndividuals + 0.1 * diffOfIndividuals, ImPlotCond_Always);
+		ImPlot::SetupFinish();
+
+		ImPlot::PlotShadedG("All indivduals distance interval", fitnessGetter, &minimumsOfIndividuals, fitnessGetter, &maximumsOfIndividuals, numberOfIndividualsSizeT);
 
 		ImPlot::EndPlot();
 	}
