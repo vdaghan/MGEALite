@@ -34,13 +34,13 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	variationFunctorCutAndCrossfillAll.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorCutAndCrossfillAll);
 	
-	Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
-	variationFunctorCutAndCrossfillSingle.name = "CutAndCrossfillSingle";
-	variationFunctorCutAndCrossfillSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	variationFunctorCutAndCrossfillSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
-	variationFunctorCutAndCrossfillSingle.probability = 1.0;
-	variationFunctorCutAndCrossfillSingle.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorCutAndCrossfillSingle);
+	//Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
+	//variationFunctorCutAndCrossfillSingle.name = "CutAndCrossfillSingle";
+	//variationFunctorCutAndCrossfillSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	//variationFunctorCutAndCrossfillSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
+	//variationFunctorCutAndCrossfillSingle.probability = 1.0;
+	//variationFunctorCutAndCrossfillSingle.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorCutAndCrossfillSingle);
 	
 	Spec::SVariationFunctor variationFunctorDeletionAll;
 	variationFunctorDeletionAll.name = "DeletionAll";
@@ -115,13 +115,29 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	variationFunctors.push_back(variationFunctorUniformCrossoverSingle);
 	
 	//Spec::SVariationFunctor variationFunctorWaveletSNV;
-	//variationFunctorWaveletSNV.name = "variationFunctorWaveletSNV";
+	//variationFunctorWaveletSNV.name = "WaveletSNV";
 	//variationFunctorWaveletSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofAll<1>;
 	//variationFunctorWaveletSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::waveletSNV);
 	//variationFunctorWaveletSNV.probability = 1.0;
 	//variationFunctorWaveletSNV.removeParentsFromMatingPool = true;
 	//variationFunctors.push_back(variationFunctorWaveletSNV);
-	
+
+	Spec::SVariationFunctor variationFunctorHalfSineSingle;
+	variationFunctorHalfSineSingle.name = "HalfSineSingle";
+	variationFunctorHalfSineSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
+	variationFunctorHalfSineSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSingle);
+	variationFunctorHalfSineSingle.probability = 1.0;
+	variationFunctorHalfSineSingle.removeParentsFromMatingPool = true;
+	variationFunctors.push_back(variationFunctorHalfSineSingle);
+
+	Spec::SVariationFunctor variationFunctorHalfSineSynchronous;
+	variationFunctorHalfSineSynchronous.name = "HalfSineSynchronous";
+	variationFunctorHalfSineSynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
+	variationFunctorHalfSineSynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSynchronous);
+	variationFunctorHalfSineSynchronous.probability = 1.0;
+	variationFunctorHalfSineSynchronous.removeParentsFromMatingPool = true;
+	variationFunctors.push_back(variationFunctorHalfSineSynchronous);
+
 	return variationFunctors;
 }
 
@@ -179,7 +195,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	//double fitness = diff * timeStep - std::abs(fingertipHeightSum);
 	double fitness;
 	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
-		fitness = toeHeightSum * timeStep;
+		fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
 	} else {
 		fitness = 0.0;
 		if (fingertipHeightSum > 0.0) {
@@ -196,7 +212,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	return fitness;
 }
 
-Spec::Distance MotionGenerator::calculateDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
+Spec::Distance MotionGenerator::calculateTorqueDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
 	auto simLogPtr1(database.getSimulationLog(id1));
 	auto simLogPtr2(database.getSimulationLog(id2));
 	auto simDataPtr1(simLogPtr1->data());
@@ -205,12 +221,41 @@ Spec::Distance MotionGenerator::calculateDistance(DEvA::IndividualIdentifier id1
 	auto numSamples(motionParameters.simSamples);
 	auto jointNames(motionParameters.jointNames);
 	std::size_t distance(0);
-	for (auto& jointName : jointNames) {
-		auto& torque1(simDataPtr1->torque.at(jointName));
-		auto& torque2(simDataPtr2->torque.at(jointName));
+	for (auto & jointName : jointNames) {
+		auto & torque1(simDataPtr1->torque.at(jointName));
+		auto & torque2(simDataPtr2->torque.at(jointName));
 		for (std::size_t i(0); i != numSamples; ++i) {
 			auto t1(torque1.at(i));
 			auto t2(torque2.at(i));
+			if (0.0 == t1 or 0.0 == t2) {
+				continue;
+			}
+			if (t1 * t2 < 0.0) {
+				++distance;
+			}
+		}
+	}
+	return distance;
+}
+
+Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
+	auto simLogPtr1(database.getSimulationLog(id1));
+	auto simLogPtr2(database.getSimulationLog(id2));
+	auto simDataPtr1(simLogPtr1->data());
+	auto simDataPtr2(simLogPtr2->data());
+
+	auto numSamples(motionParameters.simSamples);
+	std::vector<std::string> outputNames{};
+	for (auto & outputPair : simDataPtr1->outputs) {
+		outputNames.push_back(outputPair.first);
+	}
+	std::size_t distance(0);
+	for (auto & outputName : outputNames) {
+		auto & angle1(simDataPtr1->outputs.at(outputName));
+		auto & angle2(simDataPtr2->outputs.at(outputName));
+		for (std::size_t i(0); i != numSamples; ++i) {
+			auto t1(angle1.at(i));
+			auto t2(angle2.at(i));
 			if (0.0 == t1 or 0.0 == t2) {
 				continue;
 			}
@@ -328,10 +373,10 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 			worstIndividualPtr = iptr;
 		}
 	}
-	Spec::Fitness meanFitness = totalFitness / static_cast<Spec::Fitness>(fitnessValues.size());
+	//Spec::Fitness meanFitness = totalFitness / static_cast<Spec::Fitness>(fitnessValues.size());
 	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
-	spdlog::info("Worst individual {} has fitness {}.", worstIndividualPtr->genotypeProxy, worstIndividualPtr->fitness);
-	spdlog::info("Mean fitness value: {}.", meanFitness);
+	//spdlog::info("Worst individual {} has fitness {}.", worstIndividualPtr->genotypeProxy, worstIndividualPtr->fitness);
+	//spdlog::info("Mean fitness value: {}.", meanFitness);
 	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
 
 	std::list<double> simulationTimes;

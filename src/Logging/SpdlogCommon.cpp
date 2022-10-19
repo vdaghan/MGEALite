@@ -5,20 +5,23 @@
 #include "spdlog/sinks/basic_file_sink.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 
+std::shared_ptr<spdlog::async_logger> logger;
+
 void initialiseLogger() {
-	std::string pattern("[%Y%m%d:%H%M%S.%f][MGEA][%l] %v");
-	spdlog::init_thread_pool(8192, 1);
 	auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-	console_sink->set_pattern(pattern);
-	console_sink->set_level(spdlog::level::trace);
 	auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs.txt", true);
-	file_sink->set_pattern(pattern);
-	file_sink->set_level(spdlog::level::trace);
 	std::vector<spdlog::sink_ptr> sinks{ console_sink, file_sink };
-	auto logger = std::make_shared<spdlog::async_logger>("MGEALogger", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
-	logger->flush_on(spdlog::level::trace);
-	spdlog::register_logger(logger);
-	spdlog::set_default_logger(logger);
+
+	std::string pattern("[%Y%m%d:%H%M%S.%f][MGEA][%l] %v");
+	//spdlog::init_thread_pool(8192, 1);
+	//logger = std::make_shared<spdlog::async_logger>("MGEA", sinks.begin(), sinks.end(), spdlog::thread_pool(), spdlog::async_overflow_policy::block);
+	spdlog::default_logger()->sinks().push_back(console_sink);
+	spdlog::default_logger()->sinks().push_back(file_sink);
+	/*spdlog::register_logger(logger);
+	spdlog::set_default_logger(logger);*/
+	spdlog::default_logger()->set_pattern(pattern);
+	spdlog::default_logger()->set_level(spdlog::level::trace);
+	spdlog::default_logger()->flush_on(spdlog::level::trace);
 }
 
 void DEvALoggerCallback(DEvA::LogType logType, std::string message) {

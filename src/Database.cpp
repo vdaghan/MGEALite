@@ -201,19 +201,23 @@ bool Database::fullfillSimulationResultPromise(SimulationInfo simInfo) {
 }
 
 bool Database::listContains(SimulationInfoList & list, SimulationInfo simInfo) {
+	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	auto listIt = std::find(list.begin(), list.end(), simInfo);
 	return listIt != list.end();
 }
 
 void Database::removeFromList(SimulationInfoList & list, SimulationInfo simInfo) {
+	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	list.erase(simInfo);
 }
 
 void Database::addToList(SimulationInfoList & list, SimulationInfo simInfo) {
+	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	list.insert(simInfo);
 }
 
 void Database::moveFromListToList(SimulationInfoList & source, SimulationInfoList & target, SimulationInfo simInfo) {
+	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	removeFromList(source, simInfo);
 	addToList(target, simInfo);
 }

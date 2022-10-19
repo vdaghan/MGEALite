@@ -15,7 +15,6 @@ class GUILogger : public spdlog::sinks::base_sink<Mutex> {
 			spdlog::memory_buf_t formatted;
 			spdlog::sinks::base_sink<Mutex>::formatter_->format(msg, formatted);
 			std::lock_guard<std::mutex> lock(logReadMutex);
-			//logs.push_back(fmt::to_string(formatted));
 			logs.emplace_front(fmt::to_string(formatted));
 			if (logs.size() > logLength) {
 				logs.resize(logLength);
@@ -25,8 +24,16 @@ class GUILogger : public spdlog::sinks::base_sink<Mutex> {
 	public:
 		//TODO: Use something like shared_from_this to get rid of second parameter
 		bool addToLogger(std::string loggerName, std::shared_ptr<GUILogger> ptr) {
-			//spdlog::get("MGEALogger")->sinks().push_back(guiLoggerPtr);
 			auto loggerPtr = spdlog::get(loggerName);
+			if (nullptr == loggerPtr) {
+				return false;
+			}
+			auto & sinks = loggerPtr->sinks();
+			sinks.push_back(ptr);
+			return true;
+		}
+		bool addToDefaultLogger(std::shared_ptr<GUILogger> ptr) {
+			auto loggerPtr = spdlog::default_logger();
 			if (nullptr == loggerPtr) {
 				return false;
 			}

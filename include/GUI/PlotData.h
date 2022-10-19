@@ -21,6 +21,7 @@ class PlotData {
 		MGEA::SliderData sliderData;
 		MGEA::VariationData variationData;
 	private:
+		std::mutex dataMutex;
 		DEvA::EAStatistics<Spec> m_eaStatistics;
 		std::size_t nextGeneration;
 

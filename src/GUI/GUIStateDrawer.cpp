@@ -35,7 +35,7 @@ GUIStateDrawer::GUIStateDrawer(SharedSynchronisationToken && sST)
 {
 	guiLoggerPtr = std::make_shared<GUILogger_mt>();
 	guiLoggerPtr->setLogLength(100);
-	guiLoggerPtr->addToLogger("MGEALogger", guiLoggerPtr);
+	guiLoggerPtr->addToDefaultLogger(guiLoggerPtr);
 }
 
 void GUIStateDrawer::initialise(GLFWwindow * w) {

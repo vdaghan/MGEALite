@@ -50,6 +50,7 @@ class Database {
 		bool keepSyncing;
 		std::jthread scanThread;
 
+		mutable std::recursive_mutex listMutex;
 		SimulationInfoList uninitialised;
 		SimulationInfoList pendingSimulation;
 		SimulationInfoList pendingEvaluation;

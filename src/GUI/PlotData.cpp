@@ -5,6 +5,7 @@ PlotData::PlotData() : nextGeneration(0) {
 }
 
 void PlotData::updateEAStatistics(DEvA::EAStatistics<Spec> const & eaS, DEvA::EAStatisticsUpdateType updateType) {
+	std::lock_guard<std::mutex> lock(dataMutex);
 	if (eaS.eaProgress.currentGeneration == nextGeneration) {
 		sliderData.update(eaS);
 		progressbarData.update(eaS);

@@ -14,7 +14,7 @@ namespace MGEA {
 		std::size_t numJoints(initialiserParams.motionParameters.jointNames.size());
 		for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
 			std::string const& jointName = initialiserParams.motionParameters.jointNames[jointIndex];
-			for (std::size_t timeIndex(0); timeIndex != initialiserParams.motionParameters.simSamples; timeIndex += 128) {
+			for (std::size_t timeIndex(0); timeIndex < initialiserParams.motionParameters.simSamples; timeIndex += 64) {
 				auto& jointLimitsPair = initialiserParams.motionParameters.jointLimits.at(jointName);
 				std::array<double, 2> jointLimitsArray{ jointLimitsPair.first, jointLimitsPair.second };
 				for (auto& jointLimit : jointLimitsArray) {
