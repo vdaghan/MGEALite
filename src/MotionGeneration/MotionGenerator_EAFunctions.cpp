@@ -12,22 +12,25 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	
 	Spec::SVariationFunctor variationFunctorCrossoverAll;
 	variationFunctorCrossoverAll.name = "CrossoverAll";
+	variationFunctorCrossoverAll.numberOfParents = 2;
 	variationFunctorCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
 	variationFunctorCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverAll);
 	variationFunctorCrossoverAll.probability = 1.0;
 	variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorCrossoverAll);
 	
-	Spec::SVariationFunctor variationFunctorCrossoverSingle;
-	variationFunctorCrossoverSingle.name = "CrossoverSingle";
-	variationFunctorCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	variationFunctorCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
-	variationFunctorCrossoverSingle.probability = 1.0;
-	variationFunctorCrossoverSingle.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorCrossoverSingle);
+	//Spec::SVariationFunctor variationFunctorCrossoverSingle;
+	//variationFunctorCrossoverSingle.name = "CrossoverSingle";
+	//variationFunctorCrossoverSingle.numberOfParents = 2;
+	//variationFunctorCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	//variationFunctorCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
+	//variationFunctorCrossoverSingle.probability = 1.0;
+	//variationFunctorCrossoverSingle.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorCrossoverSingle);
 	
 	Spec::SVariationFunctor variationFunctorCutAndCrossfillAll;
 	variationFunctorCutAndCrossfillAll.name = "CutAndCrossfillAll";
+	variationFunctorCutAndCrossfillAll.numberOfParents = 2;
 	variationFunctorCutAndCrossfillAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
 	variationFunctorCutAndCrossfillAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillAll);
 	variationFunctorCutAndCrossfillAll.probability = 1.0;
@@ -44,6 +47,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	
 	Spec::SVariationFunctor variationFunctorDeletionAll;
 	variationFunctorDeletionAll.name = "DeletionAll";
+	variationFunctorDeletionAll.numberOfParents = 1;
 	variationFunctorDeletionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
 	variationFunctorDeletionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::deletionAll);
 	variationFunctorDeletionAll.probability = 1.0;
@@ -60,22 +64,25 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	
 	Spec::SVariationFunctor variationFunctorInsertionAll;
 	variationFunctorInsertionAll.name = "InsertionAll";
+	variationFunctorInsertionAll.numberOfParents = 1;
 	variationFunctorInsertionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
 	variationFunctorInsertionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionAll);
 	variationFunctorInsertionAll.probability = 1.0;
 	variationFunctorInsertionAll.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorInsertionAll);
 	
-	Spec::SVariationFunctor variationFunctorInsertionSingle;
-	variationFunctorInsertionSingle.name = "InsertionSingle";
-	variationFunctorInsertionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
-	variationFunctorInsertionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionSingle);
-	variationFunctorInsertionSingle.probability = 1.0;
-	variationFunctorInsertionSingle.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorInsertionSingle);
+	//Spec::SVariationFunctor variationFunctorInsertionSingle;
+	//variationFunctorInsertionSingle.name = "InsertionSingle";
+	//variationFunctorInsertionSingle.numberOfParents = 1;
+	//variationFunctorInsertionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
+	//variationFunctorInsertionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionSingle);
+	//variationFunctorInsertionSingle.probability = 1.0;
+	//variationFunctorInsertionSingle.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorInsertionSingle);
 	
 	Spec::SVariationFunctor variationFunctorkPointCrossoverAll;
 	variationFunctorkPointCrossoverAll.name = "kPointCrossoverAll";
+	variationFunctorkPointCrossoverAll.numberOfParents = 2;
 	variationFunctorkPointCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
 	variationFunctorkPointCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::kPointCrossoverAll);
 	variationFunctorkPointCrossoverAll.probability = 1.0;
@@ -92,6 +99,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	
 	Spec::SVariationFunctor variationFunctorSNV;
 	variationFunctorSNV.name = "SNV";
+	variationFunctorSNV.numberOfParents = 1;
 	variationFunctorSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
 	variationFunctorSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::snv);
 	variationFunctorSNV.probability = 1.0;
@@ -100,19 +108,21 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	
 	Spec::SVariationFunctor variationFunctorUniformCrossoverAll;
 	variationFunctorUniformCrossoverAll.name = "UniformCrossoverAll";
+	variationFunctorUniformCrossoverAll.numberOfParents = 2;
 	variationFunctorUniformCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
 	variationFunctorUniformCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverAll);
 	variationFunctorUniformCrossoverAll.probability = 1.0;
 	variationFunctorUniformCrossoverAll.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorUniformCrossoverAll);
 	
-	Spec::SVariationFunctor variationFunctorUniformCrossoverSingle;
-	variationFunctorUniformCrossoverSingle.name = "UniformCrossoverSingle";
-	variationFunctorUniformCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	variationFunctorUniformCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverSingle);
-	variationFunctorUniformCrossoverSingle.probability = 1.0;
-	variationFunctorUniformCrossoverSingle.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorUniformCrossoverSingle);
+	//Spec::SVariationFunctor variationFunctorUniformCrossoverSingle;
+	//variationFunctorUniformCrossoverSingle.name = "UniformCrossoverSingle";
+	//variationFunctorUniformCrossoverSingle.numberOfParents = 2;
+	//variationFunctorUniformCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
+	//variationFunctorUniformCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverSingle);
+	//variationFunctorUniformCrossoverSingle.probability = 1.0;
+	//variationFunctorUniformCrossoverSingle.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorUniformCrossoverSingle);
 	
 	//Spec::SVariationFunctor variationFunctorWaveletSNV;
 	//variationFunctorWaveletSNV.name = "WaveletSNV";
@@ -124,6 +134,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 
 	Spec::SVariationFunctor variationFunctorHalfSineSingle;
 	variationFunctorHalfSineSingle.name = "HalfSineSingle";
+	variationFunctorHalfSineSingle.numberOfParents = 1;
 	variationFunctorHalfSineSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
 	variationFunctorHalfSineSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSingle);
 	variationFunctorHalfSineSingle.probability = 1.0;
@@ -132,6 +143,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 
 	Spec::SVariationFunctor variationFunctorHalfSineSynchronous;
 	variationFunctorHalfSineSynchronous.name = "HalfSineSynchronous";
+	variationFunctorHalfSineSynchronous.numberOfParents = 1;
 	variationFunctorHalfSineSynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
 	variationFunctorHalfSineSynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSynchronous);
 	variationFunctorHalfSineSynchronous.probability = 1.0;
@@ -179,6 +191,8 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	auto & palmHeight = simDataPtr->outputs.at("palmHeight");
 	auto & heelHeight = simDataPtr->outputs.at("heelHeight");
 	auto & toeHeight = simDataPtr->outputs.at("toeHeight");
+	auto & comHeight = simDataPtr->outputs.at("centerOfMassZ");
+	auto & shoulderAngle = simDataPtr->outputs.at("shoulderAngle");
 	bool sameSize = fingertipHeight.size() == toeHeight.size()
 		and fingertipHeight.size() == heelHeight.size()
 		and fingertipHeight.size() == palmHeight.size();
@@ -188,13 +202,23 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		return 0.0;
 	}
 	//double diff(0.0);
-	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0);
-	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0);
-	double heelHeightSum = std::accumulate(heelHeight.begin(), heelHeight.end(), 0.0);
-	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0);
+	auto absLambda = [](double prev, double next) {
+		return std::abs(prev + next);
+	};
+	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0, absLambda);
+	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0, absLambda);
+	double heelHeightSum = std::accumulate(heelHeight.begin(), heelHeight.end(), 0.0, absLambda);
+	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0, absLambda);
+	double comHeightSum = std::accumulate(comHeight.begin(), comHeight.end(), 0.0, absLambda);
+	double shoulderAngleDiffSum{};
+	for (auto it(shoulderAngle.begin()); it != shoulderAngle.end() and std::next(it) != shoulderAngle.end(); ++it) {
+		auto const & currentElement(*it);
+		auto const & nextElement(*std::next(it));
+		shoulderAngleDiffSum += std::min(currentElement - nextElement, 0.0);
+	}
 	//double fitness = diff * timeStep - std::abs(fingertipHeightSum);
 	double fitness;
-	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
+	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0 and shoulderAngleDiffSum >= 0.0) {
 		fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
 	} else {
 		fitness = 0.0;
@@ -204,6 +228,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		if (palmHeightSum > 0.0) {
 			fitness -= palmHeightSum;
 		}
+		fitness += shoulderAngleDiffSum;
 	}
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);

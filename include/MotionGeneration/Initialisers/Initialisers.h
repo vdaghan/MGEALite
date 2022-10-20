@@ -18,7 +18,8 @@ namespace MGEA {
 		Database & database;
 	};
 
-	SimulationDataPtrs genesisRandom(std::size_t, InitialiserParams);
 	SimulationDataPtrs genesisBoundary(InitialiserParams);
 	SimulationDataPtrs genesisBoundaryWavelet(InitialiserParams);
+	SimulationDataPtrs genesisRandom(std::size_t, InitialiserParams);
+	SimulationDataPtrs genesisZero(InitialiserParams);
 }
