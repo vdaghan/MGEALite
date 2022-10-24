@@ -52,6 +52,9 @@ void to_json(JSON & j, SimulationData const & sI) {
 	if (sI.timeout) {
 		j["timeout"] = sI.timeout.value();
 	}
+	if (!sI.masses.empty()) {
+		j["masses"] = sI.masses;
+	}
 	if (!sI.torque.empty()) {
 		j["torque"] = sI.torque;
 	}
@@ -82,6 +85,9 @@ void from_json(JSON const & j, SimulationData & sI) {
 	}
 	if (j.contains("timeout")) {
 		sI.timeout = j.at("timeout").get<double>();
+	}
+	if (j.contains("masses")) {
+		j.at("masses").get_to(sI.masses);
 	}
 	if (j.contains("torque")) {
 		j.at("torque").get_to(sI.torque);

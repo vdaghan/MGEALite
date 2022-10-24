@@ -132,13 +132,22 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorWaveletSNV.removeParentsFromMatingPool = true;
 	//variationFunctors.push_back(variationFunctorWaveletSNV);
 
+	Spec::SVariationFunctor variationFunctorHalfSineAsynchronous;
+	variationFunctorHalfSineAsynchronous.name = "HalfSineAsynchronous";
+	variationFunctorHalfSineAsynchronous.numberOfParents = 1;
+	variationFunctorHalfSineAsynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
+	variationFunctorHalfSineAsynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineAsynchronous);
+	variationFunctorHalfSineAsynchronous.probability = 1.0;
+	variationFunctorHalfSineAsynchronous.removeParentsFromMatingPool = false;
+	variationFunctors.push_back(variationFunctorHalfSineAsynchronous);
+
 	Spec::SVariationFunctor variationFunctorHalfSineSingle;
 	variationFunctorHalfSineSingle.name = "HalfSineSingle";
 	variationFunctorHalfSineSingle.numberOfParents = 1;
 	variationFunctorHalfSineSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
 	variationFunctorHalfSineSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSingle);
 	variationFunctorHalfSineSingle.probability = 1.0;
-	variationFunctorHalfSineSingle.removeParentsFromMatingPool = true;
+	variationFunctorHalfSineSingle.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorHalfSineSingle);
 
 	Spec::SVariationFunctor variationFunctorHalfSineSynchronous;
@@ -147,7 +156,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	variationFunctorHalfSineSynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
 	variationFunctorHalfSineSynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSynchronous);
 	variationFunctorHalfSineSynchronous.probability = 1.0;
-	variationFunctorHalfSineSynchronous.removeParentsFromMatingPool = true;
+	variationFunctorHalfSineSynchronous.removeParentsFromMatingPool = false;
 	variationFunctors.push_back(variationFunctorHalfSineSynchronous);
 
 	return variationFunctors;
@@ -208,7 +217,9 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0, absLambda);
 	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0, absLambda);
 	double heelHeightSum = std::accumulate(heelHeight.begin(), heelHeight.end(), 0.0, absLambda);
+	double heelHeightMax = *std::max_element(heelHeight.begin(), heelHeight.end());
 	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0, absLambda);
+	double toeHeightMax = *std::max_element(toeHeight.begin(), toeHeight.end());
 	double comHeightSum = std::accumulate(comHeight.begin(), comHeight.end(), 0.0, absLambda);
 	double shoulderAngleDiffSum{};
 	for (auto it(shoulderAngle.begin()); it != shoulderAngle.end() and std::next(it) != shoulderAngle.end(); ++it) {
@@ -218,8 +229,12 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	}
 	//double fitness = diff * timeStep - std::abs(fingertipHeightSum);
 	double fitness;
-	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0 and shoulderAngleDiffSum >= 0.0) {
+	//if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0 and shoulderAngleDiffSum >= 0.0) {
+	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
 		fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
+		//fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
+		//fitness = comHeightSum;
+		//fitness = toeHeightMax + heelHeightMax;
 	} else {
 		fitness = 0.0;
 		if (fingertipHeightSum > 0.0) {
@@ -228,7 +243,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		if (palmHeightSum > 0.0) {
 			fitness -= palmHeightSum;
 		}
-		fitness += shoulderAngleDiffSum;
+		//fitness += shoulderAngleDiffSum;
 	}
 	simLogPtr->data()->fitness = fitness;
 	database.setSimulationFitness(simLogPtr->info(), fitness);
@@ -297,7 +312,8 @@ Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifie
 }
 
 bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
-	return f > 1.5 * motionParameters.simStop();
+	//return f > 1.5 * motionParameters.simStop();
+	return false;
 }
 
 void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {

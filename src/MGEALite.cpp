@@ -39,11 +39,18 @@ int main() {
 	motionParameters.simSamples = 256;
 	motionParameters.alignment = -1;
 	motionParameters.timeout = 300.0;
+	double totalMass(80.0);
+	motionParameters.masses.emplace(std::make_pair("hands", 1.2 * totalMass / 100.0));
+	motionParameters.masses.emplace(std::make_pair("arms", (5.3 + 3.1) * totalMass / 100.0));
+	motionParameters.masses.emplace(std::make_pair("trunk", (50.0) * totalMass / 100.0));
+	motionParameters.masses.emplace(std::make_pair("head", (6.5) * totalMass / 100.0));
+	motionParameters.masses.emplace(std::make_pair("legs", (19.3 + 9.0) * totalMass / 100.0));
+	motionParameters.masses.emplace(std::make_pair("feet", (2.8) * totalMass / 100.0));
 	motionParameters.jointNames.push_back("wrist");
 	motionParameters.jointNames.push_back("shoulder");
 	motionParameters.jointNames.push_back("hip");
 	//motionParameters.jointNames.push_back("ankle");
-	motionParameters.jointLimits.emplace(std::make_pair("wrist", std::make_pair(-30.0, 30.0)));
+	motionParameters.jointLimits.emplace(std::make_pair("wrist", std::make_pair(-25.0, 25.0)));
 	motionParameters.jointLimits.emplace(std::make_pair("shoulder", std::make_pair(-200.0, 200.0)));
 	motionParameters.jointLimits.emplace(std::make_pair("hip", std::make_pair(-500.0, 320.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1
 	//motionParameters.jointLimits.emplace(std::make_pair("ankle", std::make_pair(-70.0, 200.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1

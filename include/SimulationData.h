@@ -18,6 +18,7 @@ struct SimulationData {
 	std::map<std::string, double> params;
 	std::optional<int> alignment;
 	std::optional<double> timeout;
+	std::map<std::string, double> masses;
 	std::map<std::string, std::vector<double>> torque;
 	std::optional<ContactParameters> contacts;
 	std::map<std::string, std::vector<double>> outputs;

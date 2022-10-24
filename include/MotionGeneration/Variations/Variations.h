@@ -27,6 +27,7 @@ namespace MGEA {
 	SimulationDataPtrs uniformCrossoverAll(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs uniformCrossoverSingle(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs waveletSNV(VariationParams, SimulationDataPtrs);
+	SimulationDataPtrs halfSineAsynchronous(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs halfSineSingle(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs halfSineSynchronous(VariationParams, SimulationDataPtrs);
 }

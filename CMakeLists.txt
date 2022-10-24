@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.4.1.6)
+project(MGEALite LANGUAGES CXX VERSION 0.4.1.7)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 61807bfe0cb7484ef0d26aa5fe8d90f067222425 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.6.1
@@ -57,6 +57,7 @@ set(Variations_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/Cros
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/UniformCrossoverAll.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/UniformCrossoverSingle.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/WaveletSNV.cpp"
+						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/HalfSineAsynchronous.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/HalfSineSingle.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/HalfSineSynchronous.cpp")
 set(Wavelet_SOURCES "${CMAKE_SOURCE_DIR}/src/Wavelet/HaarWavelet.cpp")
