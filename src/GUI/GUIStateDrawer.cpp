@@ -100,7 +100,7 @@ void GUIStateDrawer::draw() {
 	ImVec2 offset(windowWidthDouble - static_cast<double>(windowWidth), windowHeightDouble - static_cast<double>(windowHeight));
 	offset.x /= 2;
 	offset.y /= 2;
-	gridSize = ImVec2(windowWidth / 16, windowHeight / 9);
+	gridSize = ImVec2(static_cast<double>(windowWidth) / 16.0, static_cast<double>(windowHeight) / 9.0);
 	halfGridSize = ImVec2(gridSize.x / 2, gridSize.y / 2);
 
 	plotSize = ImVec2(4 * gridSize.x, 3 * gridSize.y);
@@ -456,6 +456,7 @@ void GUIStateDrawer::drawDistancesVSGenerations() {
 }
 
 void GUIStateDrawer::drawDistancesVSIndividuals() {
+	return;
 	if (ImPlot::BeginPlot("drawDistancesVSIndividuals", plotSize, defaultPlotFlags)) {
 		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
 		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);

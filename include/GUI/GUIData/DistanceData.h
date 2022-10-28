@@ -50,8 +50,8 @@ namespace MGEA {
 				auto const & distanceMatrix = eaStatistics.distanceMatrix;
 
 				double numberOfIndividuals(static_cast<double>(distanceMatrix.size()));
-				Spec::Distance minimumOfGenerationSizeT(std::numeric_limits<std::size_t>::max());
-				Spec::Distance maximumOfGenerationSizeT(std::numeric_limits<std::size_t>::lowest());
+				Spec::Distance minimumOfGenerationSizeT(std::numeric_limits<double>::max());
+				Spec::Distance maximumOfGenerationSizeT(std::numeric_limits<double>::lowest());
 				Spec::Distance totalOfGenerationSizeT(0);
 				for (auto& id1Pair : distanceMatrix) {
 					auto& id1(id1Pair.first);
@@ -87,8 +87,8 @@ namespace MGEA {
 					auto & id1(id1Pair.first);
 					auto & id1Distances(id1Pair.second);
 					distanceRanges.push_back({});
-					distanceRanges.back().minimum = std::numeric_limits<std::size_t>::max();
-					distanceRanges.back().maximum = std::numeric_limits<std::size_t>::lowest();
+					distanceRanges.back().minimum = std::numeric_limits<double>::max();
+					distanceRanges.back().maximum = std::numeric_limits<double>::lowest();
 					for (auto& id2Pair : id1Distances) {
 						auto& id2(id2Pair.first);
 						if (id1 == id2) [[unlikely]] {

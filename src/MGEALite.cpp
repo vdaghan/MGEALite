@@ -50,8 +50,8 @@ int main() {
 	motionParameters.jointNames.push_back("shoulder");
 	motionParameters.jointNames.push_back("hip");
 	//motionParameters.jointNames.push_back("ankle");
-	motionParameters.jointLimits.emplace(std::make_pair("wrist", std::make_pair(-25.0, 25.0)));
-	motionParameters.jointLimits.emplace(std::make_pair("shoulder", std::make_pair(-200.0, 200.0)));
+	motionParameters.jointLimits.emplace(std::make_pair("wrist", std::make_pair(-100.0, 100.0)));
+	motionParameters.jointLimits.emplace(std::make_pair("shoulder", std::make_pair(-300.0, 300.0)));
 	motionParameters.jointLimits.emplace(std::make_pair("hip", std::make_pair(-500.0, 320.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1
 	//motionParameters.jointLimits.emplace(std::make_pair("ankle", std::make_pair(-70.0, 200.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1
 	motionParameters.contactParameters = bodyGroundContactParameters();

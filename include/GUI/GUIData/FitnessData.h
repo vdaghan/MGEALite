@@ -32,8 +32,13 @@ namespace MGEA {
 
 			lastGenerationFitnesses = {};
 			std::copy(fitnesses.begin(), fitnesses.end(), std::back_inserter(lastGenerationFitnesses));
-			lastGenerationMinimumFitness = *std::min_element(fitnesses.begin(), fitnesses.end());
-			lastGenerationMaximumFitness = *std::max_element(fitnesses.begin(), fitnesses.end());
+			if (fitnesses.empty()) {
+				lastGenerationMinimumFitness = 0.0;
+				lastGenerationMaximumFitness = 0.0;
+			} else {
+				lastGenerationMinimumFitness = *std::min_element(fitnesses.begin(), fitnesses.end());
+				lastGenerationMaximumFitness = *std::max_element(fitnesses.begin(), fitnesses.end());
+			}
 			lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
 			lastGenerationTotalFitness = std::accumulate(fitnesses.begin(), fitnesses.end(), 0.0);
 			lastGenerationNumberOfIndividuals = fitnesses.size();

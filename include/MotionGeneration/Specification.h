@@ -13,7 +13,7 @@ struct Specification {
 	using Phenotype = SimulationDataPtr;
 	using PhenotypeProxy = SimulationInfo;
 	using Fitness = double;
-	using Distance = std::size_t;
+	using Distance = double;
 	using IndividualParameters = DEvA::NullVParameters;
 };
 using Spec = DEvA::Specialisation<Specification>;

@@ -16,7 +16,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 , stopFlag(false)
 {
 	maxGenerations = 0;
-	//ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 256)); };
+	//ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 128)); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundary); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundaryWavelet); };
 	ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); };
@@ -25,14 +25,15 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.fitnessComparisonFunction = [](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; };
 	ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
 	ea.variationFunctors = createVariationFunctors();
-	ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<256>;
+	//ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<128>;
+	ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 128);
 	ea.convergenceCheckFunction = std::bind_front(&MotionGenerator::convergenceCheck, this);
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 256;
+	ea.lambda = 128;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };

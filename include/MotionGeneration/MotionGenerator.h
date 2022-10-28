@@ -44,7 +44,9 @@ class MotionGenerator {
 		Spec::GenotypeProxies genesisRandom(std::size_t);
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::Fitness evaluate(Spec::GenotypeProxy);
+		void survivorSelection(std::size_t, Spec::IndividualPtrs &);
 		Spec::Distance calculateTorqueDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
+		Spec::Distance calculateTorqueSignDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		Spec::Distance calculateAngleDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
