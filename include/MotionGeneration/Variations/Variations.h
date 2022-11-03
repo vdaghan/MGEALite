@@ -2,6 +2,7 @@
 
 #include "Database.h"
 #include "MotionGeneration/MotionParameters.h"
+#include "MotionGeneration/Specification.h"
 #include "SimulationData.h"
 
 #include "EvolutionaryAlgorithm.h"
@@ -30,4 +31,8 @@ namespace MGEA {
 	SimulationDataPtrs halfSineAsynchronous(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs halfSineSingle(VariationParams, SimulationDataPtrs);
 	SimulationDataPtrs halfSineSynchronous(VariationParams, SimulationDataPtrs);
+
+	SimulationDataPtrs deletionLInt(std::size_t, VariationParams, SimulationDataPtrs);
+	SimulationDataPtrs directionalLInt(std::size_t, VariationParams, Spec::IndividualPtrs);
+	SimulationDataPtrs snvLInt(std::size_t, VariationParams, SimulationDataPtrs);
 }

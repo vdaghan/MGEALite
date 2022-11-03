@@ -32,11 +32,9 @@ class Database {
 		[[nodiscard]] SimulationStatus status(SimulationInfo) const;
 		[[nodiscard]] SimulationLogPtr registerSimulation(SimulationInfo);
 		[[nodiscard]] MGEA::ErrorCode startSimulation(SimulationInfo);
-		[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
-		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
-
 		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(SimulationInfo simInfo);
-
+		//[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
+		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
 		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();

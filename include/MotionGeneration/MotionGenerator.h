@@ -51,7 +51,8 @@ class MotionGenerator {
 		[[nodiscard]] bool convergenceCheck(Spec::Fitness);
 
 		void applyMotionParameters(SimulationDataPtr);
-		[[nodiscard]] Spec::GenotypeProxies computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies);
+		[[nodiscard]] Spec::GenotypeProxies computeVariationWithGenotypeProxies(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies);
+		[[nodiscard]] Spec::GenotypeProxies computeVariationWithIndividualPointers(std::function<SimulationDataPtrs(MGEA::VariationParams, Spec::IndividualPtrs)> vFunc, Spec::IndividualPtrs parents);
 		[[nodiscard]] Spec::GenotypeProxies computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc);
 
 		void onEpochStart(std::size_t);

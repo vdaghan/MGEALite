@@ -26,7 +26,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
 	ea.variationFunctors = createVariationFunctors();
 	//ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<128>;
-	ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 128);
+	ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 256);
 	ea.convergenceCheckFunction = std::bind_front(&MotionGenerator::convergenceCheck, this);
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);

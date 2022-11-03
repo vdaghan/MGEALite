@@ -13,11 +13,11 @@ ContactParameters defaultContactParameters() {
 
 ContactParameters bodyGroundContactParameters() {
 	return ContactParameters{
-		.stiffness = 1e6,
+		.stiffness = 1e7,
 		.damping = 1e4,
-		.transitionRegionWidth = 1e-3,
-		.staticFriction = 1.15,
-		.dynamicFriction = 0.75,
+		.transitionRegionWidth = 1e-4,
+		.staticFriction = 2.0,
+		.dynamicFriction = 1.0,
 		.criticalVelocity = 1e-3
 	};
 };

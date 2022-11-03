@@ -1,5 +1,6 @@
 #include "MotionGeneration/MotionGenerator.h"
 
+#include "MotionGeneration/ParentSelectors/ParentSelectors.h"
 #include "MotionGeneration/Variations/Variations.h"
 #include "Wavelet/HaarWavelet.h"
 
@@ -17,7 +18,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorCrossoverAll.name = "CrossoverAll";
 	//variationFunctorCrossoverAll.numberOfParents = 2;
 	//variationFunctorCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverAll);
+	//variationFunctorCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverAll);
 	//variationFunctorCrossoverAll.probability = 1.0;
 	//variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCrossoverAll);
@@ -26,7 +27,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorCrossoverSingle.name = "CrossoverSingle";
 	//variationFunctorCrossoverSingle.numberOfParents = 2;
 	//variationFunctorCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
+	//variationFunctorCrossoverSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
 	//variationFunctorCrossoverSingle.probability = 1.0;
 	//variationFunctorCrossoverSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCrossoverSingle);
@@ -35,7 +36,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorCutAndCrossfillAll.name = "CutAndCrossfillAll";
 	//variationFunctorCutAndCrossfillAll.numberOfParents = 2;
 	//variationFunctorCutAndCrossfillAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCutAndCrossfillAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillAll);
+	//variationFunctorCutAndCrossfillAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillAll);
 	//variationFunctorCutAndCrossfillAll.probability = 1.0;
 	//variationFunctorCutAndCrossfillAll.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCutAndCrossfillAll);
@@ -43,42 +44,42 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
 	//variationFunctorCutAndCrossfillSingle.name = "CutAndCrossfillSingle";
 	//variationFunctorCutAndCrossfillSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCutAndCrossfillSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
+	//variationFunctorCutAndCrossfillSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
 	//variationFunctorCutAndCrossfillSingle.probability = 1.0;
 	//variationFunctorCutAndCrossfillSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCutAndCrossfillSingle);
 	
-	Spec::SVariationFunctor variationFunctorDeletionAll;
-	variationFunctorDeletionAll.name = "DeletionAll";
-	variationFunctorDeletionAll.numberOfParents = 1;
-	variationFunctorDeletionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
-	variationFunctorDeletionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::deletionAll);
-	variationFunctorDeletionAll.probability = 1.0;
-	variationFunctorDeletionAll.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorDeletionAll);
+	//Spec::SVariationFunctor variationFunctorDeletionAll;
+	//variationFunctorDeletionAll.name = "DeletionAll";
+	//variationFunctorDeletionAll.numberOfParents = 1;
+	//variationFunctorDeletionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::randomN<1>;
+	//variationFunctorDeletionAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::deletionAll);
+	//variationFunctorDeletionAll.probability = 1.0;
+	//variationFunctorDeletionAll.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorDeletionAll);
 	
 	//Spec::SVariationFunctor variationFunctorDeletionSingle;
 	//variationFunctorDeletionSingle.name = "DeletionSingle";
 	//variationFunctorDeletionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
-	//variationFunctorDeletionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::deletionSingle);
+	//variationFunctorDeletionSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::deletionSingle);
 	//variationFunctorDeletionSingle.probability = 0.2;
 	//variationFunctorDeletionSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorDeletionSingle);
 	
-	Spec::SVariationFunctor variationFunctorInsertionAll;
-	variationFunctorInsertionAll.name = "InsertionAll";
-	variationFunctorInsertionAll.numberOfParents = 1;
-	variationFunctorInsertionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
-	variationFunctorInsertionAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionAll);
-	variationFunctorInsertionAll.probability = 1.0;
-	variationFunctorInsertionAll.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorInsertionAll);
+	//Spec::SVariationFunctor variationFunctorInsertionAll;
+	//variationFunctorInsertionAll.name = "InsertionAll";
+	//variationFunctorInsertionAll.numberOfParents = 1;
+	//variationFunctorInsertionAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::randomN<1>;
+	//variationFunctorInsertionAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionAll);
+	//variationFunctorInsertionAll.probability = 1.0;
+	//variationFunctorInsertionAll.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorInsertionAll);
 	
 	//Spec::SVariationFunctor variationFunctorInsertionSingle;
 	//variationFunctorInsertionSingle.name = "InsertionSingle";
 	//variationFunctorInsertionSingle.numberOfParents = 1;
 	//variationFunctorInsertionSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 50>;
-	//variationFunctorInsertionSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionSingle);
+	//variationFunctorInsertionSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::insertionSingle);
 	//variationFunctorInsertionSingle.probability = 1.0;
 	//variationFunctorInsertionSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorInsertionSingle);
@@ -87,7 +88,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorkPointCrossoverAll.name = "kPointCrossoverAll";
 	//variationFunctorkPointCrossoverAll.numberOfParents = 2;
 	//variationFunctorkPointCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorkPointCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::kPointCrossoverAll);
+	//variationFunctorkPointCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::kPointCrossoverAll);
 	//variationFunctorkPointCrossoverAll.probability = 1.0;
 	//variationFunctorkPointCrossoverAll.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorkPointCrossoverAll);
@@ -95,25 +96,25 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//Spec::SVariationFunctor variationFunctorkPointCrossoverSingle;
 	//variationFunctorkPointCrossoverSingle.name = "kPointCrossoverSingle";
 	//variationFunctorkPointCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorkPointCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::kPointCrossoverSingle);
+	//variationFunctorkPointCrossoverSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::kPointCrossoverSingle);
 	//variationFunctorkPointCrossoverSingle.probability = 1.0;
 	//variationFunctorkPointCrossoverSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorkPointCrossoverSingle);
 	
-	Spec::SVariationFunctor variationFunctorSNV;
-	variationFunctorSNV.name = "SNV";
-	variationFunctorSNV.numberOfParents = 1;
-	variationFunctorSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
-	variationFunctorSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::snv);
-	variationFunctorSNV.probability = 1.0;
-	variationFunctorSNV.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorSNV);
+	//Spec::SVariationFunctor variationFunctorSNV;
+	//variationFunctorSNV.name = "SNV";
+	//variationFunctorSNV.numberOfParents = 1;
+	//variationFunctorSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::randomN<1>;
+	//variationFunctorSNV.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::snv);
+	//variationFunctorSNV.probability = 1.0;
+	//variationFunctorSNV.removeParentsFromMatingPool = false;
+	//variationFunctors.push_back(variationFunctorSNV);
 	
 	//Spec::SVariationFunctor variationFunctorUniformCrossoverAll;
 	//variationFunctorUniformCrossoverAll.name = "UniformCrossoverAll";
 	//variationFunctorUniformCrossoverAll.numberOfParents = 2;
 	//variationFunctorUniformCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorUniformCrossoverAll.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverAll);
+	//variationFunctorUniformCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverAll);
 	//variationFunctorUniformCrossoverAll.probability = 1.0;
 	//variationFunctorUniformCrossoverAll.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorUniformCrossoverAll);
@@ -122,7 +123,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorUniformCrossoverSingle.name = "UniformCrossoverSingle";
 	//variationFunctorUniformCrossoverSingle.numberOfParents = 2;
 	//variationFunctorUniformCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorUniformCrossoverSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverSingle);
+	//variationFunctorUniformCrossoverSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::uniformCrossoverSingle);
 	//variationFunctorUniformCrossoverSingle.probability = 1.0;
 	//variationFunctorUniformCrossoverSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorUniformCrossoverSingle);
@@ -130,8 +131,8 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//Spec::SVariationFunctor variationFunctorWaveletSNV;
 	//variationFunctorWaveletSNV.name = "WaveletSNV";
 	//variationFunctorWaveletSNV.numberOfParents = 1;
-	//variationFunctorWaveletSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
-	//variationFunctorWaveletSNV.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::waveletSNV);
+	//variationFunctorWaveletSNV.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::randomN<1>;
+	//variationFunctorWaveletSNV.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::waveletSNV);
 	//variationFunctorWaveletSNV.probability = 1.0;
 	//variationFunctorWaveletSNV.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorWaveletSNV);
@@ -140,7 +141,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorHalfSineAsynchronous.name = "HalfSineAsynchronous";
 	//variationFunctorHalfSineAsynchronous.numberOfParents = 1;
 	//variationFunctorHalfSineAsynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
-	//variationFunctorHalfSineAsynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineAsynchronous);
+	//variationFunctorHalfSineAsynchronous.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineAsynchronous);
 	//variationFunctorHalfSineAsynchronous.probability = 1.0;
 	//variationFunctorHalfSineAsynchronous.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorHalfSineAsynchronous);
@@ -149,7 +150,7 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorHalfSineSingle.name = "HalfSineSingle";
 	//variationFunctorHalfSineSingle.numberOfParents = 1;
 	//variationFunctorHalfSineSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
-	//variationFunctorHalfSineSingle.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSingle);
+	//variationFunctorHalfSineSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSingle);
 	//variationFunctorHalfSineSingle.probability = 1.0;
 	//variationFunctorHalfSineSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorHalfSineSingle);
@@ -158,10 +159,37 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	//variationFunctorHalfSineSynchronous.name = "HalfSineSynchronous";
 	//variationFunctorHalfSineSynchronous.numberOfParents = 1;
 	//variationFunctorHalfSineSynchronous.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<1, 10>;
-	//variationFunctorHalfSineSynchronous.variationFunction = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSynchronous);
+	//variationFunctorHalfSineSynchronous.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::halfSineSynchronous);
 	//variationFunctorHalfSineSynchronous.probability = 1.0;
 	//variationFunctorHalfSineSynchronous.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorHalfSineSynchronous);
+
+	Spec::SVariationFunctor variationFunctorDeletionLInt;
+	variationFunctorDeletionLInt.name = "DeletionLInt";
+	variationFunctorDeletionLInt.numberOfParents = 1;
+	variationFunctorDeletionLInt.parentSelectionFunction = MGEA::gainProportionalN<1>;
+	variationFunctorDeletionLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::deletionLInt, 3));
+	variationFunctorDeletionLInt.probability = 1.0;
+	variationFunctorDeletionLInt.removeParentsFromMatingPool = false;
+	variationFunctors.push_back(variationFunctorDeletionLInt);
+
+	Spec::SVariationFunctor variationFunctorDirectionalLInt;
+	variationFunctorDirectionalLInt.name = "DirectionalLInt";
+	variationFunctorDirectionalLInt.numberOfParents = 1;
+	variationFunctorDirectionalLInt.parentSelectionFunction = MGEA::gainProportionalN<1>;
+	variationFunctorDirectionalLInt.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariationWithIndividualPointers, this, std::bind_front(&MGEA::directionalLInt, 3));
+	variationFunctorDirectionalLInt.probability = 1.0;
+	variationFunctorDirectionalLInt.removeParentsFromMatingPool = false;
+	variationFunctors.push_back(variationFunctorDirectionalLInt);
+
+	Spec::SVariationFunctor variationFunctorSNVLInt;
+	variationFunctorSNVLInt.name = "SNVLInt";
+	variationFunctorSNVLInt.numberOfParents = 1;
+	variationFunctorSNVLInt.parentSelectionFunction = MGEA::fitnessProportionalN<1>;
+	variationFunctorSNVLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::snvLInt, 3));
+	variationFunctorSNVLInt.probability = 1.0;
+	variationFunctorSNVLInt.removeParentsFromMatingPool = false;
+	variationFunctors.push_back(variationFunctorSNVLInt);
 
 	return variationFunctors;
 }
@@ -175,10 +203,13 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
 		return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 	}
-	if (maybeSimulationDataPtr and maybeSimulationDataPtr.value()) {
+	if (maybeSimulationDataPtr.has_value() and maybeSimulationDataPtr.value()) {
+		if (!maybeSimulationDataPtr.value()->valid()) {
+			return std::unexpected(DEvA::ErrorCode::InvalidTransform);
+		}
 		return genPx;
 	}
-	return std::unexpected(DEvA::ErrorCode::Fail);
+	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 }
 
 Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
@@ -216,10 +247,13 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	}
 	//double diff(0.0);
 	auto absLambda = [](double prev, double next) {
-		return std::abs(prev + next);
+		return prev + std::abs(next);
 	};
-	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0, absLambda);
-	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0, absLambda);
+	auto onlyPositiveLambda = [](double prev, double next) {
+		return prev + std::max(next, 0.0);
+	};
+	double fingertipHeightSum = std::accumulate(fingertipHeight.begin(), fingertipHeight.end(), 0.0, onlyPositiveLambda);
+	double palmHeightSum = std::accumulate(palmHeight.begin(), palmHeight.end(), 0.0, onlyPositiveLambda);
 	double heelHeightSum = std::accumulate(heelHeight.begin(), heelHeight.end(), 0.0, absLambda);
 	double heelHeightMax = *std::max_element(heelHeight.begin(), heelHeight.end());
 	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0, absLambda);
@@ -235,9 +269,9 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double fitness;
 	//if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0 and shoulderAngleDiffSum >= 0.0) {
 	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
-		fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
 		//fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
-		//fitness = comHeightSum;
+		//fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
+		fitness = comHeightSum * timeStep / motionParameters.simStop();
 		//fitness = toeHeightMax + heelHeightMax;
 	} else {
 		fitness = 0.0;
@@ -257,6 +291,16 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 }
 
 void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs & iptrs) {
+	bool hasNonnegative = std::any_of(iptrs.begin(), iptrs.end(), [](auto & iptr) {
+		return iptr->fitness >= 0;
+	});
+	if (hasNonnegative) {
+		auto it = std::remove_if(iptrs.begin(), iptrs.end(), [](auto & iptr) {
+			return iptr->fitness < 0;
+		});
+		iptrs.erase(it, iptrs.end());
+	}
+
 	std::vector<Spec::IndividualPtr> iptrVector(iptrs.begin(), iptrs.end());
 	std::vector<std::size_t> iptrVectorIndices(iptrVector.size());
 	std::iota(iptrVectorIndices.begin(), iptrVectorIndices.end(), 0);
@@ -271,13 +315,13 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 		for (auto ind2 : iptrVectorIndices) {
 			auto & iptr1(iptrVector.at(ind1));
 			auto & iptr2(iptrVector.at(ind2));
-			auto maybeSimDataPtr1(database.getSimulationResult(iptr1->id));
-			auto maybeSimDataPtr2(database.getSimulationResult(iptr2->id));
-			if (!maybeSimDataPtr1.has_value() or !maybeSimDataPtr2.has_value()) {
+			auto simLogPtr1(database.getSimulationLog(iptr1->id));
+			auto simLogPtr2(database.getSimulationLog(iptr2->id));
+			if (!simLogPtr1 or !simLogPtr2) {
 				throw std::logic_error("Simulation data should have been ready, but it's not...");
 			}
-			auto simDataPtr1(maybeSimDataPtr1.value());
-			auto simDataPtr2(maybeSimDataPtr2.value());
+			auto simDataPtr1(simLogPtr1->data());
+			auto simDataPtr2(simLogPtr2->data());
 
 			double distance(0.0);
 			for (auto & jointName : motionParameters.jointNames) {
@@ -341,15 +385,28 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 		valueMap.emplace(std::make_pair(iptrVector.at(i)->id, value));
 	}
 
-	iptrs.sort([&](auto & lhs, auto & rhs) {
-		auto lhsId(lhs->id);
-		auto rhsId(rhs->id);
-		return valueMap.at(lhsId) < valueMap.at(rhsId);
-	});
+	auto filterValueLambda = [&](auto & iptr) {
+		auto & value(valueMap.at(iptr->id));
+		return value < 1;
+	};
+	auto it = std::remove_if(iptrs.begin(), iptrs.end(), filterValueLambda);
+	iptrs.erase(it, iptrs.end());
 
 	if (iptrs.size() > count) {
+		iptrs.sort([&](auto & lhs, auto & rhs) {
+			auto lhsId(lhs->id);
+			auto rhsId(rhs->id);
+			return valueMap.at(lhsId) > valueMap.at(rhsId);
+		});
+
 		iptrs.resize(count);
 	}
+
+	iptrs.sort([&](auto& lhs, auto& rhs) {
+		auto lhsFitness(lhs->fitness);
+		auto rhsFitness(rhs->fitness);
+		return lhsFitness > rhsFitness;
+	});
 }
 
 Spec::Distance MotionGenerator::calculateTorqueDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
@@ -448,7 +505,7 @@ void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 	sptr->contacts = motionParameters.contactParameters;
 }
 
-Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies) {
+Spec::GenotypeProxies MotionGenerator::computeVariationWithGenotypeProxies(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies) {
 	std::size_t const simLength = motionParameters.simSamples;
 	std::size_t const numJoints = motionParameters.jointNames.size();
 	if (0 == simLength || 0 == numJoints) {
@@ -470,6 +527,48 @@ Spec::GenotypeProxies MotionGenerator::computeVariation(std::function<Simulation
 	};
 
 	auto children = vFunc(variationParameters, parentData);
+
+	Spec::GenotypeProxies childProxies;
+	for (auto& child : children) {
+		if (checkStopFlagAndMaybeWait()) {
+			return {};
+		}
+		applyMotionParameters(child);
+		auto childIndividualIdentifier = ea.reserveNewIndividualIdentifier();
+		//auto childIndividualPtr = ea.createNewIndividual(childIndividualIdentifier);
+		auto childLogPtr = database.registerSimulation(childIndividualIdentifier);
+		// TODO Check if we could successfully create a new input?
+		updateSimulationDataPtr({ .source = child, .target = childLogPtr->data() });
+		MGEA::ErrorCode startError = database.startSimulation(childIndividualIdentifier);
+		// TODO Check if start was successful?
+		childProxies.push_back(childIndividualIdentifier);
+	}
+	timer.end();
+	return childProxies;
+}
+
+Spec::GenotypeProxies MotionGenerator::computeVariationWithIndividualPointers(std::function<SimulationDataPtrs(MGEA::VariationParams, Spec::IndividualPtrs)> vFunc, Spec::IndividualPtrs parents) {
+	std::size_t const simLength = motionParameters.simSamples;
+	std::size_t const numJoints = motionParameters.jointNames.size();
+	if (0 == simLength || 0 == numJoints) {
+		return {};
+	}
+
+	auto& timer = DTimer::simple("computeVariation()").newSample().begin();
+
+	for (auto & parent : parents) {
+		SimulationLogPtr parentLogPtr = database.getSimulationLog(parent->genotypeProxy);
+		SimulationDataPtr parentDataPtr = parentLogPtr->data();
+		parent->genotype = parentDataPtr;
+	}
+
+	MGEA::VariationParams variationParameters{
+		.motionParameters = motionParameters,
+		.pauseFlag = pauseFlag,
+		.stopFlag = stopFlag
+	};
+
+	auto children = vFunc(variationParameters, parents);
 
 	Spec::GenotypeProxies childProxies;
 	for (auto& child : children) {

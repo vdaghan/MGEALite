@@ -36,9 +36,9 @@ int main() {
 	MotionParameters motionParameters;
 	motionParameters.simStart = 0.0;
 	motionParameters.simStep = 0.01;
-	motionParameters.simSamples = 256;
+	motionParameters.simSamples = 128;
 	motionParameters.alignment = -1;
-	motionParameters.timeout = 300.0;
+	motionParameters.timeout = 30.0;
 	double totalMass(80.0);
 	motionParameters.masses.emplace(std::make_pair("hands", 1.2 * totalMass / 100.0));
 	motionParameters.masses.emplace(std::make_pair("arms", (5.3 + 3.1) * totalMass / 100.0));

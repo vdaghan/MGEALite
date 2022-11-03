@@ -25,6 +25,23 @@ struct SimulationData {
 	std::map<std::string, double> metadata;
 	double fitness;
 	std::optional<std::string> error;
+	bool valid() {
+		if (error) {
+			return false;
+		}
+		std::size_t const length(time.size());
+		for (auto & t : torque) {
+			if (length != t.second.size()) {
+				return false;
+			}
+		}
+		for (auto & o : outputs) {
+			if (length != o.second.size()) {
+				return false;
+			}
+		}
+		return true;
+	};
 };
 
 using SimulationDataPtr = std::shared_ptr<SimulationData>;
