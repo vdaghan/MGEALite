@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Metric.h"
 #include "MGEAError.h"
 #include "MotionGeneration/MotionParameters.h"
 
@@ -23,7 +24,7 @@ struct SimulationData {
 	std::optional<ContactParameters> contacts;
 	std::map<std::string, std::vector<double>> outputs;
 	std::map<std::string, double> metadata;
-	double fitness;
+	MGEAMetricVariantMap metrics;
 	std::optional<std::string> error;
 	bool valid() {
 		if (error) {

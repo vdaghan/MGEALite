@@ -19,21 +19,38 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	//ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 128)); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundary); };
 	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundaryWavelet); };
-	ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); };
-	ea.transformFunction = std::bind_front(&MotionGenerator::transform, this);
-	ea.evaluationFunction = std::bind_front(&MotionGenerator::evaluate, this);
-	ea.fitnessComparisonFunction = [](Spec::Fitness lhs, Spec::Fitness rhs){ return lhs > rhs; };
-	ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
-	ea.variationFunctors = createVariationFunctors();
+	ea.registerEAFunction(DEvA::EAFunction::Initialisation, [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); });
+	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
+	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromGenotypeProxy, std::bind_front(&MotionGenerator::evaluateIndividualFromGenotypeProxy, this));
+	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromIndividualPtr, std::bind_front(&MotionGenerator::evaluateIndividualFromIndividualPtr, this));
+	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) { return std::get<double>(lhs->metrics.at("fitness")) > std::get<double>(rhs->metrics.at("fitness")); });
+	//ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
 	//ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<128>;
-	ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 256);
-	ea.convergenceCheckFunction = std::bind_front(&MotionGenerator::convergenceCheck, this);
+	//ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 32);
+	ea.registerEAFunction(DEvA::EAFunction::SurvivorSelection, std::bind_front(&MotionGenerator::survivorSelectionPareto, this));
+	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, std::bind_front(&MotionGenerator::convergenceCheck, this));
+	ea.registerMetricComparison("fitness", [](MGEAMetricVariant lhs, MGEAMetricVariant rhs){
+		double lhsFitness(std::get<double>(lhs));
+		double rhsFitness(std::get<double>(rhs));
+		return lhsFitness > rhsFitness;
+	});
+	ea.registerMetricComparison("gain", [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
+		double lhsGain(std::get<double>(lhs));
+		double rhsGain(std::get<double>(rhs));
+		return lhsGain > rhsGain;
+	});
+
+	createVariationFunctors();
+	ea.useVariationFunctor("CrossoverAll");
+	ea.useVariationFunctor("DeletionLInt");
+	ea.useVariationFunctor("DirectionalLInt");
+	ea.useVariationFunctor("SNVLInt");
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 128;
+	ea.lambda = 256;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
@@ -56,45 +73,6 @@ bool MotionGenerator::checkStopFlagAndMaybeWait() {
 		std::this_thread::sleep_for(std::chrono::milliseconds(100));
 	}
 	return stopFlag.load();
-}
-
-void MotionGenerator::tryExecute_OnMotionGenerationStateChange() {
-	if (onMotionGenerationStateChange) {
-		onMotionGenerationStateChange(currentGeneration, motionGenerationState);
-	}
-}
-
-void MotionGenerator::updateMotionGenerationStateWith(EpochProgress & eP) {
-	motionGenerationState.updateWith(eP);
-	tryExecute_OnMotionGenerationStateChange();
-}
-
-void MotionGenerator::updateMotionGenerationStateWithEAProgress() {
-	if (ea.genealogy.empty()) [[unlikely]] {
-		return;
-	}
-	EAProgress eP;
-	eP.currentGeneration = currentGeneration;
-	eP.numberOfGenerations = ea.genealogy.size();
-	motionGenerationState.updateWith(eP);
-	tryExecute_OnMotionGenerationStateChange();
-}
-
-void MotionGenerator::updateMotionGenerationStateWithFitnessStatus() {
-	if (ea.genealogy.empty()) [[unlikely]] {
-		return;
-	}
-	auto const & generation = ea.genealogy.back();
-	FitnessStatus fS;
-	fS.fitnesses.clear();
-	for (auto & iptr : generation) {
-		if (!iptr->maybePhenotypeProxy.has_value()) {
-			continue;
-		}
-		fS.fitnesses.push_back(iptr->fitness);
-	}
-	motionGenerationState.updateWith(fS);
-	tryExecute_OnMotionGenerationStateChange();
 }
 
 void MotionGenerator::exportGenerationData() {

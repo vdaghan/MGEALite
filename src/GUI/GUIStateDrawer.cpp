@@ -299,7 +299,7 @@ void GUIStateDrawer::drawLogsOrPlots() {
 }
 
 ImPlotPoint fitnessGetter(int idx, void * user_data) {
-	std::vector<Spec::Fitness> * userDataAsVector = static_cast<std::vector<Spec::Fitness> *>(user_data);
+	std::vector<double> * userDataAsVector = static_cast<std::vector<double> *>(user_data);
 	return ImPlotPoint(idx, userDataAsVector->at(idx));
 };
 

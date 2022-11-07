@@ -33,7 +33,7 @@ void updateSimulationDataPtr(SimulationDataPtrPair pair) {
 	if (!pair.source->metadata.empty()) {
 		pair.target->metadata = pair.source->metadata;
 	}
-	pair.target->fitness = pair.source->fitness;
+	pair.target->metrics = pair.source->metrics;
 	if (pair.source->error) {
 		pair.target->error = pair.source->error;
 	}
@@ -67,7 +67,9 @@ void to_json(JSON & j, SimulationData const & sI) {
 	if (!sI.metadata.empty()) {
 		j["metadata"] = sI.metadata;
 	}
-	j["fitness"] = sI.fitness;
+	//if (!sI.metrics.empty()) {
+	//	j["metrics"] = sI.metrics;
+	//}
 	if (sI.error) {
 		j["error"] = sI.error.value();
 	}
@@ -110,9 +112,9 @@ void from_json(JSON const & j, SimulationData & sI) {
 			}
 		}
 	}
-	if (j.contains("fitness")) {
-		j.at("fitness").get_to(sI.fitness);
-	}
+	//if (j.contains("metrics")) {
+	//	j.at("metrics").get_to(sI.metrics);
+	//}
 	if (j.contains("metadata")) {
 		j.at("metadata").get_to(sI.metadata);
 	}

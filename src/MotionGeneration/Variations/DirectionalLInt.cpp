@@ -8,13 +8,13 @@ namespace MGEA {
 		if (parent.parents.empty()) {
 			return {};
 		}
-		Spec::Fitness grandparentFitness(std::numeric_limits<Spec::Fitness>::lowest());
+		double grandparentFitness(std::numeric_limits<double>::lowest());
 		Spec::Genotype grandparentGenotype{};
 
 		for (auto & grandparent : parent.parents) {
-			if (grandparent->fitness > grandparentFitness) {
+			if (std::get<double>(grandparent->metrics.at("fitness")) > grandparentFitness) {
 				grandparentGenotype = grandparent->genotype;
-				grandparentFitness = grandparent->fitness;
+				grandparentFitness = std::get<double>(grandparent->metrics.at("fitness"));
 			}
 		}
 

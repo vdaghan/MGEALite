@@ -11,6 +11,7 @@
 
 #include "Datastore.h"
 #include "MotionGeneration/MotionParameters.h"
+#include "MotionGeneration/Specification.h"
 #include "SimulationLog.h"
 #include "Error.h"
 #include "MGEAError.h"
@@ -33,8 +34,7 @@ class Database {
 		[[nodiscard]] SimulationLogPtr registerSimulation(SimulationInfo);
 		[[nodiscard]] MGEA::ErrorCode startSimulation(SimulationInfo);
 		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(SimulationInfo simInfo);
-		//[[nodiscard]] MaybeSimulationDataPtr getSimulationResult(SimulationInfo);
-		MGEA::ErrorCode setSimulationFitness(SimulationInfo, double);
+		MGEA::ErrorCode saveSimulationMetrics(SimulationInfo, Spec::MetricVariantMap);
 		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();

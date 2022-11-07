@@ -11,17 +11,15 @@
 #include <cmath>
 #include <valarray>
 
-std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
-	std::list<Spec::SVariationFunctor> variationFunctors;
-	
-	//Spec::SVariationFunctor variationFunctorCrossoverAll;
-	//variationFunctorCrossoverAll.name = "CrossoverAll";
-	//variationFunctorCrossoverAll.numberOfParents = 2;
-	//variationFunctorCrossoverAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverAll);
-	//variationFunctorCrossoverAll.probability = 1.0;
-	//variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
-	//variationFunctors.push_back(variationFunctorCrossoverAll);
+void MotionGenerator::createVariationFunctors() {
+	Spec::SVariationFunctor variationFunctorCrossoverAll;
+	variationFunctorCrossoverAll.name = "CrossoverAll";
+	variationFunctorCrossoverAll.numberOfParents = 2;
+	variationFunctorCrossoverAll.parentSelectionFunction = std::bind_front(DEvA::StandardParentSelectors<Spec>::randomN<2>, "fitness");
+	variationFunctorCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, &MGEA::crossoverAll);
+	variationFunctorCrossoverAll.probability = 1.0;
+	variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
+	ea.registerVariationFunctor(variationFunctorCrossoverAll);
 	
 	//Spec::SVariationFunctor variationFunctorCrossoverSingle;
 	//variationFunctorCrossoverSingle.name = "CrossoverSingle";
@@ -167,31 +165,29 @@ std::list<Spec::SVariationFunctor> MotionGenerator::createVariationFunctors() {
 	Spec::SVariationFunctor variationFunctorDeletionLInt;
 	variationFunctorDeletionLInt.name = "DeletionLInt";
 	variationFunctorDeletionLInt.numberOfParents = 1;
-	variationFunctorDeletionLInt.parentSelectionFunction = MGEA::gainProportionalN<1>;
-	variationFunctorDeletionLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::deletionLInt, 3));
+	variationFunctorDeletionLInt.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "gain");
+	variationFunctorDeletionLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::deletionLInt, 2));
 	variationFunctorDeletionLInt.probability = 1.0;
 	variationFunctorDeletionLInt.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorDeletionLInt);
+	ea.registerVariationFunctor(variationFunctorDeletionLInt);
 
 	Spec::SVariationFunctor variationFunctorDirectionalLInt;
 	variationFunctorDirectionalLInt.name = "DirectionalLInt";
 	variationFunctorDirectionalLInt.numberOfParents = 1;
-	variationFunctorDirectionalLInt.parentSelectionFunction = MGEA::gainProportionalN<1>;
-	variationFunctorDirectionalLInt.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariationWithIndividualPointers, this, std::bind_front(&MGEA::directionalLInt, 3));
+	variationFunctorDirectionalLInt.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "gain");
+	variationFunctorDirectionalLInt.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariationWithIndividualPointers, this, std::bind_front(&MGEA::directionalLInt, 2));
 	variationFunctorDirectionalLInt.probability = 1.0;
 	variationFunctorDirectionalLInt.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorDirectionalLInt);
+	ea.registerVariationFunctor(variationFunctorDirectionalLInt);
 
 	Spec::SVariationFunctor variationFunctorSNVLInt;
 	variationFunctorSNVLInt.name = "SNVLInt";
 	variationFunctorSNVLInt.numberOfParents = 1;
-	variationFunctorSNVLInt.parentSelectionFunction = MGEA::fitnessProportionalN<1>;
-	variationFunctorSNVLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::snvLInt, 3));
+	variationFunctorSNVLInt.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "fitness");
+	variationFunctorSNVLInt.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::snvLInt, 2));
 	variationFunctorSNVLInt.probability = 1.0;
 	variationFunctorSNVLInt.removeParentsFromMatingPool = false;
-	variationFunctors.push_back(variationFunctorSNVLInt);
-
-	return variationFunctors;
+	ea.registerVariationFunctor(variationFunctorSNVLInt);
 }
 
 Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
@@ -212,12 +208,12 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 }
 
-Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
+Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy genPx) {
 	//auto & timer = DTimer::simple("evaluate()").newSample().begin();
 	auto simLogPtr = database.getSimulationLog(genPx);
 	if (simLogPtr->fitnessExists()) {
 		//timer.end();
-		return simLogPtr->data()->fitness;
+		return simLogPtr->data()->metrics;
 	}
 	SimulationDataPtr simDataPtr = simLogPtr->data();
 
@@ -228,14 +224,15 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	if (!hasToeHeight or !hasFingertipHeight or !hasHeelHeight or !hasPalmHeight) {
 		spdlog::error("There is no position named \"heelHeight\" or \"toeHeight\" or \"fingertipHeight\" or \"palmHeight\" in simulation output {}", genPx);
 		//timer.end();
-		return 0.0;
+		return {};
 	}
 	double timeStep = motionParameters.simStep;
 	auto & fingertipHeight = simDataPtr->outputs.at("fingertipHeight");
 	auto & palmHeight = simDataPtr->outputs.at("palmHeight");
 	auto & heelHeight = simDataPtr->outputs.at("heelHeight");
 	auto & toeHeight = simDataPtr->outputs.at("toeHeight");
-	auto & comHeight = simDataPtr->outputs.at("centerOfMassZ");
+	auto & comX = simDataPtr->outputs.at("centerOfMassX");
+	auto & comZ = simDataPtr->outputs.at("centerOfMassZ");
 	auto & shoulderAngle = simDataPtr->outputs.at("shoulderAngle");
 	bool sameSize = fingertipHeight.size() == toeHeight.size()
 		and fingertipHeight.size() == heelHeight.size()
@@ -243,9 +240,11 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	if (!sameSize) {
 		spdlog::error("\"heelHeight\", \"toeHeight\", \"palmHeight\" and \"fingertipHeight\" are not of same size");
 		//timer.end();
-		return 0.0;
+		return {};
 	}
-	//double diff(0.0);
+
+	Spec::MetricVariantMap metrics;
+
 	auto absLambda = [](double prev, double next) {
 		return prev + std::abs(next);
 	};
@@ -258,7 +257,8 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	double heelHeightMax = *std::max_element(heelHeight.begin(), heelHeight.end());
 	double toeHeightSum = std::accumulate(toeHeight.begin(), toeHeight.end(), 0.0, absLambda);
 	double toeHeightMax = *std::max_element(toeHeight.begin(), toeHeight.end());
-	double comHeightSum = std::accumulate(comHeight.begin(), comHeight.end(), 0.0, absLambda);
+	double comXSum = std::accumulate(comX.begin(), comX.end(), 0.0, absLambda);
+	double comZSum = std::accumulate(comZ.begin(), comZ.end(), 0.0, absLambda);
 	double shoulderAngleDiffSum{};
 	for (auto it(shoulderAngle.begin()); it != shoulderAngle.end() and std::next(it) != shoulderAngle.end(); ++it) {
 		auto const & currentElement(*it);
@@ -271,7 +271,7 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 	if (fingertipHeightSum <= 0.0 and palmHeightSum <= 0.0) {
 		//fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
 		//fitness = std::min(toeHeightSum, heelHeightSum) * timeStep;
-		fitness = comHeightSum * timeStep / motionParameters.simStop();
+		fitness = (2 * comZSum - comXSum) * timeStep / motionParameters.simStop();
 		//fitness = toeHeightMax + heelHeightMax;
 	} else {
 		fitness = 0.0;
@@ -283,20 +283,47 @@ Spec::Fitness MotionGenerator::evaluate(Spec::GenotypeProxy genPx) {
 		}
 		//fitness += shoulderAngleDiffSum;
 	}
-	simLogPtr->data()->fitness = fitness;
-	database.setSimulationFitness(simLogPtr->info(), fitness);
+	metrics["fingertipHeightSum"] = fingertipHeightSum;
+	metrics["palmHeightSum"] = palmHeightSum;
+	metrics["heelHeightSum"] = heelHeightSum;
+	metrics["heelHeightMax"] = heelHeightMax;
+	metrics["toeHeightSum"] = toeHeightSum;
+	metrics["toeHeightMax"] = toeHeightMax;
+	metrics["comXSum"] = comXSum;
+	metrics["comZSum"] = comZSum;
+	metrics["shoulderAngleDiffSum"] = shoulderAngleDiffSum;
+	metrics["fitness"] = fitness;
+
+	simLogPtr->data()->metrics = metrics;
+	database.saveSimulationMetrics(simLogPtr->info(), metrics);
 	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
 	//timer.end();
-	return fitness;
+	return metrics;
+}
+
+Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromIndividualPtr(Spec::IndividualPtr iptr) {
+	double maximumFitnessDiff(0.0);
+	for (auto const& parent : iptr->parents) {
+		auto const& parentFitness(std::get<double>(parent->metrics.at("fitness")));
+		for (auto const& grandparent : parent->parents) {
+			auto const& grandparentFitness(std::get<double>(grandparent->metrics.at("fitness")));
+			double fitnessDiff(parentFitness - grandparentFitness);
+			maximumFitnessDiff = std::max(maximumFitnessDiff, fitnessDiff);
+		}
+	}
+
+	Spec::MetricVariantMap metrics;
+	metrics["gain"] = maximumFitnessDiff;
+	return metrics;
 }
 
 void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs & iptrs) {
 	bool hasNonnegative = std::any_of(iptrs.begin(), iptrs.end(), [](auto & iptr) {
-		return iptr->fitness >= 0;
+		return std::get<double>(iptr->metrics.at("fitness")) >= 0;
 	});
 	if (hasNonnegative) {
 		auto it = std::remove_if(iptrs.begin(), iptrs.end(), [](auto & iptr) {
-			return iptr->fitness < 0;
+			return std::get<double>(iptr->metrics.at("fitness")) < 0;
 		});
 		iptrs.erase(it, iptrs.end());
 	}
@@ -304,15 +331,24 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 	std::vector<Spec::IndividualPtr> iptrVector(iptrs.begin(), iptrs.end());
 	std::vector<std::size_t> iptrVectorIndices(iptrVector.size());
 	std::iota(iptrVectorIndices.begin(), iptrVectorIndices.end(), 0);
-	std::vector<std::vector<double>> distanceMatrix;
+	//std::vector<std::vector<double>> globalDistanceMatrix;
+	std::vector<double> globalTotalDistanceVector;
+	std::vector<double> localDistanceVector;
 
-	distanceMatrix.resize(iptrVector.size());
-	for (std::size_t i(0); i < iptrVector.size(); ++i) {
-		distanceMatrix[i].resize(iptrVector.size(), 0.0);
-	}
+	//globalDistanceMatrix.resize(iptrVector.size());
+	globalTotalDistanceVector.resize(iptrVector.size());
+	localDistanceVector.resize(iptrVector.size());
+	//for (std::size_t i(0); i < iptrVector.size(); ++i) {
+	//	globalDistanceMatrix[i].resize(iptrVector.size(), 0.0);
+	//}
 
 	std::for_each(std::execution::par, iptrVectorIndices.begin(), iptrVectorIndices.end(), [&](std::size_t ind1) {
+		double minLocalDistance(std::numeric_limits<double>::max());
+		double totalDistance(0.0);
 		for (auto ind2 : iptrVectorIndices) {
+			if (ind1 == ind2) {
+				continue;
+			}
 			auto & iptr1(iptrVector.at(ind1));
 			auto & iptr2(iptrVector.at(ind2));
 			auto simLogPtr1(database.getSimulationLog(iptr1->id));
@@ -333,9 +369,13 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 			}
 			distance = std::sqrt(distance);
 
-			distanceMatrix[ind1][ind2] = distance;
-			distanceMatrix[ind2][ind1] = distance;
+			//globalDistanceMatrix[ind1][ind2] = distance;
+			//globalDistanceMatrix[ind2][ind1] = distance;
+			minLocalDistance = std::min(minLocalDistance, distance);
+			totalDistance += distance;
 		}
+		globalTotalDistanceVector[ind1] = totalDistance;
+		localDistanceVector[ind1] = minLocalDistance;
 	});
 
 	std::vector<double> fitnesses(iptrVector.size());
@@ -343,11 +383,12 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 	std::vector<double> lucks(iptrVector.size());
 	for (std::size_t i(0); i < iptrVector.size(); ++i) {
 		auto & iptr(iptrVector.at(i));
-		fitnesses.at(i) = iptr->fitness;
-		novelties.at(i) = std::accumulate(distanceMatrix.at(i).begin(), distanceMatrix.at(i).end(), 0.0);
+		fitnesses.at(i) = std::get<double>(iptr->metrics.at("fitness"));
+		novelties.at(i) = globalTotalDistanceVector[i];
+		//novelties.at(i) = localDistanceVector[i];
 		std::list<double> fitnessDiffs;
 		std::transform(iptr->parents.begin(), iptr->parents.end(), std::back_inserter(fitnessDiffs), [&](auto& parent) {
-			return parent->fitness - iptr->fitness;
+			return std::get<double>(parent->metrics.at("fitness")) - std::get<double>(iptr->metrics.at("fitness"));
 		});
 		lucks.at(i) = 0.0;
 		if (fitnessDiffs.size() > 0) {
@@ -370,6 +411,9 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 	};
 	normaliseLambda(fitnesses);
 	normaliseLambda(novelties);
+	//std::transform(novelties.begin(), novelties.end(), novelties.begin(), [&](auto n) {
+	//	return 1 - n;
+	//});
 	normaliseLambda(lucks);
 
 	std::map<DEvA::IndividualIdentifier, double> valueMap;
@@ -387,24 +431,155 @@ void MotionGenerator::survivorSelection(std::size_t count, Spec::IndividualPtrs 
 
 	auto filterValueLambda = [&](auto & iptr) {
 		auto & value(valueMap.at(iptr->id));
-		return value < 1;
+		return value < 1.0;
 	};
 	auto it = std::remove_if(iptrs.begin(), iptrs.end(), filterValueLambda);
 	iptrs.erase(it, iptrs.end());
 
-	if (iptrs.size() > count) {
-		iptrs.sort([&](auto & lhs, auto & rhs) {
-			auto lhsId(lhs->id);
-			auto rhsId(rhs->id);
-			return valueMap.at(lhsId) > valueMap.at(rhsId);
-		});
+	//if (iptrs.size() > count) {
+	//	iptrs.sort([&](auto & lhs, auto & rhs) {
+	//		auto lhsId(lhs->id);
+	//		auto rhsId(rhs->id);
+	//		return valueMap.at(lhsId) > valueMap.at(rhsId);
+	//	});
 
-		iptrs.resize(count);
-	}
+	//	iptrs.resize(count);
+	//}
 
 	iptrs.sort([&](auto& lhs, auto& rhs) {
-		auto lhsFitness(lhs->fitness);
-		auto rhsFitness(rhs->fitness);
+		auto lhsFitness(std::get<double>(lhs->metrics.at("fitness")));
+		auto rhsFitness(std::get<double>(rhs->metrics.at("fitness")));
+		return lhsFitness > rhsFitness;
+	});
+
+	if (iptrs.size() > count) {
+		iptrs.resize(count);
+	}
+}
+
+void MotionGenerator::survivorSelectionPareto(Spec::IndividualPtrs & iptrs) {
+	bool hasNonnegative = std::any_of(iptrs.begin(), iptrs.end(), [](auto& iptr) {
+		return std::get<double>(iptr->metrics.at("fitness")) >= 0;
+	});
+	if (hasNonnegative) {
+		auto it = std::remove_if(iptrs.begin(), iptrs.end(), [](auto& iptr) {
+			return std::get<double>(iptr->metrics.at("fitness")) < 0;
+		});
+		iptrs.erase(it, iptrs.end());
+	}
+
+	std::vector<Spec::IndividualPtr> iptrVector(iptrs.begin(), iptrs.end());
+	std::vector<std::size_t> iptrVectorIndices(iptrVector.size());
+	std::iota(iptrVectorIndices.begin(), iptrVectorIndices.end(), 0);
+	//std::vector<std::vector<double>> globalDistanceMatrix;
+	std::vector<double> globalTotalDistanceVector;
+	std::vector<double> localDistanceVector;
+
+	//globalDistanceMatrix.resize(iptrVector.size());
+	globalTotalDistanceVector.resize(iptrVector.size());
+	localDistanceVector.resize(iptrVector.size());
+	//for (std::size_t i(0); i < iptrVector.size(); ++i) {
+	//	globalDistanceMatrix[i].resize(iptrVector.size(), 0.0);
+	//}
+
+	std::for_each(std::execution::par, iptrVectorIndices.begin(), iptrVectorIndices.end(), [&](std::size_t ind1) {
+		double minLocalDistance(std::numeric_limits<double>::max());
+		double totalDistance(0.0);
+		for (auto ind2 : iptrVectorIndices) {
+			if (ind1 == ind2) {
+				continue;
+			}
+			auto& iptr1(iptrVector.at(ind1));
+			auto& iptr2(iptrVector.at(ind2));
+			auto simLogPtr1(database.getSimulationLog(iptr1->id));
+			auto simLogPtr2(database.getSimulationLog(iptr2->id));
+			if (!simLogPtr1 or !simLogPtr2) {
+				throw std::logic_error("Simulation data should have been ready, but it's not...");
+			}
+			auto simDataPtr1(simLogPtr1->data());
+			auto simDataPtr2(simLogPtr2->data());
+
+			double distance(0.0);
+			for (auto& jointName : motionParameters.jointNames) {
+				auto& torqueData1(simDataPtr1->torque.at(jointName));
+				auto& torqueData2(simDataPtr2->torque.at(jointName));
+				for (std::size_t i(0); i != motionParameters.simSamples; ++i) {
+					distance += std::pow(torqueData1.at(i) - torqueData2.at(i), 2);
+				}
+			}
+			distance = std::sqrt(distance);
+
+			//globalDistanceMatrix[ind1][ind2] = distance;
+			//globalDistanceMatrix[ind2][ind1] = distance;
+			minLocalDistance = std::min(minLocalDistance, distance);
+			totalDistance += distance;
+		}
+		globalTotalDistanceVector[ind1] = totalDistance;
+		localDistanceVector[ind1] = minLocalDistance;
+	});
+
+	std::vector<double> fitnesses(iptrVector.size());
+	std::vector<double> novelties(iptrVector.size());
+	std::vector<double> lucks(iptrVector.size());
+	for (std::size_t i(0); i < iptrVector.size(); ++i) {
+		auto& iptr(iptrVector.at(i));
+		fitnesses.at(i) = std::get<double>(iptr->metrics.at("fitness"));
+		novelties.at(i) = globalTotalDistanceVector[i];
+		//novelties.at(i) = localDistanceVector[i];
+		std::list<double> fitnessDiffs;
+		std::transform(iptr->parents.begin(), iptr->parents.end(), std::back_inserter(fitnessDiffs), [&](auto& parent) {
+			return std::get<double>(parent->metrics.at("fitness")) - std::get<double>(iptr->metrics.at("fitness"));
+		});
+		lucks.at(i) = 0.0;
+		if (fitnessDiffs.size() > 0) {
+			double luck = *std::min_element(fitnessDiffs.begin(), fitnessDiffs.end());
+			lucks.at(i) = luck;
+		}
+	}
+
+	auto normaliseLambda = [](std::vector<double>& v) {
+		if (v.empty()) {
+			return;
+		}
+		double maxValue(*std::max_element(v.begin(), v.end()));
+		double minValue(*std::min_element(v.begin(), v.end()));
+		if (maxValue == minValue) {
+			v = std::vector<double>(v.size(), 1.0);
+		}
+		else {
+			std::transform(v.begin(), v.end(), v.begin(), [&](auto f) { return (f - minValue) / (maxValue - minValue); });
+		}
+	};
+	normaliseLambda(fitnesses);
+	normaliseLambda(novelties);
+	//std::transform(novelties.begin(), novelties.end(), novelties.begin(), [&](auto n) {
+	//	return 1 - n;
+	//});
+	normaliseLambda(lucks);
+
+	std::map<DEvA::IndividualIdentifier, double> valueMap;
+	auto computeValueLambda = [&](std::size_t ind) {
+		double fitnessSq(std::pow(fitnesses.at(ind), 2));
+		double noveltySq(std::pow(novelties.at(ind), 2));
+		double luckSq(std::pow(lucks.at(ind), 2));
+		double value(std::sqrt(fitnessSq + noveltySq + luckSq));
+		return value;
+	};
+	for (std::size_t i(0); i < iptrVector.size(); ++i) {
+		double value(computeValueLambda(i));
+		valueMap.emplace(std::make_pair(iptrVector.at(i)->id, value));
+	}
+
+	auto filterValueLambda = [&](auto& iptr) {
+		auto& value(valueMap.at(iptr->id));
+		return value < 1.0;
+	};
+	auto it = std::remove_if(iptrs.begin(), iptrs.end(), filterValueLambda);
+	iptrs.erase(it, iptrs.end());
+
+	iptrs.sort([&](auto& lhs, auto& rhs) {
+		auto lhsFitness(std::get<double>(lhs->metrics.at("fitness")));
+		auto rhsFitness(std::get<double>(rhs->metrics.at("fitness")));
 		return lhsFitness > rhsFitness;
 	});
 }
@@ -489,7 +664,7 @@ Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifie
 	return distance;
 }
 
-bool MotionGenerator::convergenceCheck(Spec::Fitness f) {
+bool MotionGenerator::convergenceCheck(Spec::MetricVariantMap mVM) {
 	//return f > 1.5 * motionParameters.simStop();
 	return false;
 }
@@ -615,33 +790,14 @@ Spec::GenotypeProxies MotionGenerator::computeGenesis(std::function<SimulationDa
 void MotionGenerator::onEpochStart(std::size_t generation) {
 	currentGeneration = generation;
 	spdlog::info("Epoch {} started.", generation);
-	updateMotionGenerationStateWithEAProgress();
 }
 
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
 	auto & lastGeneration = ea.genealogy.back();
 
-	updateMotionGenerationStateWithEAProgress();
-	updateMotionGenerationStateWithFitnessStatus();
-
 	auto & timer = DTimer::simple("stats").newSample().begin();
 	auto const & bestIndividualPtr = lastGeneration.front();
-	auto worstIndividualPtr = lastGeneration.front();
-	std::list<Spec::Fitness> fitnessValues;
-	Spec::Fitness totalFitness = 0.0;
-	for (auto const & iptr : lastGeneration) {
-		if (iptr->maybePhenotypeProxy) {
-			auto & fitness = iptr->fitness;
-			totalFitness += fitness;
-			fitnessValues.push_back(fitness);
-			worstIndividualPtr = iptr;
-		}
-	}
-	//Spec::Fitness meanFitness = totalFitness / static_cast<Spec::Fitness>(fitnessValues.size());
-	spdlog::info("Best individual {} has fitness {}.", bestIndividualPtr->genotypeProxy, bestIndividualPtr->fitness);
-	//spdlog::info("Worst individual {} has fitness {}.", worstIndividualPtr->genotypeProxy, worstIndividualPtr->fitness);
-	//spdlog::info("Mean fitness value: {}.", meanFitness);
 	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
 
 	std::list<double> simulationTimes;

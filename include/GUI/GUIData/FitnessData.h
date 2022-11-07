@@ -11,7 +11,7 @@ namespace MGEA {
 		FitnessData() : nextGeneration(0), numberOfGenerations(0) {};
 
 		// Fitness vs Individuals
-		std::vector<Spec::Fitness> lastGenerationFitnesses;
+		std::vector<double> lastGenerationFitnesses;
 		double lastGenerationMinimumFitness;
 		double lastGenerationMaximumFitness;
 		double lastGenerationDiff;
@@ -28,28 +28,28 @@ namespace MGEA {
 
 
 		void update(DEvA::EAStatistics<Spec> const & eaStatistics) {
-			auto const & fitnesses(eaStatistics.fitnesses);
+			//auto const & individualMetrics(eaStatistics.individualMetrics);
 
-			lastGenerationFitnesses = {};
-			std::copy(fitnesses.begin(), fitnesses.end(), std::back_inserter(lastGenerationFitnesses));
-			if (fitnesses.empty()) {
-				lastGenerationMinimumFitness = 0.0;
-				lastGenerationMaximumFitness = 0.0;
-			} else {
-				lastGenerationMinimumFitness = *std::min_element(fitnesses.begin(), fitnesses.end());
-				lastGenerationMaximumFitness = *std::max_element(fitnesses.begin(), fitnesses.end());
-			}
-			lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
-			lastGenerationTotalFitness = std::accumulate(fitnesses.begin(), fitnesses.end(), 0.0);
-			lastGenerationNumberOfIndividuals = fitnesses.size();
-			lastGenerationMeanFitness = lastGenerationTotalFitness / static_cast<double>(lastGenerationNumberOfIndividuals);
+			//lastGenerationFitnesses = {};
+			//std::copy(individualMetrics.begin(), individualMetrics.end(), std::back_inserter(lastGenerationFitnesses));
+			//if (individualMetrics.empty()) {
+			//	lastGenerationMinimumFitness = 0.0;
+			//	lastGenerationMaximumFitness = 0.0;
+			//} else {
+			//	//lastGenerationMinimumFitness = *std::min_element(individualMetrics.begin(), individualMetrics.end());
+			//	//lastGenerationMaximumFitness = *std::max_element(individualMetrics.begin(), individualMetrics.end());
+			//}
+			//lastGenerationDiff = lastGenerationMaximumFitness - lastGenerationMinimumFitness;
+			//lastGenerationTotalFitness = std::accumulate(individualMetrics.begin(), individualMetrics.end(), 0.0);
+			//lastGenerationNumberOfIndividuals = individualMetrics.size();
+			//lastGenerationMeanFitness = lastGenerationTotalFitness / static_cast<double>(lastGenerationNumberOfIndividuals);
 
-			minimumOfGenerations.push_back(lastGenerationMinimumFitness);
-			maximumOfGenerations.push_back(lastGenerationMaximumFitness);
-			meanOfGenerations.push_back(lastGenerationMeanFitness);
-			++numberOfGenerations;
+			//minimumOfGenerations.push_back(lastGenerationMinimumFitness);
+			//maximumOfGenerations.push_back(lastGenerationMaximumFitness);
+			//meanOfGenerations.push_back(lastGenerationMeanFitness);
+			//++numberOfGenerations;
 
-			++nextGeneration;
+			//++nextGeneration;
 		};
 	};
 };

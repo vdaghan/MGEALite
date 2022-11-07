@@ -2,18 +2,20 @@
 
 #include "EvolutionaryAlgorithm.h"
 
-#include "Database.h"
+#include "Metric.h"
+#include "SimulationData.h"
 #include "Specialisation.h"
 
+class Database;
 struct Specification {
 	Specification(Database & database_) : database{database_} {};
 	Database & database;
 	using Genotype = SimulationDataPtr;
-	using GenotypeProxy = SimulationInfo;
+	using GenotypeProxy = DEvA::IndividualIdentifier;
 	using Phenotype = SimulationDataPtr;
-	using PhenotypeProxy = SimulationInfo;
-	using Fitness = double;
-	using Distance = double;
+	using PhenotypeProxy = DEvA::IndividualIdentifier;
+	using MetricVariant = MGEAMetricVariant;
+	using Distance = double; // TODO: Distance is a metric
 	using IndividualParameters = DEvA::NullVParameters;
 };
 using Spec = DEvA::Specialisation<Specification>;

@@ -30,7 +30,7 @@ class Datastore {
 
 		MGEA::ErrorCode exportInputFile(SimulationLogPtr);
 		MGEA::ErrorCode importOutputFile(SimulationLogPtr);
-		MGEA::ErrorCode setFitnessAndCombineFiles(SimulationLogPtr, double);
+		MGEA::ErrorCode combineFilesWithMetrics(SimulationLogPtr, std::map<std::string, MGEAMetricVariant>);
 		MaybeSimulationDataPtr importCombinedFile(SimulationInfo);
 
 		DatastoreHistory const & history() const { return m_history; };

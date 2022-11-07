@@ -100,7 +100,7 @@ MGEA::ErrorCode Datastore::importOutputFile(SimulationLogPtr simLogPtr) {
 	return MGEA::ErrorCode::OK;
 }
 
-MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, double fitness) {
+MGEA::ErrorCode Datastore::combineFilesWithMetrics(SimulationLogPtr slptr, std::map<std::string, MGEAMetricVariant> metrics) {
 	auto const simInfo = slptr->info();
 	auto const inputFile = toInputPath(simInfo.identifier);
 	auto const outputFile = toOutputPath(simInfo.identifier);
@@ -127,7 +127,7 @@ MGEA::ErrorCode Datastore::setFitnessAndCombineFiles(SimulationLogPtr slptr, dou
 	SimulationDataPtr combinedDataPtr = std::make_shared<SimulationData>();
 	updateSimulationDataPtr({.source = maybeInputDataPtr.value(), .target = combinedDataPtr});
 	updateSimulationDataPtr({.source = maybeOutputDataPtr.value(), .target = combinedDataPtr});
-	combinedDataPtr->fitness = fitness;
+	combinedDataPtr->metrics = metrics;
 	MGEA::ErrorCode exportError = exportSimulationData(combinedDataPtr, combinedFile);
 	if (MGEA::ErrorCode::OK != exportError) {
 		return exportError;

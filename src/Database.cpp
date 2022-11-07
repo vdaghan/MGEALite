@@ -108,37 +108,7 @@ std::shared_future<MaybeSimulationDataPtr> Database::requestSimulationResult(Sim
 	return simulationResultPromises.at(simInfo).get_future();
 }
 
-//MaybeSimulationDataPtr Database::getSimulationResult(SimulationInfo simInfo) {
-//	std::lock_guard<std::recursive_mutex> lock(dbMutex);
-//	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
-//	if (!simulationLogPtr) {
-//		return nullptr;
-//	}
-//	if (simulationLogPtr->outputExists()) {
-//		return simulationLogPtr->data();
-//	}
-//	MGEA::ErrorCode importError = datastore.importOutputFile(simulationLogPtr);
-//	if (MGEA::ErrorCode::OK != importError) {
-//		return std::unexpected(importError);
-//	}
-//	if (simulationLogPtr->data()->error) {
-//		spdlog::warn("Simulation error for {}. Error message was:", simInfo);
-//		spdlog::warn("{}", *simulationLogPtr->data()->error);
-//		simulationLogPtr->updateStatus(SimulationStatus::SimulationError);
-//		MGEA::ErrorCode setError = datastore.setFitnessAndCombineFiles(simulationLogPtr, std::numeric_limits<double>::min());
-//		if (MGEA::ErrorCode::OK != setError) {
-//			return std::unexpected(setError);
-//		}
-//		return std::unexpected(MGEA::ErrorCode::SimulationError);
-//	} else if (!simulationLogPtr->data()->valid()) {
-//		return std::unexpected(MGEA::ErrorCode::SimulationError);
-//	}
-//	simulationLogPtr->updateStatus(SimulationStatus::PendingEvaluation);
-//	moveFromListToList(pendingSimulation, pendingEvaluation, simInfo);
-//	return simulationLogPtr->data();
-//}
-
-MGEA::ErrorCode Database::setSimulationFitness(SimulationInfo simInfo, double fitness) {
+MGEA::ErrorCode Database::saveSimulationMetrics(SimulationInfo simInfo, Spec::MetricVariantMap metrics) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
 		return MGEA::ErrorCode::Fail;
@@ -146,7 +116,7 @@ MGEA::ErrorCode Database::setSimulationFitness(SimulationInfo simInfo, double fi
 	if (simulationLogPtr->fitnessExists()) {
 		return MGEA::ErrorCode::OK;
 	}
-	MGEA::ErrorCode setError = datastore.setFitnessAndCombineFiles(simulationLogPtr, fitness);
+	MGEA::ErrorCode setError = datastore.combineFilesWithMetrics(simulationLogPtr, metrics);
 	if (MGEA::ErrorCode::OK != setError) {
 		return setError;
 	}
@@ -193,7 +163,7 @@ bool Database::fullfillSimulationResultPromise(SimulationInfo simInfo) {
 			spdlog::warn("Simulation error for {}. Error message was:", simInfo);
 			spdlog::warn("{}", *simulationLogPtr->data()->error);
 		}
-		MGEA::ErrorCode setError = datastore.setFitnessAndCombineFiles(simulationLogPtr, std::numeric_limits<double>::min());
+		MGEA::ErrorCode setError = datastore.combineFilesWithMetrics(simulationLogPtr, {});
 		if (MGEA::ErrorCode::OK != setError) {
 			return false;
 		}
