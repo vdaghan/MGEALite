@@ -7,35 +7,41 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <utility>
 #include <vector>
 
 namespace MGEA {
 	template <std::size_t N>
 	static Spec::IndividualPtrs metricProportionalN(std::string metricName, Spec::MetricComparisonMap const & compMap, Spec::IndividualPtrs domain) {
+		auto & comp(compMap.at(metricName));
 		auto bestWorstIteratorPair(std::minmax_element(domain.begin(), domain.end(), [&](auto const & lhs, auto const & rhs) {
-			auto const & lhsFitness = std::get<double>(lhs->metrics.at(metricName));
-			auto const & rhsFitness = std::get<double>(rhs->metrics.at(metricName));
-			return compMap.at(metricName)(lhsFitness, rhsFitness);
+			auto const & lhsMetric = std::get<double>(lhs->metrics.at(metricName));
+			auto const & rhsMetric = std::get<double>(rhs->metrics.at(metricName));
+			return comp(lhsMetric, rhsMetric);
 		}));
-		double worstFitness = std::get<double>((*bestWorstIteratorPair.second)->metrics.at(metricName));
-		double bestFitness = std::get<double>((*bestWorstIteratorPair.first)->metrics.at(metricName));
+		double worstMetric = std::get<double>((*bestWorstIteratorPair.second)->metrics.at(metricName));
+		double bestMetric = std::get<double>((*bestWorstIteratorPair.first)->metrics.at(metricName));
 		std::vector<Spec::IndividualPtr> vec(domain.begin(), domain.end());
 		std::vector<double> weights;
 		weights.reserve(vec.size());
-		auto fitnessMappingLambda = [&](Spec::IndividualPtr iptr) -> double {
+		auto metricMappingLambda = [&](Spec::IndividualPtr iptr) -> double {
 			double metric(std::get<double>(iptr->metrics.at(metricName)));
-			// t * bestFitness + (t-1) * worstFitness = f
-			// t = (f - worstFitness) / (bestFitness + worstFitness)
+			// t * bestMetric + (t-1) * worstMetric = f
+			// t = (f - worstMetric) / (bestMetric + worstMetric)
 			double retVal(1.0);
-			bool bothZero(0.0 == worstFitness and 0.0 == bestFitness);
-			bool bestWorstEqual(worstFitness == bestFitness);
+			bool bothZero(0.0 == worstMetric and 0.0 == bestMetric);
+			bool bestWorstEqual(worstMetric == bestMetric);
 			if (!bestWorstEqual and !bothZero) {
-				retVal = (metric - worstFitness) / (bestFitness + worstFitness);
+				if (bestMetric >= worstMetric) {
+					retVal = (metric - worstMetric) / std::abs(bestMetric + worstMetric);
+				} else {
+					retVal = (metric - bestMetric) / std::abs(bestMetric + worstMetric);
+				}
 			}
 			return retVal;
 		};
-		std::transform(vec.begin(), vec.end(), std::back_inserter(weights), fitnessMappingLambda);
+		std::transform(vec.begin(), vec.end(), std::back_inserter(weights), metricMappingLambda);
 		std::discrete_distribution<std::size_t> dist(weights.begin(), weights.end());
 
 		static std::random_device randomDevice;

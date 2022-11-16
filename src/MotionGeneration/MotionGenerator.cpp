@@ -29,7 +29,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	//ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 32);
 	ea.registerEAFunction(DEvA::EAFunction::SurvivorSelection, std::bind_front(&MotionGenerator::survivorSelectionPareto, this));
 	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, std::bind_front(&MotionGenerator::convergenceCheck, this));
-	ea.registerMetricComparison("fitness", [](MGEAMetricVariant lhs, MGEAMetricVariant rhs){
+	ea.registerMetricComparison("balance", [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
+		double lhsBalance(std::get<double>(lhs));
+		double rhsBalance(std::get<double>(rhs));
+		return lhsBalance < rhsBalance;
+	});
+	ea.registerMetricComparison("fitness", [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
 		double lhsFitness(std::get<double>(lhs));
 		double rhsFitness(std::get<double>(rhs));
 		return lhsFitness > rhsFitness;
@@ -42,15 +47,18 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 
 	createVariationFunctors();
 	ea.useVariationFunctor("CrossoverAll");
-	ea.useVariationFunctor("DeletionLInt");
-	ea.useVariationFunctor("DirectionalLInt");
-	ea.useVariationFunctor("SNVLInt");
+	ea.useVariationFunctor("DeletionLIntBP");
+	ea.useVariationFunctor("DeletionLIntFP");
+	ea.useVariationFunctor("DirectionalLIntBP");
+	ea.useVariationFunctor("DirectionalLIntFP");
+	ea.useVariationFunctor("SNVLIntBP");
+	ea.useVariationFunctor("SNVLIntFP");
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 256;
+	ea.lambda = 512;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
