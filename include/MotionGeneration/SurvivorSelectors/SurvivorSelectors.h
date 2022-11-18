@@ -7,6 +7,7 @@
 #include <vector>
 
 namespace MGEA {
+	void cullEquals(Spec::IndividualPtrs & iptrs);
 	void cullPartiallyDominated(std::vector<std::string> metrics, Spec::MetricComparisonMap compMap, Spec::IndividualPtrs & iptrs);
 	void onlyPositivesIfThereIsAny(std::string metric, Spec::IndividualPtrs & iptrs);
 	void paretoFront(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs);

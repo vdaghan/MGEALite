@@ -1,8 +1,11 @@
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 
+#include "Logging/SpdlogCommon.h"
+
 namespace MGEA {
 	void paretoFront(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs) {
-		auto isDominatedLambda = [&](auto const& iptr) {
+		std::size_t prevCount(iptrs.size());
+		auto isDominatedLambda = [&](auto const & iptr) {
 			double fitness = std::get<double>(iptr->metrics.at("fitness"));
 			double balance = std::get<double>(iptr->metrics.at("balance"));
 			for (auto& other : iptrs) {
@@ -25,5 +28,8 @@ namespace MGEA {
 			auto rhsFitness(std::get<double>(rhs->metrics.at("fitness")));
 			return lhsFitness > rhsFitness;
 		});
+
+		std::size_t curCount(iptrs.size());
+		spdlog::info("\tparetoFront: {} -> {}", prevCount, curCount);
 	}
 }

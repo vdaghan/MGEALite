@@ -1,9 +1,12 @@
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 
+#include "Logging/SpdlogCommon.h"
+
 #include <algorithm>
 
 namespace MGEA {
 	void survivorSelectionOverMetric(std::string metric, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs) {
+		std::size_t prevCount(iptrs.size());
 		std::list<Spec::IndividualPtrs> sets{};
 		for (auto it(iptrs.begin()); it != iptrs.end(); ++it) {
 			auto & iptr(*it);
@@ -32,6 +35,7 @@ namespace MGEA {
 			sets.emplace_back(set);
 		}
 
+		spdlog::info("\tsurvivorSelectionOverMetric: number of different sets having the metric {} = {}", metric, sets.size());
 		for (auto & set : sets) {
 			fSelection(set);
 		}
@@ -41,5 +45,8 @@ namespace MGEA {
 			retVal.insert(retVal.end(), set.begin(), set.end());
 		}
 		iptrs = retVal;
+
+		std::size_t curCount(iptrs.size());
+		spdlog::info("\tsurvivorSelectionOverMetric: {} -> {}", prevCount, curCount);
 	}
 }

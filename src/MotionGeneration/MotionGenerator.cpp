@@ -53,6 +53,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	//combinedSurvivorSelector.survivorSelectors.emplace_back(std::bind_front(&MGEA::paretoFront, paretoMetrics));
 	//combinedSurvivorSelector.survivorSelectors.emplace_back(std::bind_front(&MGEA::survivorSelectionOverMetric, "angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics, metricComparisonMap)));
 	Spec::FSurvivorSelection combinedSurvivorSelectorLambda = [=](Spec::IndividualPtrs & iptrs) {
+		MGEA::cullEquals(iptrs);
 		MGEA::onlyPositivesIfThereIsAny("fitness", iptrs);
 		MGEA::paretoFront(paretoMetrics, iptrs);
 		MGEA::survivorSelectionOverMetric("angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics, metricComparisonMap), iptrs);

@@ -220,6 +220,8 @@ void MotionGenerator::createVariationFunctors() {
 
 Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
 	auto simLogPtr = database.getSimulationLog(genPx);
+	auto iptr(ea.find(genPx));
+	iptr->genotype = simLogPtr->data();
 	if (simLogPtr->outputExists()) {
 		return genPx;
 	}
@@ -570,7 +572,7 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	auto const & bestIndividualPtr = lastGeneration.front();
 	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
 
-	auto & bestIndividualMetric(ea.bestIndividualMetric);
+	auto & bestIndividualMetric(ea.bestIndividual->metrics);
 	double bestFitness(std::get<double>(bestIndividualMetric.at("fitness")));
 	spdlog::info("Best fitness: {}", bestFitness);
 
