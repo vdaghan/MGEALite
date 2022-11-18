@@ -2,7 +2,7 @@
 
 #include "spdlog/spdlog.h"
 
-SimulationLog::SimulationLog(SimulationInfo info)
+SimulationLog::SimulationLog(DEvA::IndividualIdentifier info)
 	: m_info(info),
 	m_status{SimulationStatus::Uninitialised},
 	m_data(new SimulationData())

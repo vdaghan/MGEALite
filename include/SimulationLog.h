@@ -4,21 +4,22 @@
 #include <deque>
 #include <memory>
 
+#include "IndividualIdentifier.h"
+
 #include "SimulationData.h"
-#include "SimulationInfo.h"
 
 enum class SimulationStatus { NonExistent, Uninitialised, PendingSimulation, SimulationError, PendingEvaluation, Computed, Archived };
 
 class SimulationLog {
 	public:
-		SimulationLog(SimulationInfo);
+		SimulationLog(DEvA::IndividualIdentifier);
 
 		SimulationStatus status() const { return m_status; };
 		void updateStatus(SimulationStatus status) { touch(); m_status = status; };
 
 		std::size_t generation() const { return m_info.generation; };
 		std::size_t identifier() const { return m_info.identifier; };
-		SimulationInfo info() const { return m_info; };
+		DEvA::IndividualIdentifier info() const { return m_info; };
 
 		bool inputExists() const;
 		bool outputExists() const;
@@ -28,7 +29,7 @@ class SimulationLog {
 		SimulationDataPtr data() { touch(); return m_data; };
 		uint64_t timeSinceLastTouch();
 	private:
-		SimulationInfo m_info;
+		DEvA::IndividualIdentifier m_info;
 		SimulationStatus m_status;
 		SimulationDataPtr m_data;
 

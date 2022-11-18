@@ -9,6 +9,8 @@
 #include <string>
 #include <thread>
 
+#include "IndividualIdentifier.h"
+
 #include "Datastore.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/Specification.h"
@@ -18,10 +20,10 @@
 
 using Generation = std::size_t;
 using SimulationId = std::size_t;
-using UpdatedSimulationList = std::list<SimulationInfo>;
+using UpdatedSimulationList = std::list<DEvA::IndividualIdentifier>;
 
-using SimulationInfoList = std::set<SimulationInfo>;
-using SimulationHistory = std::map<SimulationInfo, SimulationLogPtr>;
+using SimulationInfoList = std::set<DEvA::IndividualIdentifier>;
+using SimulationHistory = std::map<DEvA::IndividualIdentifier, SimulationLogPtr>;
 class Database {
 	public:
 		Database(std::string, MotionParameters &);
@@ -30,16 +32,16 @@ class Database {
 		void startSyncLoop();
 		void stopSyncLoop();
 
-		[[nodiscard]] SimulationStatus status(SimulationInfo) const;
-		[[nodiscard]] SimulationLogPtr registerSimulation(SimulationInfo);
-		[[nodiscard]] MGEA::ErrorCode startSimulation(SimulationInfo);
-		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(SimulationInfo simInfo);
-		MGEA::ErrorCode saveSimulationMetrics(SimulationInfo, Spec::MetricVariantMap);
-		[[nodiscard]] SimulationLogPtr getSimulationLog(SimulationInfo);
+		[[nodiscard]] SimulationStatus status(DEvA::IndividualIdentifier) const;
+		[[nodiscard]] SimulationLogPtr registerSimulation(DEvA::IndividualIdentifier);
+		[[nodiscard]] MGEA::ErrorCode startSimulation(DEvA::IndividualIdentifier);
+		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(DEvA::IndividualIdentifier simInfo);
+		MGEA::ErrorCode saveSimulationMetrics(DEvA::IndividualIdentifier, Spec::MetricVariantMap);
+		[[nodiscard]] SimulationLogPtr getSimulationLog(DEvA::IndividualIdentifier);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();
 
-		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
+		MGEA::ErrorCode saveVisualisationTarget(DEvA::IndividualIdentifier);
 	private:
 		MotionParameters & motionParameters;
 		Datastore datastore;
@@ -55,12 +57,12 @@ class Database {
 		SimulationInfoList computed;
 
 		mutable std::mutex promiseMutex;
-		std::map<SimulationInfo, std::promise<MaybeSimulationDataPtr>> simulationResultPromises;
-		bool fullfillSimulationResultPromise(SimulationInfo);
-		bool listContains(SimulationInfoList &, SimulationInfo);
-		void removeFromList(SimulationInfoList &, SimulationInfo);
-		void addToList(SimulationInfoList &, SimulationInfo);
-		void moveFromListToList(SimulationInfoList &, SimulationInfoList &, SimulationInfo);
+		std::map<DEvA::IndividualIdentifier, std::promise<MaybeSimulationDataPtr>> simulationResultPromises;
+		bool fullfillSimulationResultPromise(DEvA::IndividualIdentifier);
+		bool listContains(SimulationInfoList &, DEvA::IndividualIdentifier);
+		void removeFromList(SimulationInfoList &, DEvA::IndividualIdentifier);
+		void addToList(SimulationInfoList &, DEvA::IndividualIdentifier);
+		void moveFromListToList(SimulationInfoList &, SimulationInfoList &, DEvA::IndividualIdentifier);
 
 		SimulationHistory simulationHistory;
 };

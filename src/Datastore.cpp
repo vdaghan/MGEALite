@@ -35,7 +35,7 @@ Datastore::Datastore(std::filesystem::path path)
 			if (!std::filesystem::exists(individualPath)) {
 				break;
 			}
-			addToHistory(SimulationInfo{.generation=gen, .identifier=id});
+			addToHistory(DEvA::IndividualIdentifier{.generation=gen, .identifier=id});
 			++id;
 		}
 		++gen;
@@ -138,7 +138,7 @@ MGEA::ErrorCode Datastore::combineFilesWithMetrics(SimulationLogPtr slptr, std::
 	return MGEA::ErrorCode::OK;
 }
 
-MaybeSimulationDataPtr Datastore::importCombinedFile(SimulationInfo simInfo) {
+MaybeSimulationDataPtr Datastore::importCombinedFile(DEvA::IndividualIdentifier simInfo) {
 	std::filesystem::path const file = toCombinedPath(simInfo);
 	if (!std::filesystem::exists(file)) {
 		return std::unexpected(MGEA::ErrorCode::FileNotFound);
@@ -146,7 +146,7 @@ MaybeSimulationDataPtr Datastore::importCombinedFile(SimulationInfo simInfo) {
 	return importSimulationData(file);
 }
 
-bool Datastore::existsInHistory(SimulationInfo simInfo) {
+bool Datastore::existsInHistory(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(historyMutex);
 	auto & gen(simInfo.generation);
 	if (m_history.size() <= gen) {
@@ -157,7 +157,7 @@ bool Datastore::existsInHistory(SimulationInfo simInfo) {
 	return it != generationHistory.end();
 }
 
-MGEA::ErrorCode Datastore::saveVisualisationTarget(SimulationInfo simInfo) {
+MGEA::ErrorCode Datastore::saveVisualisationTarget(DEvA::IndividualIdentifier simInfo) {
 	auto const combinedFilePath = toCombinedPath(simInfo);
 	std::filesystem::path const visualisationFilePath(m_visualisationPath / "visualise.json");
 	if (!std::filesystem::exists(combinedFilePath)) [[unlikely]] {
@@ -211,7 +211,7 @@ Progress Datastore::getProgress() {
 			if (!idOpt) {
 				continue;
 			}
-			addToHistory(SimulationInfo{.generation = *genOpt, .identifier = *idOpt});
+			addToHistory(DEvA::IndividualIdentifier{.generation = *genOpt, .identifier = *idOpt});
 		}
 	}
 	return progress;
@@ -243,7 +243,7 @@ void Datastore::deleteAllArtifacts() {
 	}
 }
 
-void Datastore::addToHistory(SimulationInfo simInfo) {
+void Datastore::addToHistory(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(historyMutex);
 	if (existsInHistory(simInfo)) {
 		return;
@@ -263,10 +263,10 @@ std::filesystem::path Datastore::toOutputPath(std::size_t id) {
 	return std::filesystem::path(m_queuePath / (std::to_string(id) + ".output"));
 }
 
-std::filesystem::path Datastore::toCombinedPath(SimulationInfo simInfo) {
+std::filesystem::path Datastore::toCombinedPath(DEvA::IndividualIdentifier simInfo) {
 	return std::filesystem::path(m_path / std::to_string(simInfo.generation) / (std::to_string(simInfo.identifier) + ".json"));
 }
 
-std::filesystem::path Datastore::toGenerationPath(SimulationInfo simInfo) {
+std::filesystem::path Datastore::toGenerationPath(DEvA::IndividualIdentifier simInfo) {
 	return std::filesystem::path(m_path / std::to_string(simInfo.generation));
 }

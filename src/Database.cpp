@@ -60,7 +60,7 @@ void Database::stopSyncLoop() {
 	keepSyncing = false;
 }
 
-SimulationStatus Database::status(SimulationInfo simInfo) const {
+SimulationStatus Database::status(DEvA::IndividualIdentifier simInfo) const {
 	std::lock_guard<std::recursive_mutex> lock(dbMutex);
 	if (!simulationHistory.contains(simInfo)) {
 		return SimulationStatus::NonExistent;
@@ -68,7 +68,7 @@ SimulationStatus Database::status(SimulationInfo simInfo) const {
 	return simulationHistory.at(simInfo)->status();
 }
 
-SimulationLogPtr Database::registerSimulation(SimulationInfo simInfo) {
+SimulationLogPtr Database::registerSimulation(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(dbMutex);
 	if (SimulationStatus::NonExistent != status(simInfo)) {
 		return getSimulationLog(simInfo);
@@ -83,7 +83,7 @@ SimulationLogPtr Database::registerSimulation(SimulationInfo simInfo) {
 	return simulationLogPtr;
 }
 
-MGEA::ErrorCode Database::startSimulation(SimulationInfo simInfo) {
+MGEA::ErrorCode Database::startSimulation(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(dbMutex);
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
@@ -97,7 +97,7 @@ MGEA::ErrorCode Database::startSimulation(SimulationInfo simInfo) {
 	return datastore.exportInputFile(simulationLogPtr);
 }
 
-std::shared_future<MaybeSimulationDataPtr> Database::requestSimulationResult(SimulationInfo simInfo) {
+std::shared_future<MaybeSimulationDataPtr> Database::requestSimulationResult(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::mutex> lock(promiseMutex);
 	if (!listContains(pendingSimulation, simInfo)) {
 		throw(std::logic_error(std::format("SimulationResult for ({}, {}) requested, but it is not pending simulation!", simInfo.generation, simInfo.identifier)));
@@ -108,7 +108,7 @@ std::shared_future<MaybeSimulationDataPtr> Database::requestSimulationResult(Sim
 	return simulationResultPromises.at(simInfo).get_future();
 }
 
-MGEA::ErrorCode Database::saveSimulationMetrics(SimulationInfo simInfo, Spec::MetricVariantMap metrics) {
+MGEA::ErrorCode Database::saveSimulationMetrics(DEvA::IndividualIdentifier simInfo, Spec::MetricVariantMap metrics) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
 		return MGEA::ErrorCode::Fail;
@@ -125,7 +125,7 @@ MGEA::ErrorCode Database::saveSimulationMetrics(SimulationInfo simInfo, Spec::Me
 	return MGEA::ErrorCode::OK;
 }
 
-SimulationLogPtr Database::getSimulationLog(SimulationInfo simInfo) {
+SimulationLogPtr Database::getSimulationLog(DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(dbMutex);
 	if (!simulationHistory.contains(simInfo)) {
 		return nullptr;
@@ -137,7 +137,7 @@ SimulationHistory const & Database::getSimulationHistory() {
 	return simulationHistory;
 }
 
-MGEA::ErrorCode Database::saveVisualisationTarget(SimulationInfo simInfo) {
+MGEA::ErrorCode Database::saveVisualisationTarget(DEvA::IndividualIdentifier simInfo) {
 	return datastore.saveVisualisationTarget(simInfo);
 }
 
@@ -145,7 +145,7 @@ void Database::syncWithDatastore() {
 	datastore.syncWithFilesystem();
 }
 
-bool Database::fullfillSimulationResultPromise(SimulationInfo simInfo) {
+bool Database::fullfillSimulationResultPromise(DEvA::IndividualIdentifier simInfo) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
 		return false;
@@ -178,23 +178,23 @@ bool Database::fullfillSimulationResultPromise(SimulationInfo simInfo) {
 	return true;
 }
 
-bool Database::listContains(SimulationInfoList & list, SimulationInfo simInfo) {
+bool Database::listContains(SimulationInfoList & list, DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	auto listIt = std::find(list.begin(), list.end(), simInfo);
 	return listIt != list.end();
 }
 
-void Database::removeFromList(SimulationInfoList & list, SimulationInfo simInfo) {
+void Database::removeFromList(SimulationInfoList & list, DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	list.erase(simInfo);
 }
 
-void Database::addToList(SimulationInfoList & list, SimulationInfo simInfo) {
+void Database::addToList(SimulationInfoList & list, DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	list.insert(simInfo);
 }
 
-void Database::moveFromListToList(SimulationInfoList & source, SimulationInfoList & target, SimulationInfo simInfo) {
+void Database::moveFromListToList(SimulationInfoList & source, SimulationInfoList & target, DEvA::IndividualIdentifier simInfo) {
 	std::lock_guard<std::recursive_mutex> lock(listMutex);
 	removeFromList(source, simInfo);
 	addToList(target, simInfo);

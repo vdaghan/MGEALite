@@ -3,6 +3,8 @@
 #include "MGEAError.h"
 #include "SimulationLog.h"
 
+#include "IndividualIdentifier.h"
+
 #include <deque>
 #include <filesystem>
 #include <list>
@@ -11,7 +13,7 @@
 #include <utility>
 #include <vector>
 
-using DatastoreGeneration = std::list<SimulationInfo>;
+using DatastoreGeneration = std::list<DEvA::IndividualIdentifier>;
 using DatastoreHistory = std::deque<DatastoreGeneration>;
 using DatastoreHistoryIterator = decltype(std::declval<DatastoreHistory>().begin());
 
@@ -31,11 +33,11 @@ class Datastore {
 		MGEA::ErrorCode exportInputFile(SimulationLogPtr);
 		MGEA::ErrorCode importOutputFile(SimulationLogPtr);
 		MGEA::ErrorCode combineFilesWithMetrics(SimulationLogPtr, std::map<std::string, MGEAMetricVariant>);
-		MaybeSimulationDataPtr importCombinedFile(SimulationInfo);
+		MaybeSimulationDataPtr importCombinedFile(DEvA::IndividualIdentifier);
 
 		DatastoreHistory const & history() const { return m_history; };
-		bool existsInHistory(SimulationInfo);
-		MGEA::ErrorCode saveVisualisationTarget(SimulationInfo);
+		bool existsInHistory(DEvA::IndividualIdentifier);
+		MGEA::ErrorCode saveVisualisationTarget(DEvA::IndividualIdentifier);
 	private:
 		std::filesystem::path const m_path;
 		std::filesystem::path const m_queuePath;
@@ -51,10 +53,10 @@ class Datastore {
 
 		std::recursive_mutex historyMutex;
 		DatastoreHistory m_history;
-		void addToHistory(SimulationInfo);
+		void addToHistory(DEvA::IndividualIdentifier);
 
 		std::filesystem::path toInputPath(std::size_t);
 		std::filesystem::path toOutputPath(std::size_t);
-		std::filesystem::path toCombinedPath(SimulationInfo);
-		std::filesystem::path toGenerationPath(SimulationInfo);
+		std::filesystem::path toCombinedPath(DEvA::IndividualIdentifier);
+		std::filesystem::path toGenerationPath(DEvA::IndividualIdentifier);
 };
