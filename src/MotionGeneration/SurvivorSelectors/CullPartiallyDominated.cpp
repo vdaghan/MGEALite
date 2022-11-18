@@ -5,26 +5,33 @@
 namespace MGEA {
 	void cullPartiallyDominated(std::vector<std::string> metrics, Spec::MetricComparisonMap compMap, Spec::IndividualPtrs& iptrs) {
 		std::vector<Spec::IndividualPtr> iPtrVector(iptrs.begin(), iptrs.end());
-		auto metricAccessorLambda = [](Spec::IndividualPtr & iptr, std::string metric) -> double {
-			return std::get<double>(iptr->metrics.at(metric));
-		};
+
 		auto isPartiallyDominatedLambda = [&](auto & iptr) {
-			return std::any_of(iptrs.begin(), iptrs.end(), [&](auto & otherptr) {
+			for (auto & otherptr : iptrs) {
+				if (otherptr->id == iptr->id) [[unlikely]] {
+					continue;
+				}
+				std::size_t numDominatingMetrics(0);
 				for (auto & metric : metrics) {
-					auto const & comp(compMap.at(metric));
+					auto const& comp(compMap.at(metric));
 					bool otherIsBetter = comp(otherptr->metrics.at(metric), iptr->metrics.at(metric));
 					if (otherIsBetter) {
-						return true;
+						++numDominatingMetrics;
 					}
 				}
-				return false;
-			});
+				if (numDominatingMetrics + 1 == metrics.size()) {
+					return true;
+				}
+			}
+			return false;
 		};
 
 		std::list<Spec::IndividualPtr> retVal{};
-		std::copy_if(iPtrVector.begin(), iPtrVector.end(), std::back_inserter(retVal), [&](auto & iptr) {
-			return !isPartiallyDominatedLambda(iptr);
-		});
+		for (auto & iptr : iPtrVector) {
+			if (!isPartiallyDominatedLambda(iptr)) {
+				retVal.push_back(iptr);
+			}
+		}
 
 		iptrs = retVal;
 	}

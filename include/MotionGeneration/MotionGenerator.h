@@ -31,14 +31,9 @@ class MotionGenerator {
 
 		// EA Functions
 		void createVariationFunctors();
-		Spec::GenotypeProxies genesisBoundary();
-		Spec::GenotypeProxies genesisBoundaryWavelet();
-		Spec::GenotypeProxies genesisRandom(std::size_t);
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::MetricVariantMap evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy);
 		Spec::MetricVariantMap evaluateIndividualFromIndividualPtr(Spec::IndividualPtr);
-		void survivorSelection(std::size_t, Spec::IndividualPtrs &);
-		void survivorSelectionPareto(Spec::IndividualPtrs&);
 		Spec::Distance calculateTorqueDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		Spec::Distance calculateTorqueSignDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		Spec::Distance calculateAngleDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);

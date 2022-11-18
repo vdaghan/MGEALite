@@ -50,7 +50,7 @@ namespace MGEA {
 			while (j < avsvExtents[0]) {
 				bool equal(true);
 				for (std::size_t k(0); k != avsvExtents[1]; ++k) {
-					if (avsv[j][k] != avsv[j][k]) {
+					if (avsv[i][k] != avsv[j][k]) {
 						equal = false;
 						break;
 					}

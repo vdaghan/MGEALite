@@ -11,13 +11,4 @@ namespace MGEA {
 	void onlyPositivesIfThereIsAny(std::string metric, Spec::IndividualPtrs & iptrs);
 	void paretoFront(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs);
 	void survivorSelectionOverMetric(std::string metric, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs);
-
-	//struct CombinedSurvivorSelector {
-	//	std::list<Spec::FSurvivorSelection> survivorSelectors{};
-	//	void apply(Spec::IndividualPtrs & iptrs) {
-	//		for (auto & sS : survivorSelectors) {
-	//			sS(iptrs);
-	//		}
-	//	}
-	//};
 }
