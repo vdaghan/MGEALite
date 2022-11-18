@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.4.2.2)
+project(MGEALite LANGUAGES CXX VERSION 0.4.2.3)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG a2f3d9f597e3d809c852503f503a69db95bbab13 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.6.8
@@ -42,6 +42,12 @@ set(Initialisers_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/
 						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/BoundaryWavelet.cpp"
 						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/Random.cpp"
 						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/Zero.cpp")
+set(Metrics_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Metrics/AngularVelocitySign.cpp"
+                    "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Metrics/Metrics.cpp")
+set(SurvivorSelectors_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/CullPartiallyDominated.cpp"
+                              "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/OnlyPositivesIfThereIsAny.cpp"
+                              "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/ParetoFront.cpp"
+                              "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/SurvivorSelectionOverMetric.cpp")
 set(Variations_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverAll.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CrossoverSingle.cpp"
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/CutAndCrossfillAll.cpp"
@@ -64,6 +70,7 @@ set(Variations_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/Cros
 						"${CMAKE_SOURCE_DIR}/src/MotionGeneration/Variations/SNVLInt.cpp")
 set(Wavelet_SOURCES "${CMAKE_SOURCE_DIR}/src/Wavelet/HaarWavelet.cpp")
 set(MGEALite_SOURCES "${CMAKE_BINARY_DIR}/mgealite_version.cpp"
+					"${CMAKE_SOURCE_DIR}/src/Common.cpp"
 					"${CMAKE_SOURCE_DIR}/src/Metric.cpp"
 					"${CMAKE_SOURCE_DIR}/src/MGEALite.cpp"
 					"${CMAKE_SOURCE_DIR}/src/SimulationData.cpp"
@@ -89,6 +96,8 @@ set(GUI_SOURCES "${CMAKE_SOURCE_DIR}/src/GUI/GUIStateDrawer.cpp"
 target_sources(MGEALite PUBLIC ${Logging_SOURCES})
 target_sources(MGEALite PUBLIC ${MotionGeneration_SOURCES})
 target_sources(MGEALite PUBLIC ${Initialisers_SOURCES})
+target_sources(MGEALite PUBLIC ${Metrics_SOURCES})
+target_sources(MGEALite PUBLIC ${SurvivorSelectors_SOURCES})
 target_sources(MGEALite PUBLIC ${Variations_SOURCES})
 target_sources(MGEALite PUBLIC ${Wavelet_SOURCES})
 target_sources(MGEALite PUBLIC ${MGEALite_SOURCES})
@@ -123,3 +132,5 @@ target_link_libraries(MGEALite glfw opengl32 gdi32)
 
 file(GLOB Data_Directory "${CMAKE_SOURCE_DIR}/data/*")
 file(COPY ${Data_Directory} DESTINATION ${CMAKE_BINARY_DIR}/data)
+
+add_subdirectory("tests")

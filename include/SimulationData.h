@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common.h"
 #include "Metric.h"
 #include "MGEAError.h"
 #include "MotionGeneration/MotionParameters.h"
@@ -15,15 +16,16 @@
 using JSON = nlohmann::ordered_json;
 
 struct SimulationData {
-	std::vector<double> time;
-	std::map<std::string, double> params;
+	MGEA::DataVector time;
 	std::optional<int> alignment;
 	std::optional<double> timeout;
+	std::map<std::string, double> params;
 	std::map<std::string, double> masses;
-	std::map<std::string, std::vector<double>> torque;
-	std::optional<ContactParameters> contacts;
-	std::map<std::string, std::vector<double>> outputs;
 	std::map<std::string, double> metadata;
+	std::optional<ContactParameters> contacts;
+	std::map<std::string, MGEA::DataVector> torque;
+	std::map<std::string, MGEA::DataVector> angles;
+	std::map<std::string, MGEA::DataVector> outputs;
 	MGEAMetricVariantMap metrics;
 	std::optional<std::string> error;
 	bool valid() {

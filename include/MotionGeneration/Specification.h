@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Common.h"
 #include "EvolutionaryAlgorithm.h"
 
 #include "Metric.h"

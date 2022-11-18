@@ -12,26 +12,32 @@ void updateSimulationDataPtr(SimulationDataPtrPair pair) {
 	if (!pair.source->time.empty()) {
 		pair.target->time = pair.source->time;
 	}
-	if (!pair.source->params.empty()) {
-		pair.target->params = pair.source->params;
-	}
 	if (pair.source->alignment) {
 		pair.target->alignment = pair.source->alignment;
 	}
 	if (pair.source->timeout) {
 		pair.target->timeout = pair.source->timeout;
 	}
-	if (!pair.source->torque.empty()) {
-		pair.target->torque = pair.source->torque;
+	if (!pair.source->params.empty()) {
+		pair.target->params = pair.source->params;
+	}
+	if (!pair.source->masses.empty()) {
+		pair.target->masses = pair.source->masses;
+	}
+	if (!pair.source->metadata.empty()) {
+		pair.target->metadata = pair.source->metadata;
 	}
 	if (pair.source->contacts) {
 		pair.target->contacts = pair.source->contacts;
 	}
+	if (!pair.source->torque.empty()) {
+		pair.target->torque = pair.source->torque;
+	}
+	if (!pair.source->angles.empty()) {
+		pair.target->angles = pair.source->angles;
+	}
 	if (!pair.source->outputs.empty()) {
 		pair.target->outputs = pair.source->outputs;
-	}
-	if (!pair.source->metadata.empty()) {
-		pair.target->metadata = pair.source->metadata;
 	}
 	pair.target->metrics = pair.source->metrics;
 	if (pair.source->error) {
@@ -43,29 +49,32 @@ void to_json(JSON & j, SimulationData const & sI) {
 	if (!sI.time.empty()) {
 		j["time"] = sI.time;
 	}
-	if (!sI.params.empty()) {
-		j["params"] = sI.params;
-	}
 	if (sI.alignment) {
 		j["alignment"] = sI.alignment.value();
 	}
 	if (sI.timeout) {
 		j["timeout"] = sI.timeout.value();
 	}
+	if (!sI.params.empty()) {
+		j["params"] = sI.params;
+	}
 	if (!sI.masses.empty()) {
 		j["masses"] = sI.masses;
 	}
-	if (!sI.torque.empty()) {
-		j["torque"] = sI.torque;
+	if (!sI.metadata.empty()) {
+		j["metadata"] = sI.metadata;
 	}
 	if (sI.contacts) {
 		j["contacts"] = sI.contacts.value();
 	}
+	if (!sI.torque.empty()) {
+		j["torque"] = sI.torque;
+	}
+	if (!sI.angles.empty()) {
+		j["angles"] = sI.angles;
+	}
 	if (!sI.outputs.empty()) {
 		j["outputs"] = sI.outputs;
-	}
-	if (!sI.metadata.empty()) {
-		j["metadata"] = sI.metadata;
 	}
 	if (!sI.metrics.empty()) {
 		for (auto & metric : sI.metrics) {
@@ -86,23 +95,29 @@ void from_json(JSON const & j, SimulationData & sI) {
 	if (j.contains("time")) {
 		j.at("time").get_to(sI.time);
 	}
-	if (j.contains("params")) {
-		j.at("params").get_to(sI.params);
-	}
 	if (j.contains("alignment")) {
 		sI.alignment = j.at("alignment").get<int>();
 	}
 	if (j.contains("timeout")) {
 		sI.timeout = j.at("timeout").get<double>();
 	}
+	if (j.contains("params")) {
+		j.at("params").get_to(sI.params);
+	}
 	if (j.contains("masses")) {
 		j.at("masses").get_to(sI.masses);
+	}
+	if (j.contains("metadata")) {
+		j.at("metadata").get_to(sI.metadata);
+	}
+	if (j.contains("contacts")) {
+		sI.contacts = j.at("contacts").get<ContactParameters>();
 	}
 	if (j.contains("torque")) {
 		j.at("torque").get_to(sI.torque);
 	}
-	if (j.contains("contacts")) {
-		sI.contacts = j.at("contacts").get<ContactParameters>();
+	if (j.contains("angles")) {
+		j.at("angles").get_to(sI.angles);
 	}
 	if (j.contains("outputs")) {
 		auto & outputs = j["outputs"];
@@ -125,9 +140,6 @@ void from_json(JSON const & j, SimulationData & sI) {
 			std::string metricKey = metricsIt.key();
 			auto & metricValue = metricsIt.value();
 		}
-	}
-	if (j.contains("metadata")) {
-		j.at("metadata").get_to(sI.metadata);
 	}
 	if (j.contains("error")) {
 		j.at("error").get_to(sI.error);
