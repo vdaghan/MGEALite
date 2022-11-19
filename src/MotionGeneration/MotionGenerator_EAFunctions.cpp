@@ -443,12 +443,13 @@ bool MotionGenerator::convergenceCheck(Spec::MetricVariantMap mVM) {
 
 void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 	sptr->time = motionParameters.time();
+	sptr->alignment = motionParameters.alignment;
+	sptr->timeout = motionParameters.timeout;
 	sptr->params.emplace("simStart", motionParameters.simStart);
 	sptr->params.emplace("simStop", motionParameters.simStop());
 	sptr->params.emplace("simStep", motionParameters.simStep);
 	sptr->params.emplace("simSamples", static_cast<double>(motionParameters.simSamples));
-	sptr->alignment = motionParameters.alignment;
-	sptr->timeout = motionParameters.timeout;
+	sptr->masses = motionParameters.masses;
 	sptr->contacts = motionParameters.contactParameters;
 }
 

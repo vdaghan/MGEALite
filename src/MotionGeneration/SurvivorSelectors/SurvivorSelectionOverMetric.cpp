@@ -35,10 +35,20 @@ namespace MGEA {
 			sets.emplace_back(set);
 		}
 
-		spdlog::info("\tsurvivorSelectionOverMetric: number of different sets having the metric {} = {}", metric, sets.size());
+		spdlog::info("\tsurvivorSelectionOverMetric: number of different values of metric {} in sets = {}", metric, sets.size());
+		std::size_t maxSetSizeBeforeSelection(0);
+		for (auto & set : sets) {
+			maxSetSizeBeforeSelection = std::max(maxSetSizeBeforeSelection, set.size());
+		}
+		spdlog::info("\tsurvivorSelectionOverMetric: maximum set size before selection = {}", maxSetSizeBeforeSelection);
 		for (auto & set : sets) {
 			fSelection(set);
 		}
+		std::size_t maxSetSizeAfterSelection(0);
+		for (auto& set : sets) {
+			maxSetSizeAfterSelection = std::max(maxSetSizeAfterSelection, set.size());
+		}
+		spdlog::info("\tsurvivorSelectionOverMetric: maximum set size after selection = {}", maxSetSizeAfterSelection);
 
 		Spec::IndividualPtrs retVal{};
 		for (auto & set : sets) {

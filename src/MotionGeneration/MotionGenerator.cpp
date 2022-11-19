@@ -17,17 +17,12 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 , stopFlag(false)
 {
 	maxGenerations = 0;
-	//ea.genesisFunction = [&]() { return computeGenesis(std::bind_front(MGEA::genesisRandom, 128)); };
-	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundary); };
-	//ea.genesisFunction = [&]() { return computeGenesis(MGEA::genesisBoundaryWavelet); };
 	ea.registerEAFunction(DEvA::EAFunction::Initialisation, [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); });
 	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
 	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromGenotypeProxy, std::bind_front(&MotionGenerator::evaluateIndividualFromGenotypeProxy, this));
 	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromIndividualPtr, std::bind_front(&MotionGenerator::evaluateIndividualFromIndividualPtr, this));
 	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) { return std::get<double>(lhs->metrics.at("fitness")) > std::get<double>(rhs->metrics.at("fitness")); });
 	//ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
-	//ea.survivorSelectionFunction = DEvA::StandardSurvivorSelectors<Spec>::clamp<128>;
-	//ea.survivorSelectionFunction = std::bind_front(&MotionGenerator::survivorSelection, this, 32);
 	Spec::FMetricComparison balanceComparisonLambda = [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
 		double lhsBalance(std::get<double>(lhs));
 		double rhsBalance(std::get<double>(rhs));
@@ -48,10 +43,6 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	metricComparisonMap.emplace(std::make_pair("fitness", fitnessComparisonLambda));
 	metricComparisonMap.emplace(std::make_pair("gain", gainComparisonLambda));
 	std::vector<std::string> paretoMetrics{ "fitness", "balance" };
-	//MGEA::CombinedSurvivorSelector combinedSurvivorSelector;
-	//combinedSurvivorSelector.survivorSelectors.emplace_back(std::bind_front(&MGEA::onlyPositivesIfThereIsAny, "fitness"));
-	//combinedSurvivorSelector.survivorSelectors.emplace_back(std::bind_front(&MGEA::paretoFront, paretoMetrics));
-	//combinedSurvivorSelector.survivorSelectors.emplace_back(std::bind_front(&MGEA::survivorSelectionOverMetric, "angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics, metricComparisonMap)));
 	Spec::FSurvivorSelection combinedSurvivorSelectorLambda = [=](Spec::IndividualPtrs & iptrs) {
 		MGEA::cullEquals(iptrs);
 		MGEA::onlyPositivesIfThereIsAny("fitness", iptrs);
@@ -77,7 +68,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 512;
+	ea.lambda = 64;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
