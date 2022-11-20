@@ -14,12 +14,18 @@ message(STATUS "gtest_SOURCE_DIR = ${gtest_SOURCE_DIR}")
 
 add_executable(MGEALite_Tests)
 target_sources(MGEALite_Tests PUBLIC "${CMAKE_SOURCE_DIR}/tests/MGEALite_AngularVelocitySign.cpp")
-target_sources(MGEALite_Tests PUBLIC "${CMAKE_SOURCE_DIR}/src/Common.cpp")
-add_executable(MGEALite::Tests ALIAS MGEALite_Tests)
-#target_link_libraries(MGEALite_Tests PUBLIC MGEALite)
+target_sources(MGEALite_Tests PUBLIC "${CMAKE_SOURCE_DIR}/tests/MGEALite_JSONFiles.cpp")
 
-target_include_directories(MGEALite_Tests PUBLIC "../include")
+target_sources(MGEALite_Tests PUBLIC ${MGEALite_SOURCES_ALL})
+target_include_directories(MGEALite_Tests SYSTEM INTERFACE ${MGEALite_INCLUDES_SYSINT})
+target_include_directories(MGEALite_Tests PUBLIC ${MGEALite_INCLUDES_PUBLIC})
+target_link_libraries(MGEALite_Tests PRIVATE ${MGEALite_LIBRARIES})
+
+add_executable(MGEALite::Tests ALIAS MGEALite_Tests)
 target_include_directories(MGEALite_Tests PUBLIC "${gtest_SOURCE_DIR}/googletest/include")
 target_link_libraries(MGEALite_Tests PRIVATE gtest_main)
 include(GoogleTest)
 gtest_discover_tests(MGEALite_Tests TEST_PREFIX MGEALite::)
+
+file(GLOB Data_Directory "${CMAKE_SOURCE_DIR}/tests/testdata/*")
+file(COPY ${Data_Directory} DESTINATION ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/testdata/)

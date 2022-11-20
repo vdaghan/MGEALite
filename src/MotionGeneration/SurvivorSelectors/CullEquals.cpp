@@ -13,6 +13,9 @@ namespace MGEA {
 			for (auto otherit(std::next(it)); otherit != iptrs.end(); ++otherit) {
 				auto & iptr(*it);
 				auto & otheriptr(*otherit);
+				if (iptr->id == otheriptr->id) {
+					continue;
+				}
 				if (iptr->genotype->torque == otheriptr->genotype->torque) {
 					thereIsAnEqual = true;
 					break;
