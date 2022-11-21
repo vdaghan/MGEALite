@@ -73,7 +73,22 @@ void MotionGenerator::createMetricFunctors() {
 	auto angularVelocitySignComparisonLambda = [](std::any lhs, std::any rhs) {
 		MGEA::OrderedVector lhsAngularVelocitySign(std::any_cast<MGEA::OrderedVector>(lhs));
 		MGEA::OrderedVector rhsAngularVelocitySign(std::any_cast<MGEA::OrderedVector>(rhs));
-		return lhsAngularVelocitySign == rhsAngularVelocitySign;
+		std::size_t minVectorSize(std::min(lhsAngularVelocitySign.size(), rhsAngularVelocitySign.size()));
+		for (std::size_t i(0); i != minVectorSize; ++i) {
+			std::size_t numAngles(lhsAngularVelocitySign.at(i).size());
+			if (numAngles != rhsAngularVelocitySign.at(i).size()) {
+				throw;
+			}
+			for (std::size_t j(0); j != numAngles; ++j) {
+				bool equalValue(lhsAngularVelocitySign.at(i).at(j) == rhsAngularVelocitySign.at(i).at(j));
+				bool lhsIsZero(lhsAngularVelocitySign.at(i).at(j) == 0);
+				bool rhsIsZero(rhsAngularVelocitySign.at(i).at(j) == 0);
+				if (not (equalValue or lhsIsZero or rhsIsZero)) {
+					return false;
+				}
+			}
+		}
+		return true;
 	};
 	DEvA::MetricFunctor<Spec> angularVelocitySignMetricFunctor{
 		.name = "angularVelocitySign",
