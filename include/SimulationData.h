@@ -23,9 +23,9 @@ struct SimulationData {
 	std::map<std::string, double> masses;
 	std::map<std::string, double> metadata;
 	std::optional<ContactParameters> contacts;
-	std::map<std::string, MGEA::DataVector> torque;
-	std::map<std::string, MGEA::DataVector> angles;
-	std::map<std::string, MGEA::DataVector> outputs;
+	MGEA::VectorMap torque;
+	MGEA::VectorMap angles;
+	MGEA::VectorMap outputs;
 	MGEAMetricVariantMap metrics;
 	std::optional<std::string> error;
 	bool valid() {

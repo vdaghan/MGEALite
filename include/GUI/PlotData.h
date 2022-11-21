@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MotionGeneration/Specification.h"
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 
 #include "GUI/GUIData/DistanceData.h"
 #include "GUI/GUIData/FitnessData.h"

@@ -5,7 +5,7 @@
 #include "spdlog/async.h"
 #include "spdlog/spdlog.h"
 
-#include "Logger.h"
+#include "DEvA/Logger.h"
 
 #include "Logging/CustomFormatting.h"
 

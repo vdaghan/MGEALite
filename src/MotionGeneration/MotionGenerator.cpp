@@ -21,40 +21,23 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
 	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromGenotypeProxy, std::bind_front(&MotionGenerator::evaluateIndividualFromGenotypeProxy, this));
 	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromIndividualPtr, std::bind_front(&MotionGenerator::evaluateIndividualFromIndividualPtr, this));
-	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) { return std::get<double>(lhs->metrics.at("fitness")) > std::get<double>(rhs->metrics.at("fitness")); });
-	//ea.distanceCalculationFunction = std::bind_front(&MotionGenerator::calculateAngleDistance, this);
-	Spec::FMetricComparison balanceComparisonLambda = [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
-		double lhsBalance(std::get<double>(lhs));
-		double rhsBalance(std::get<double>(rhs));
-		return lhsBalance < rhsBalance;
-	};
-	Spec::FMetricComparison fitnessComparisonLambda = [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
-		double lhsFitness(std::get<double>(lhs));
-		double rhsFitness(std::get<double>(rhs));
-		return lhsFitness > rhsFitness;
-	};
-	Spec::FMetricComparison gainComparisonLambda = [](MGEAMetricVariant lhs, MGEAMetricVariant rhs) {
-		double lhsGain(std::get<double>(lhs));
-		double rhsGain(std::get<double>(rhs));
-		return lhsGain > rhsGain;
-	};
-	Spec::MetricComparisonMap metricComparisonMap{};
-	metricComparisonMap.emplace(std::make_pair("balance", balanceComparisonLambda));
-	metricComparisonMap.emplace(std::make_pair("fitness", fitnessComparisonLambda));
-	metricComparisonMap.emplace(std::make_pair("gain", gainComparisonLambda));
+	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) {
+		return lhs->metricMap.at("fitness") < rhs->metricMap.at("fitness");
+	});
 	std::vector<std::string> paretoMetrics{ "fitness", "balance" };
 	Spec::FSurvivorSelection combinedSurvivorSelectorLambda = [=](Spec::IndividualPtrs & iptrs) {
 		MGEA::cullEquals(iptrs);
-		MGEA::onlyPositivesIfThereIsAny("fitness", iptrs);
+		MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
 		MGEA::paretoFront(paretoMetrics, iptrs);
-		MGEA::survivorSelectionOverMetric("angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics, metricComparisonMap), iptrs);
+		MGEA::survivorSelectionOverMetric("angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
 	};
 	ea.registerEAFunction(DEvA::EAFunction::SurvivorSelection, combinedSurvivorSelectorLambda);
-	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, std::bind_front(&MotionGenerator::convergenceCheck, this));
-	ea.registerMetricComparison("balance", balanceComparisonLambda);
-	ea.registerMetricComparison("fitness", fitnessComparisonLambda);
-	ea.registerMetricComparison("gain", gainComparisonLambda);
+	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, [](Spec::SMetricMap const& metricMap) { return false; });
 
+	createMetricFunctors();
+	ea.useMetricFunctor("angularVelocitySign");
+	ea.useMetricFunctor("balance");
+	ea.useMetricFunctor("fitness");
 	createVariationFunctors();
 	ea.useVariationFunctor("CrossoverAll");
 	ea.useVariationFunctor("DeletionLIntBP");
@@ -68,7 +51,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 64;
+	ea.lambda = 128;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };

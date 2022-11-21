@@ -12,9 +12,9 @@ namespace MGEA {
 		Spec::Genotype grandparentGenotype{};
 
 		for (auto & grandparent : parent.parents) {
-			if (std::get<double>(grandparent->metrics.at("fitness")) > grandparentFitness) {
+			if (grandparent->metricMap.at("fitness").as<double>() > grandparentFitness) {
 				grandparentGenotype = grandparent->genotype;
-				grandparentFitness = std::get<double>(grandparent->metrics.at("fitness"));
+				grandparentFitness = grandparent->metricMap.at("fitness").as<double>();
 			}
 		}
 

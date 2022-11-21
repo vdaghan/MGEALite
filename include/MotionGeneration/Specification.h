@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Common.h"
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
+#include "DEvA/Specialisation.h"
 
 #include "Metric.h"
 #include "SimulationData.h"
-#include "Specialisation.h"
 
 class Database;
 struct Specification {

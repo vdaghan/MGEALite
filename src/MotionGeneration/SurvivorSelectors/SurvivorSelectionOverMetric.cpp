@@ -10,11 +10,11 @@ namespace MGEA {
 		std::list<Spec::IndividualPtrs> sets{};
 		for (auto it(iptrs.begin()); it != iptrs.end(); ++it) {
 			auto & iptr(*it);
-			auto & imetric(iptr->metrics.at(metric));
+			auto & imetric(iptr->metricMap.at(metric));
 			bool alreadyInSet(false);
 			for (auto sit(sets.begin()); sit != sets.end(); ++sit) {
 				auto & siptr(sit->front());
-				auto & smetric(siptr->metrics.at(metric));
+				auto & smetric(siptr->metricMap.at(metric));
 				if (imetric == smetric) {
 					alreadyInSet = true;
 					break;
@@ -27,7 +27,7 @@ namespace MGEA {
 			set.emplace_back(iptr);
 			for (auto nit(std::next(it)); nit != iptrs.end(); ++nit) {
 				auto & niptr(*nit);
-				auto & nmetric(niptr->metrics.at(metric));
+				auto & nmetric(niptr->metricMap.at(metric));
 				if (nmetric == imetric) {
 					set.emplace_back(niptr);
 				}

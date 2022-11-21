@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MotionGeneration/Specification.h"
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 
 #include <list>
 #include <mutex>

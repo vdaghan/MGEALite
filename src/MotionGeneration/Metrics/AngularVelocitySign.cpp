@@ -4,7 +4,7 @@
 #include <vector>
 
 namespace MGEA {
-	OrderedVector computeAngularVelocitySign(VectorMap angles) {
+	OrderedVector computeAngularVelocitySign(VectorMap const & angles) {
 		OrderedVector anglesVector(orderedVectorFromVectorMap(angles));
 		auto angleExtents(getExtents(anglesVector));
 		if (angleExtents.empty() or 0 == angleExtents[0]) {

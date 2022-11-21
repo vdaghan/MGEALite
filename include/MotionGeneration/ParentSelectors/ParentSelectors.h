@@ -13,30 +13,31 @@
 
 namespace MGEA {
 	template <std::size_t N>
-	static Spec::IndividualPtrs metricProportionalN(std::string metricName, Spec::MetricComparisonMap const & compMap, Spec::IndividualPtrs domain) {
-		auto & comp(compMap.at(metricName));
+	static Spec::IndividualPtrs metricProportionalN(std::string metricName, Spec::IndividualPtrs domain) {
 		auto bestWorstIteratorPair(std::minmax_element(domain.begin(), domain.end(), [&](auto const & lhs, auto const & rhs) {
-			auto const & lhsMetric = std::get<double>(lhs->metrics.at(metricName));
-			auto const & rhsMetric = std::get<double>(rhs->metrics.at(metricName));
-			return comp(lhsMetric, rhsMetric);
+			auto const & lhsMetric = lhs->metricMap.at(metricName);
+			auto const & rhsMetric = rhs->metricMap.at(metricName);
+			return lhsMetric < rhsMetric;
 		}));
-		double worstMetric = std::get<double>((*bestWorstIteratorPair.second)->metrics.at(metricName));
-		double bestMetric = std::get<double>((*bestWorstIteratorPair.first)->metrics.at(metricName));
+		auto & worstMetric = (*bestWorstIteratorPair.second)->metricMap.at(metricName);
+		auto & bestMetric = (*bestWorstIteratorPair.first)->metricMap.at(metricName);
 		std::vector<Spec::IndividualPtr> vec(domain.begin(), domain.end());
 		std::vector<double> weights;
 		weights.reserve(vec.size());
 		auto metricMappingLambda = [&](Spec::IndividualPtr iptr) -> double {
-			double metric(std::get<double>(iptr->metrics.at(metricName)));
+			double metricValue(iptr->metricMap.at(metricName).as<double>());
+			double worstMetricValue(worstMetric.as<double>());
+			double bestMetricValue(bestMetric.as<double>());
 			// t * bestMetric + (t-1) * worstMetric = f
 			// t = (f - worstMetric) / (bestMetric + worstMetric)
 			double retVal(1.0);
-			bool bothZero(0.0 == worstMetric and 0.0 == bestMetric);
-			bool bestWorstEqual(worstMetric == bestMetric);
+			bool bothZero(0.0 == worstMetricValue and 0.0 == bestMetricValue);
+			bool bestWorstEqual(worstMetricValue == bestMetricValue);
 			if (!bestWorstEqual and !bothZero) {
-				if (bestMetric >= worstMetric) {
-					retVal = (metric - worstMetric) / std::abs(bestMetric + worstMetric);
+				if (bestMetricValue >= worstMetricValue) {
+					retVal = (metricValue - worstMetricValue) / std::abs(bestMetricValue + worstMetricValue);
 				} else {
-					retVal = (metric - bestMetric) / std::abs(bestMetric + worstMetric);
+					retVal = (metricValue - bestMetricValue) / std::abs(bestMetricValue + worstMetricValue);
 				}
 			}
 			return retVal;

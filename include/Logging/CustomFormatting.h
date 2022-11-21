@@ -1,6 +1,6 @@
 #pragma once
 
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"

@@ -5,7 +5,7 @@
 #include <thread>
 #include <vector>
 
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 #include <DTimer/DTimer.h>
 
 #include "mgealite_version.h"

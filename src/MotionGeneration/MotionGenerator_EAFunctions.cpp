@@ -343,9 +343,9 @@ Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromGenotypeProxy(Spec
 Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromIndividualPtr(Spec::IndividualPtr iptr) {
 	double maximumFitnessDiff(0.0);
 	for (auto const& parent : iptr->parents) {
-		auto const& parentFitness(std::get<double>(parent->metrics.at("fitness")));
+		auto const& parentFitness(std::any_cast<double>(parent->metricMap.at("fitness")));
 		for (auto const& grandparent : parent->parents) {
-			auto const& grandparentFitness(std::get<double>(grandparent->metrics.at("fitness")));
+			auto const& grandparentFitness(std::any_cast<double>(grandparent->metricMap.at("fitness")));
 			double fitnessDiff(parentFitness - grandparentFitness);
 			maximumFitnessDiff = std::max(maximumFitnessDiff, fitnessDiff);
 		}
@@ -573,8 +573,8 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	auto const & bestIndividualPtr = lastGeneration.front();
 	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
 
-	auto & bestIndividualMetric(ea.bestIndividual->metrics);
-	double bestFitness(std::get<double>(bestIndividualMetric.at("fitness")));
+	auto & bestIndividualMetric(ea.bestIndividual->metricMap);
+	double bestFitness(bestIndividualMetric.at("fitness").as<double>());
 	spdlog::info("Best fitness: {}", bestFitness);
 
 	std::list<double> simulationTimes;

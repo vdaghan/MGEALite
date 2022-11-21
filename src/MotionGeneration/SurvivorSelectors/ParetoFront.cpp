@@ -6,12 +6,17 @@ namespace MGEA {
 	void paretoFront(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs) {
 		std::size_t prevCount(iptrs.size());
 		auto isDominatedLambda = [&](auto const & iptr) {
-			double fitness = std::get<double>(iptr->metrics.at("fitness"));
-			double balance = std::get<double>(iptr->metrics.at("balance"));
 			for (auto& other : iptrs) {
-				double otherFitness = std::get<double>(other->metrics.at("fitness"));
-				double otherBalance = std::get<double>(other->metrics.at("balance"));
-				if (otherFitness > fitness and otherBalance < balance) {
+				bool isDominatedByOther(true);
+				for (auto& metricName : metrics) {
+					auto & metricValue(iptr->metricMap.at(metricName));
+					auto & otherMetricValue(other->metricMap.at(metricName));
+					if (not (otherMetricValue < metricValue)) {
+						isDominatedByOther = false;
+						break;
+					}
+				}
+				if (isDominatedByOther) {
 					return true;
 				}
 			}
@@ -24,9 +29,9 @@ namespace MGEA {
 		}
 
 		iptrs.sort([&](auto& lhs, auto& rhs) {
-			auto lhsFitness(std::get<double>(lhs->metrics.at("fitness")));
-			auto rhsFitness(std::get<double>(rhs->metrics.at("fitness")));
-			return lhsFitness > rhsFitness;
+			auto lhsFitness(lhs->metricMap.at("fitness"));
+			auto rhsFitness(rhs->metricMap.at("fitness"));
+			return lhsFitness < rhsFitness;
 		});
 
 		std::size_t curCount(iptrs.size());

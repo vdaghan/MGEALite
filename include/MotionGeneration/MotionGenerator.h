@@ -3,11 +3,12 @@
 #include "Database.h"
 #include "MotionGeneration/Initialisers/Initialisers.h"
 #include "MotionGeneration/Variations/Variations.h"
+#include "MotionGeneration/Metrics/Metrics.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/Specification.h"
 #include "SimulationData.h"
 
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 
 #include <string>
 
@@ -30,6 +31,7 @@ class MotionGenerator {
 		void exportGenerationData();
 
 		// EA Functions
+		void createMetricFunctors();
 		void createVariationFunctors();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
 		Spec::MetricVariantMap evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy);

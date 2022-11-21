@@ -4,6 +4,6 @@
 #include "MotionGeneration/Specification.h"
 
 namespace MGEA {
-	OrderedVector computeAngularVelocitySign(VectorMap angles);
+	OrderedVector computeAngularVelocitySign(VectorMap const & angles);
 	OrderedVector angularVelocitySign(Spec::IndividualPtr);
 }

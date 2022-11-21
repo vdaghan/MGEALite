@@ -5,7 +5,7 @@
 #include "MotionGeneration/Specification.h"
 #include "SimulationData.h"
 
-#include "EvolutionaryAlgorithm.h"
+#include "DEvA/EvolutionaryAlgorithm.h"
 
 namespace MGEA {
 	struct VariationParams {

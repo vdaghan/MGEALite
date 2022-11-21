@@ -9,13 +9,13 @@
 #include <string>
 #include <thread>
 
-#include "IndividualIdentifier.h"
+#include "DEvA/Error.h"
+#include "DEvA/IndividualIdentifier.h"
 
 #include "Datastore.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/Specification.h"
 #include "SimulationLog.h"
-#include "Error.h"
 #include "MGEAError.h"
 
 using Generation = std::size_t;
