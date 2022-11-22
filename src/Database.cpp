@@ -108,7 +108,7 @@ std::shared_future<MaybeSimulationDataPtr> Database::requestSimulationResult(DEv
 	return simulationResultPromises.at(simInfo).get_future();
 }
 
-MGEA::ErrorCode Database::saveSimulationMetrics(DEvA::IndividualIdentifier simInfo, Spec::MetricVariantMap metrics) {
+MGEA::ErrorCode Database::saveSimulationMetrics(DEvA::IndividualIdentifier simInfo, Spec::SMetricMap metricMap) {
 	SimulationLogPtr simulationLogPtr = getSimulationLog(simInfo);
 	if (!simulationLogPtr) {
 		return MGEA::ErrorCode::Fail;
@@ -116,7 +116,7 @@ MGEA::ErrorCode Database::saveSimulationMetrics(DEvA::IndividualIdentifier simIn
 	if (simulationLogPtr->fitnessExists()) {
 		return MGEA::ErrorCode::OK;
 	}
-	MGEA::ErrorCode setError = datastore.combineFilesWithMetrics(simulationLogPtr, metrics);
+	MGEA::ErrorCode setError = datastore.combineFilesWithMetrics(simulationLogPtr, metricMap);
 	if (MGEA::ErrorCode::OK != setError) {
 		return setError;
 	}

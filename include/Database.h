@@ -36,7 +36,7 @@ class Database {
 		[[nodiscard]] SimulationLogPtr registerSimulation(DEvA::IndividualIdentifier);
 		[[nodiscard]] MGEA::ErrorCode startSimulation(DEvA::IndividualIdentifier);
 		std::shared_future<MaybeSimulationDataPtr> requestSimulationResult(DEvA::IndividualIdentifier simInfo);
-		MGEA::ErrorCode saveSimulationMetrics(DEvA::IndividualIdentifier, Spec::MetricVariantMap);
+		MGEA::ErrorCode saveSimulationMetrics(DEvA::IndividualIdentifier, Spec::SMetricMap);
 		[[nodiscard]] SimulationLogPtr getSimulationLog(DEvA::IndividualIdentifier);
 
 		[[nodiscard]] SimulationHistory const & getSimulationHistory();

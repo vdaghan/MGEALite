@@ -26,7 +26,7 @@ struct SimulationData {
 	MGEA::VectorMap torque;
 	MGEA::VectorMap angles;
 	MGEA::VectorMap outputs;
-	MGEAMetricVariantMap metrics;
+	std::optional<std::string> metrics;
 	std::optional<std::string> error;
 	bool valid() {
 		if (error) {

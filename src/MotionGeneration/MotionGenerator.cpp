@@ -19,8 +19,6 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	maxGenerations = 0;
 	ea.registerEAFunction(DEvA::EAFunction::Initialisation, [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); });
 	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
-	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromGenotypeProxy, std::bind_front(&MotionGenerator::evaluateIndividualFromGenotypeProxy, this));
-	ea.registerEAFunction(DEvA::EAFunction::EvaluateIndividualFromIndividualPtr, std::bind_front(&MotionGenerator::evaluateIndividualFromIndividualPtr, this));
 	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) {
 		return lhs->metricMap.at("fitness") < rhs->metricMap.at("fitness");
 	});
@@ -38,6 +36,11 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.useMetricFunctor("angularVelocitySign");
 	ea.useMetricFunctor("balance");
 	ea.useMetricFunctor("fitness");
+	auto evaluationCallback = [&](DEvA::IndividualIdentifier id) {
+		auto const & simLogPtr = database.getSimulationLog(id);
+		database.saveSimulationMetrics(simLogPtr->info(), {});
+	};
+	ea.registerCallback(DEvA::Callback::Evaluation, evaluationCallback);
 	createVariationFunctors();
 	ea.useVariationFunctor("CrossoverAll");
 	ea.useVariationFunctor("DeletionLIntBP");

@@ -4,6 +4,7 @@
 #include "SimulationLog.h"
 
 #include "DEvA/IndividualIdentifier.h"
+#include "MotionGeneration/Specification.h"
 
 #include <deque>
 #include <filesystem>
@@ -32,7 +33,7 @@ class Datastore {
 
 		MGEA::ErrorCode exportInputFile(SimulationLogPtr);
 		MGEA::ErrorCode importOutputFile(SimulationLogPtr);
-		MGEA::ErrorCode combineFilesWithMetrics(SimulationLogPtr, std::map<std::string, MGEAMetricVariant>);
+		MGEA::ErrorCode combineFilesWithMetrics(SimulationLogPtr, Spec::SMetricMap);
 		MaybeSimulationDataPtr importCombinedFile(DEvA::IndividualIdentifier);
 
 		DatastoreHistory const & history() const { return m_history; };

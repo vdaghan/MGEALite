@@ -34,12 +34,9 @@ class MotionGenerator {
 		void createMetricFunctors();
 		void createVariationFunctors();
 		Spec::MaybePhenotypeProxy transform(Spec::GenotypeProxy);
-		Spec::MetricVariantMap evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy);
-		Spec::MetricVariantMap evaluateIndividualFromIndividualPtr(Spec::IndividualPtr);
 		Spec::Distance calculateTorqueDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		Spec::Distance calculateTorqueSignDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
 		Spec::Distance calculateAngleDistance(DEvA::IndividualIdentifier, DEvA::IndividualIdentifier);
-		[[nodiscard]] bool convergenceCheck(Spec::MetricVariantMap);
 
 		void applyMotionParameters(SimulationDataPtr);
 		[[nodiscard]] Spec::GenotypeProxies computeVariationWithGenotypeProxies(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies);

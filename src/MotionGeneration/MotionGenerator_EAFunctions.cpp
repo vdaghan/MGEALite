@@ -238,123 +238,123 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
 }
 
-Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy genPx) {
-	//auto & timer = DTimer::simple("evaluate()").newSample().begin();
-	auto simLogPtr = database.getSimulationLog(genPx);
-	if (simLogPtr->fitnessExists()) {
-		//timer.end();
-		return simLogPtr->data()->metrics;
-	}
-	SimulationDataPtr simDataPtr = simLogPtr->data();
+//Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy genPx) {
+//	//auto & timer = DTimer::simple("evaluate()").newSample().begin();
+//	auto simLogPtr = database.getSimulationLog(genPx);
+//	if (simLogPtr->fitnessExists()) {
+//		//timer.end();
+//		return simLogPtr->data()->metrics;
+//	}
+//	SimulationDataPtr simDataPtr = simLogPtr->data();
+//
+//	bool hasHeelHeight = simDataPtr->outputs.contains("heelZ");
+//	bool hasToeHeight = simDataPtr->outputs.contains("toeZ");
+//	bool hasFingertipHeight = simDataPtr->outputs.contains("fingertipZ");
+//	bool hasPalmHeight = simDataPtr->outputs.contains("palmZ");
+//	if (!hasToeHeight or !hasFingertipHeight or !hasHeelHeight or !hasPalmHeight) {
+//		spdlog::error("There is no position named \"heelZ\" or \"toeZ\" or \"fingertipZ\" or \"palmZ\" in simulation output {}", genPx);
+//		//timer.end();
+//		return {};
+//	}
+//	double timeStep = motionParameters.simStep;
+//	auto & fingertipZ = simDataPtr->outputs.at("fingertipZ");
+//	auto & palmX = simDataPtr->outputs.at("palmX");
+//	auto & palmZ = simDataPtr->outputs.at("palmZ");
+//	auto & heelZ = simDataPtr->outputs.at("heelZ");
+//	auto & toeZ = simDataPtr->outputs.at("toeZ");
+//	auto & comX = simDataPtr->outputs.at("centerOfMassX");
+//	auto & comZ = simDataPtr->outputs.at("centerOfMassZ");
+//	auto & shoulderAngle = simDataPtr->angles.at("shoulder");
+//	bool sameSize = fingertipZ.size() == toeZ.size()
+//		and fingertipZ.size() == heelZ.size()
+//		and fingertipZ.size() == palmZ.size();
+//	if (!sameSize) {
+//		spdlog::error("\"heelZ\", \"toeZ\", \"palmZ\" and \"fingertipHeight\" are not of same size");
+//		//timer.end();
+//		return {};
+//	}
+//
+//	Spec::MetricVariantMap metrics;
+//
+//	auto absLambda = [](double prev, double next) {
+//		return prev + std::abs(next);
+//	};
+//	auto onlyPositiveLambda = [](double prev, double next) {
+//		return prev + std::max(next, 0.0);
+//	};
+//	//double fingertipZSum = std::accumulate(fingertipZ.begin(), fingertipZ.end(), 0.0, onlyPositiveLambda);
+//	//double palmZSum = std::accumulate(palmZ.begin(), palmZ.end(), 0.0, onlyPositiveLambda);
+//	double fingertipZSum = std::accumulate(fingertipZ.begin(), fingertipZ.end(), 0.0);
+//	double maxFingertipZ = *std::max_element(fingertipZ.begin(), fingertipZ.end());
+//	double palmZSum = std::accumulate(palmZ.begin(), palmZ.end(), 0.0);
+//	double maxPalmZ = *std::max_element(palmZ.begin(), palmZ.end());
+//	double heelZSum = std::accumulate(heelZ.begin(), heelZ.end(), 0.0, absLambda);
+//	double heelZMax = *std::max_element(heelZ.begin(), heelZ.end());
+//	double toeZSum = std::accumulate(toeZ.begin(), toeZ.end(), 0.0, absLambda);
+//	double toeZMax = *std::max_element(toeZ.begin(), toeZ.end());
+//	double comXSum = std::accumulate(comX.begin(), comX.end(), 0.0, absLambda);
+//	double comZSum = std::accumulate(comZ.begin(), comZ.end(), 0.0, absLambda);
+//	double shoulderAngleDiffSum{};
+//	for (auto it(shoulderAngle.begin()); it != shoulderAngle.end() and std::next(it) != shoulderAngle.end(); ++it) {
+//		auto const & currentElement(*it);
+//		auto const & nextElement(*std::next(it));
+//		shoulderAngleDiffSum += std::min(currentElement - nextElement, 0.0);
+//	}
+//	double balance = std::inner_product(comX.begin(), comX.end(), palmX.begin(), 0.0, std::plus<>(), [](auto const& cX, auto const& pX) {
+//		return std::abs(cX - pX);
+//	});
+//	//double balance(0.0);
+//	//for (std::size_t i(0); i != palmX.size(); ++i) {
+//	//	balance += std::abs(comX[i] - palmX[i]);
+//	//}
+//	balance = balance * timeStep / motionParameters.simStop();
+//	double fitness;
+//	if (fingertipZSum <= 0.0 and palmZSum <= 0.0) {
+//		fitness = comZSum * timeStep / motionParameters.simStop();
+//	} else {
+//		fitness = 0.0;
+//		if (fingertipZSum > 0.0) {
+//			fitness -= maxFingertipZ;
+//		}
+//		if (palmZSum > 0.0) {
+//			fitness -= maxPalmZ;
+//		}
+//	}
+//	metrics["fingertipZSum"] = fingertipZSum;
+//	metrics["palmZSum"] = palmZSum;
+//	metrics["heelZSum"] = heelZSum;
+//	metrics["heelZMax"] = heelZMax;
+//	metrics["toeZSum"] = toeZSum;
+//	metrics["toeZMax"] = toeZMax;
+//	metrics["comXSum"] = comXSum;
+//	metrics["comZSum"] = comZSum;
+//	metrics["shoulderAngleDiffSum"] = shoulderAngleDiffSum;
+//	metrics["fitness"] = fitness;
+//	metrics["balance"] = balance;
+//	metrics["angularVelocitySign"] = MGEA::computeAngularVelocitySign(simLogPtr->data()->angles);
+//
+//	simLogPtr->data()->metrics = metrics;
+//	database.saveSimulationMetrics(simLogPtr->info(), metrics);
+//	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
+//	//timer.end();
+//	return metrics;
+//}
 
-	bool hasHeelHeight = simDataPtr->outputs.contains("heelZ");
-	bool hasToeHeight = simDataPtr->outputs.contains("toeZ");
-	bool hasFingertipHeight = simDataPtr->outputs.contains("fingertipZ");
-	bool hasPalmHeight = simDataPtr->outputs.contains("palmZ");
-	if (!hasToeHeight or !hasFingertipHeight or !hasHeelHeight or !hasPalmHeight) {
-		spdlog::error("There is no position named \"heelZ\" or \"toeZ\" or \"fingertipZ\" or \"palmZ\" in simulation output {}", genPx);
-		//timer.end();
-		return {};
-	}
-	double timeStep = motionParameters.simStep;
-	auto & fingertipZ = simDataPtr->outputs.at("fingertipZ");
-	auto & palmX = simDataPtr->outputs.at("palmX");
-	auto & palmZ = simDataPtr->outputs.at("palmZ");
-	auto & heelZ = simDataPtr->outputs.at("heelZ");
-	auto & toeZ = simDataPtr->outputs.at("toeZ");
-	auto & comX = simDataPtr->outputs.at("centerOfMassX");
-	auto & comZ = simDataPtr->outputs.at("centerOfMassZ");
-	auto & shoulderAngle = simDataPtr->angles.at("shoulder");
-	bool sameSize = fingertipZ.size() == toeZ.size()
-		and fingertipZ.size() == heelZ.size()
-		and fingertipZ.size() == palmZ.size();
-	if (!sameSize) {
-		spdlog::error("\"heelZ\", \"toeZ\", \"palmZ\" and \"fingertipHeight\" are not of same size");
-		//timer.end();
-		return {};
-	}
-
-	Spec::MetricVariantMap metrics;
-
-	auto absLambda = [](double prev, double next) {
-		return prev + std::abs(next);
-	};
-	auto onlyPositiveLambda = [](double prev, double next) {
-		return prev + std::max(next, 0.0);
-	};
-	//double fingertipZSum = std::accumulate(fingertipZ.begin(), fingertipZ.end(), 0.0, onlyPositiveLambda);
-	//double palmZSum = std::accumulate(palmZ.begin(), palmZ.end(), 0.0, onlyPositiveLambda);
-	double fingertipZSum = std::accumulate(fingertipZ.begin(), fingertipZ.end(), 0.0);
-	double maxFingertipZ = *std::max_element(fingertipZ.begin(), fingertipZ.end());
-	double palmZSum = std::accumulate(palmZ.begin(), palmZ.end(), 0.0);
-	double maxPalmZ = *std::max_element(palmZ.begin(), palmZ.end());
-	double heelZSum = std::accumulate(heelZ.begin(), heelZ.end(), 0.0, absLambda);
-	double heelZMax = *std::max_element(heelZ.begin(), heelZ.end());
-	double toeZSum = std::accumulate(toeZ.begin(), toeZ.end(), 0.0, absLambda);
-	double toeZMax = *std::max_element(toeZ.begin(), toeZ.end());
-	double comXSum = std::accumulate(comX.begin(), comX.end(), 0.0, absLambda);
-	double comZSum = std::accumulate(comZ.begin(), comZ.end(), 0.0, absLambda);
-	double shoulderAngleDiffSum{};
-	for (auto it(shoulderAngle.begin()); it != shoulderAngle.end() and std::next(it) != shoulderAngle.end(); ++it) {
-		auto const & currentElement(*it);
-		auto const & nextElement(*std::next(it));
-		shoulderAngleDiffSum += std::min(currentElement - nextElement, 0.0);
-	}
-	double balance = std::inner_product(comX.begin(), comX.end(), palmX.begin(), 0.0, std::plus<>(), [](auto const& cX, auto const& pX) {
-		return std::abs(cX - pX);
-	});
-	//double balance(0.0);
-	//for (std::size_t i(0); i != palmX.size(); ++i) {
-	//	balance += std::abs(comX[i] - palmX[i]);
-	//}
-	balance = balance * timeStep / motionParameters.simStop();
-	double fitness;
-	if (fingertipZSum <= 0.0 and palmZSum <= 0.0) {
-		fitness = comZSum * timeStep / motionParameters.simStop();
-	} else {
-		fitness = 0.0;
-		if (fingertipZSum > 0.0) {
-			fitness -= maxFingertipZ;
-		}
-		if (palmZSum > 0.0) {
-			fitness -= maxPalmZ;
-		}
-	}
-	metrics["fingertipZSum"] = fingertipZSum;
-	metrics["palmZSum"] = palmZSum;
-	metrics["heelZSum"] = heelZSum;
-	metrics["heelZMax"] = heelZMax;
-	metrics["toeZSum"] = toeZSum;
-	metrics["toeZMax"] = toeZMax;
-	metrics["comXSum"] = comXSum;
-	metrics["comZSum"] = comZSum;
-	metrics["shoulderAngleDiffSum"] = shoulderAngleDiffSum;
-	metrics["fitness"] = fitness;
-	metrics["balance"] = balance;
-	metrics["angularVelocitySign"] = MGEA::computeAngularVelocitySign(simLogPtr->data()->angles);
-
-	simLogPtr->data()->metrics = metrics;
-	database.saveSimulationMetrics(simLogPtr->info(), metrics);
-	//spdlog::info("Individual{} evaluated to fitness value {}", genPx, fitness);
-	//timer.end();
-	return metrics;
-}
-
-Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromIndividualPtr(Spec::IndividualPtr iptr) {
-	double maximumFitnessDiff(0.0);
-	for (auto const& parent : iptr->parents) {
-		auto const& parentFitness(std::any_cast<double>(parent->metricMap.at("fitness")));
-		for (auto const& grandparent : parent->parents) {
-			auto const& grandparentFitness(std::any_cast<double>(grandparent->metricMap.at("fitness")));
-			double fitnessDiff(parentFitness - grandparentFitness);
-			maximumFitnessDiff = std::max(maximumFitnessDiff, fitnessDiff);
-		}
-	}
-
-	Spec::MetricVariantMap metrics;
-	metrics["gain"] = maximumFitnessDiff;
-	return metrics;
-}
+//Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromIndividualPtr(Spec::IndividualPtr iptr) {
+//	double maximumFitnessDiff(0.0);
+//	for (auto const& parent : iptr->parents) {
+//		auto const& parentFitness(std::any_cast<double>(parent->metricMap.at("fitness")));
+//		for (auto const& grandparent : parent->parents) {
+//			auto const& grandparentFitness(std::any_cast<double>(grandparent->metricMap.at("fitness")));
+//			double fitnessDiff(parentFitness - grandparentFitness);
+//			maximumFitnessDiff = std::max(maximumFitnessDiff, fitnessDiff);
+//		}
+//	}
+//
+//	Spec::MetricVariantMap metrics;
+//	metrics["gain"] = maximumFitnessDiff;
+//	return metrics;
+//}
 
 Spec::Distance MotionGenerator::calculateTorqueDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
 	auto simLogPtr1(database.getSimulationLog(id1));
@@ -434,11 +434,6 @@ Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifie
 		}
 	}
 	return distance;
-}
-
-bool MotionGenerator::convergenceCheck(Spec::MetricVariantMap mVM) {
-	//return f > 1.5 * motionParameters.simStop();
-	return false;
 }
 
 void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {

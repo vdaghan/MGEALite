@@ -76,15 +76,8 @@ void to_json(JSON & j, SimulationData const & sI) {
 	if (!sI.outputs.empty()) {
 		j["outputs"] = sI.outputs;
 	}
-	if (!sI.metrics.empty()) {
-		for (auto & metric : sI.metrics) {
-			auto & metricKey(metric.first);
-			auto & metricValue(metric.second);
-			if (std::holds_alternative<double>(metricValue)) {
-				auto & metric(std::get<double>(metricValue));
-				j["metrics"][metricKey] = metric;
-			}
-		}
+	if (sI.metrics) {
+		j["metrics"] = sI.metrics.value();
 	}
 	if (sI.error) {
 		j["error"] = sI.error.value();
@@ -135,11 +128,7 @@ void from_json(JSON const & j, SimulationData & sI) {
 		}
 	}
 	if (j.contains("metrics")) {
-		auto & metrics = j["metrics"];
-		for (auto metricsIt = metrics.begin(); metricsIt != metrics.end(); ++metricsIt) {
-			std::string metricKey = metricsIt.key();
-			auto & metricValue = metricsIt.value();
-		}
+		sI.metrics = j.at("metrics").get<std::string>();
 	}
 	if (j.contains("error")) {
 		j.at("error").get_to(sI.error);
