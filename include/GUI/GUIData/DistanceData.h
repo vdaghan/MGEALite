@@ -87,16 +87,17 @@ namespace MGEA {
 					auto & id1(id1Pair.first);
 					auto & id1Distances(id1Pair.second);
 					distanceRanges.push_back({});
-					distanceRanges.back().minimum = std::numeric_limits<double>::max();
-					distanceRanges.back().maximum = std::numeric_limits<double>::lowest();
-					for (auto& id2Pair : id1Distances) {
-						auto& id2(id2Pair.first);
+                    auto & distanceRange(distanceRanges.back());
+					distanceRange.minimum = std::numeric_limits<double>::max();
+					distanceRange.maximum = std::numeric_limits<double>::lowest();
+					for (auto & id2Pair : id1Distances) {
+						auto & id2(id2Pair.first);
 						if (id1 == id2) [[unlikely]] {
 							continue;
 						}
 						auto& distance(id2Pair.second);
-						distanceRanges.back().minimum = std::min(distanceRanges.back().minimum, distance);
-						distanceRanges.back().maximum = std::max(distanceRanges.back().maximum, distance);
+						distanceRange.minimum = std::min(distanceRange.minimum, distance);
+						distanceRange.maximum = std::max(distanceRange.maximum, distance);
 					}
 				}
 				distanceRanges.sort([](auto const & dr1, auto const & dr2) { return dr1 > dr2; });

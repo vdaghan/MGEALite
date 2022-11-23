@@ -3,7 +3,6 @@
 #include "Database.h"
 #include "MotionGeneration/Initialisers/Initialisers.h"
 #include "MotionGeneration/Variations/Variations.h"
-#include "MotionGeneration/Metrics/Metrics.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/Specification.h"
 #include "SimulationData.h"

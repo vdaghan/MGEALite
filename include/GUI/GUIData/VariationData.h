@@ -9,7 +9,7 @@
 
 namespace MGEA {
 	struct VariationData {
-		VariationData() {};
+		VariationData() = default;
 
 		std::vector<std::string> lastGenerationVariationNames;
 		std::vector<std::size_t> lastGenerationSuccess;

@@ -17,8 +17,10 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.4.3.7)
+project(MGEALite LANGUAGES CXX VERSION 0.4.3.8)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
+
+add_custom_target(MGEADependencies COMMAND dot -Tsvg ${CMAKE_BINARY_DIR}/MGEALite.dot -o ${CMAKE_BINARY_DIR}/MGEALite.svg)
 
 FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 5efeb1809cddfa1748e4f50eb9e4ef11e326f3f4 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.4.7.6
 FetchContent_Declare(DTimer GIT_REPOSITORY https://github.com/vdaghan/DTimer.git GIT_TAG 03c3a8cd8f3d0c5976a2d596c41979318c5a6a08 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DTimer) # 0.1.0.1

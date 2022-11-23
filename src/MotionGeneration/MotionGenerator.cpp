@@ -1,6 +1,10 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 #include "MotionGeneration/MotionGenerator.h"
 
 #include "MotionGeneration/Initialisers/Initialisers.h"
+#include "MotionGeneration/Metrics/Metrics.h"
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 #include "Logging/SpdlogCommon.h"
 #include "Wavelet/HaarWavelet.h"
@@ -54,7 +58,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 128;
+	ea.lambda = 1024;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };

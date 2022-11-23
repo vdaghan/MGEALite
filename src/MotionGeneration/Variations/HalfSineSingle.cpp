@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 #include "MotionGeneration/Variations/Variations.h"
 
 #include <algorithm>
@@ -8,7 +11,7 @@ namespace MGEA {
 	SimulationDataPtrs halfSineSingle(VariationParams variationParameters, SimulationDataPtrs parents) {
 		auto const & parent = *parents.front();
 
-		SimulationDataPtr childDataPtr = SimulationDataPtr(new SimulationData());
+		SimulationDataPtr childDataPtr = std::make_shared<SimulationData>();
 
 		childDataPtr->time = parent.time;
 		childDataPtr->params = parent.params;

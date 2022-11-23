@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 #include "Logging/SpdlogCommon.h"
 
 #include "spdlog/async.h"
@@ -20,7 +23,7 @@ void initialiseLogger() {
 	spdlog::default_logger()->flush_on(spdlog::level::trace);
 }
 
-void DEvALoggerCallback(DEvA::LogType logType, std::string message) {
+void DEvALoggerCallback(DEvA::LogType logType, std::string const & message) {
 	if (DEvA::LogType::Trace == logType) {
 		spdlog::trace(message);
 	} else if (DEvA::LogType::Debug == logType) {

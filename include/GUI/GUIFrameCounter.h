@@ -15,7 +15,7 @@ namespace MGEA {
 	class GUIFrameCounter {
 		public:
 			FPSInfo tickAndWait() {
-				lastTimepoints.push_front(std::chrono::high_resolution_clock::now());
+				lastTimepoints.emplace_front(std::chrono::high_resolution_clock::now());
 				lastTimepoints.resize(std::min(lastTimepoints.size(), measurementSamples));
 				double timeDiff(timeDifference(lastTimepoints.front(), lastTimepoints.back()));
 				double limitedFrameTime(timeDiff / static_cast<double>(lastTimepoints.size()-1));

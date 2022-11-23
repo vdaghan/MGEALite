@@ -11,4 +11,4 @@
 
 extern std::shared_ptr<spdlog::async_logger> logger;
 void initialiseLogger();
-void DEvALoggerCallback(DEvA::LogType, std::string);
+void DEvALoggerCallback(DEvA::LogType, std::string const &);

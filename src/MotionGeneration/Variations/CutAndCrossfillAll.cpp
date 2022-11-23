@@ -1,3 +1,6 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
@@ -5,8 +8,8 @@ namespace MGEA {
 		auto const& parent1 = *sdptrs.front();
 		auto const& parent2 = *sdptrs.back();
 
-		SimulationDataPtr child1DataPtr = SimulationDataPtr(new SimulationData());
-		SimulationDataPtr child2DataPtr = SimulationDataPtr(new SimulationData());
+		SimulationDataPtr child1DataPtr = std::make_shared<SimulationData>();
+		SimulationDataPtr child2DataPtr = std::make_shared<SimulationData>();
 
 		child1DataPtr->time = parent1.time;
 		child1DataPtr->params = parent1.params;
