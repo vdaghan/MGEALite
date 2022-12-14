@@ -32,9 +32,4 @@ namespace MGEA {
 		}
 		return retVal;
 	}
-
-	//VectorMap vectorMapFromOrderedVector(VectorMap const & like, std::vector<std::vector<double>> const & orderedVector) {
-	//	VectorMap vectorMap{};
-	//	for ()
-	//}
 }

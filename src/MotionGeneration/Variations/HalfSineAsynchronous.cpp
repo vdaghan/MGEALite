@@ -8,8 +8,9 @@
 #include <numbers>
 
 namespace MGEA {
-	SimulationDataPtrs halfSineAsynchronous(VariationParams variationParameters, SimulationDataPtrs parents) {
-		auto const& parent = *parents.front();
+	SimulationDataPtrs halfSineAsynchronous(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto parentPtr = iptrs.front();
+		auto const & parent = *parentPtr->genotype;
 
 		SimulationDataPtr childDataPtr = std::make_shared<SimulationData>();
 

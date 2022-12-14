@@ -428,71 +428,71 @@ void GUIStateDrawer::drawVariationStatisticsOverGenealogy() {
 }
 
 void GUIStateDrawer::drawDistancesVSGenerations() {
-	if (ImPlot::BeginPlot("DistancesVSGenerations", plotSize, defaultPlotFlags)) {
-		ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
-		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
-		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+	//if (ImPlot::BeginPlot("DistancesVSGenerations", plotSize, defaultPlotFlags)) {
+	//	ImPlot::SetupAxis(ImAxis_X1, "Generation", defaultPlotAxisFlags);
+	//	ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
+	//	ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		MGEA::DistanceData& distanceData = plotData.distanceData;
-		if (0 == distanceData.maximumsOfGenerations.size()) {
-			ImPlot::EndPlot();
-			return;
-		}
-		auto & numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
-		auto & minimumOfGenerations(distanceData.minimumOfGenerations);
-		auto & maximumOfGenerations(distanceData.maximumOfGenerations);
-		auto & diffOfGenerations(distanceData.diffOfGenerations);
-		auto & minimumsOfGenerations(distanceData.minimumsOfGenerations);
-		auto & maximumsOfGenerations(distanceData.maximumsOfGenerations);
-		auto & meansOfGenerations(distanceData.meansOfGenerations);
-		auto & numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
+	//	MGEA::DistanceData& distanceData = plotData.distanceData;
+	//	if (0 == distanceData.maximumsOfGenerations.size()) {
+	//		ImPlot::EndPlot();
+	//		return;
+	//	}
+	//	auto & numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
+	//	auto & minimumOfGenerations(distanceData.minimumOfGenerations);
+	//	auto & maximumOfGenerations(distanceData.maximumOfGenerations);
+	//	auto & diffOfGenerations(distanceData.diffOfGenerations);
+	//	auto & minimumsOfGenerations(distanceData.minimumsOfGenerations);
+	//	auto & maximumsOfGenerations(distanceData.maximumsOfGenerations);
+	//	auto & meansOfGenerations(distanceData.meansOfGenerations);
+	//	auto & numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
 
-		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - 0.1 * diffOfGenerations, maximumOfGenerations + 0.1 * diffOfGenerations, ImPlotCond_Always);
-		ImPlot::SetupFinish();
+	//	ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfGenerationsDouble, ImPlotCond_Always);
+	//	ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfGenerations - 0.1 * diffOfGenerations, maximumOfGenerations + 0.1 * diffOfGenerations, ImPlotCond_Always);
+	//	ImPlot::SetupFinish();
 
-		ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);
-		ImPlot::PlotLine("All generations mean distance", &meansOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
+	//	ImPlot::PlotShadedG("All generations distance interval", fitnessGetter, &minimumsOfGenerations, fitnessGetter, &maximumsOfGenerations, numberOfGenerationsInt);
+	//	ImPlot::PlotLine("All generations mean distance", &meansOfGenerations[0], numberOfGenerationsInt, 1.0, 0.0, defaultPlotLineFlags);
 
-		ImPlot::EndPlot();
-	}
+	//	ImPlot::EndPlot();
+	//}
 }
 
 void GUIStateDrawer::drawDistancesVSIndividuals() {
-	return;
-	if (ImPlot::BeginPlot("drawDistancesVSIndividuals", plotSize, defaultPlotFlags)) {
-		ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
-		ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
-		ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
+	//return;
+	//if (ImPlot::BeginPlot("drawDistancesVSIndividuals", plotSize, defaultPlotFlags)) {
+	//	ImPlot::SetupAxis(ImAxis_X1, "Individual", defaultPlotAxisFlags);
+	//	ImPlot::SetupAxis(ImAxis_Y1, "Distance", defaultPlotAxisFlags);
+	//	ImPlot::SetupLegend(ImPlotLocation_South, ImPlotLegendFlags_Outside);
 
-		MGEA::DistanceData& distanceData = plotData.distanceData;
-		if (0 == distanceData.maximumsOfGenerations.size()) {
-			ImPlot::EndPlot();
-			return;
-		}
-		auto& numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
-		auto& minimumOfGenerations(distanceData.minimumOfGenerations);
-		auto& maximumOfGenerations(distanceData.maximumOfGenerations);
-		auto& diffOfGenerations(distanceData.diffOfGenerations);
-		auto& minimumsOfGenerations(distanceData.minimumsOfGenerations);
-		auto& maximumsOfGenerations(distanceData.maximumsOfGenerations);
-		auto& meansOfGenerations(distanceData.meansOfGenerations);
-		auto& numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
+	//	MGEA::DistanceData& distanceData = plotData.distanceData;
+	//	if (0 == distanceData.maximumsOfGenerations.size()) {
+	//		ImPlot::EndPlot();
+	//		return;
+	//	}
+	//	auto& numberOfGenerationsDouble(distanceData.numberOfGenerationsDouble);
+	//	auto& minimumOfGenerations(distanceData.minimumOfGenerations);
+	//	auto& maximumOfGenerations(distanceData.maximumOfGenerations);
+	//	auto& diffOfGenerations(distanceData.diffOfGenerations);
+	//	auto& minimumsOfGenerations(distanceData.minimumsOfGenerations);
+	//	auto& maximumsOfGenerations(distanceData.maximumsOfGenerations);
+	//	auto& meansOfGenerations(distanceData.meansOfGenerations);
+	//	auto& numberOfGenerationsInt(distanceData.numberOfGenerationsInt);
 
-		auto& minimumOfIndividuals(distanceData.minimumOfIndividuals);
-		auto& maximumOfIndividuals(distanceData.maximumOfIndividuals);
-		auto& diffOfIndividuals(distanceData.diffOfIndividuals);
-		auto& minimumsOfIndividuals(distanceData.minimumsOfIndividuals);
-		auto& maximumsOfIndividuals(distanceData.maximumsOfIndividuals);
-		std::size_t numberOfIndividualsSizeT(distanceData.numberOfIndividuals);
-		double numberOfIndividualsDouble(static_cast<double>(distanceData.numberOfIndividuals));
+	//	auto& minimumOfIndividuals(distanceData.minimumOfIndividuals);
+	//	auto& maximumOfIndividuals(distanceData.maximumOfIndividuals);
+	//	auto& diffOfIndividuals(distanceData.diffOfIndividuals);
+	//	auto& minimumsOfIndividuals(distanceData.minimumsOfIndividuals);
+	//	auto& maximumsOfIndividuals(distanceData.maximumsOfIndividuals);
+	//	std::size_t numberOfIndividualsSizeT(distanceData.numberOfIndividuals);
+	//	double numberOfIndividualsDouble(static_cast<double>(distanceData.numberOfIndividuals));
 
-		ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfIndividualsDouble, ImPlotCond_Always);
-		ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfIndividuals - 0.1 * diffOfIndividuals, maximumOfIndividuals + 0.1 * diffOfIndividuals, ImPlotCond_Always);
-		ImPlot::SetupFinish();
+	//	ImPlot::SetupAxisLimits(ImAxis_X1, 0.0, numberOfIndividualsDouble, ImPlotCond_Always);
+	//	ImPlot::SetupAxisLimits(ImAxis_Y1, minimumOfIndividuals - 0.1 * diffOfIndividuals, maximumOfIndividuals + 0.1 * diffOfIndividuals, ImPlotCond_Always);
+	//	ImPlot::SetupFinish();
 
-		ImPlot::PlotShadedG("All indivduals distance interval", fitnessGetter, &minimumsOfIndividuals, fitnessGetter, &maximumsOfIndividuals, numberOfIndividualsSizeT);
+	//	ImPlot::PlotShadedG("All indivduals distance interval", fitnessGetter, &minimumsOfIndividuals, fitnessGetter, &maximumsOfIndividuals, numberOfIndividualsSizeT);
 
-		ImPlot::EndPlot();
-	}
+	//	ImPlot::EndPlot();
+	//}
 }

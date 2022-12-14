@@ -15,7 +15,6 @@ class PlotData {
 		void updateEAStatistics(DEvA::EAStatistics<Spec> const &, DEvA::EAStatisticsUpdateType);
 
 		DEvA::EAProgress copyProgress();
-		MGEA::DistanceData distanceData;
 		MGEA::FitnessData fitnessData;
 		MGEA::ProgressbarData progressbarData;
 		MGEA::SliderData sliderData;

@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Database.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/SharedSynchronisationHelpers.h"
 #include "MotionGeneration/Specification.h"
@@ -15,7 +14,6 @@ namespace MGEA {
 		MotionParameters & motionParameters;
 		std::atomic<bool> & pauseFlag;
 		std::atomic<bool> & stopFlag;
-		Database & database;
 	};
 
 	SimulationDataPtrs genesisBoundary(InitialiserParams);

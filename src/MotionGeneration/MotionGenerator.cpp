@@ -9,6 +9,7 @@
 #include "Logging/SpdlogCommon.h"
 #include "Wavelet/HaarWavelet.h"
 
+#include "DEvA/Filestore.h"
 #include <DTimer/DTimer.h>
 
 #include <algorithm>
@@ -16,10 +17,11 @@
 
 MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP) 
 : motionParameters(mP)
-, database(folder, motionParameters)
+, datastore(folder)
 , pauseFlag(false)
 , stopFlag(false)
 {
+	ea.datastore = std::make_shared<DEvA::Filestore<Spec>>();
 	maxGenerations = 0;
 	ea.registerEAFunction(DEvA::EAFunction::Initialisation, [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); });
 	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
@@ -41,8 +43,8 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.useMetricFunctor("balance");
 	ea.useMetricFunctor("fitness");
 	auto evaluationCallback = [&](DEvA::IndividualIdentifier id) {
-		auto const & simLogPtr = database.getSimulationLog(id);
-		database.saveSimulationMetrics(simLogPtr->info(), {});
+		//auto const & simLogPtr = database.getSimulationLog(id);
+		//database.saveSimulationMetrics(simLogPtr->info(), {});
 	};
 	ea.registerCallback(DEvA::Callback::Evaluation, evaluationCallback);
 	createVariationFunctors();
@@ -58,7 +60,7 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
 	ea.onPauseCallback = [&]() { pauseFlag.store(true); };
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
-	ea.lambda = 1024;
+	ea.lambda = 256;
 	ea.logger.callback = DEvALoggerCallback;
 	exportGenerationData();
 };
@@ -84,26 +86,26 @@ bool MotionGenerator::checkStopFlagAndMaybeWait() {
 }
 
 void MotionGenerator::exportGenerationData() {
-	spdlog::info("Exporting previous data to EA...");
-	SimulationHistory const & simulationHistory = database.getSimulationHistory();
-	if (simulationHistory.empty()) {
-		spdlog::info("No previous data found.");
-		return;
-	}
-	auto const & lastElement = std::max_element(simulationHistory.begin(), simulationHistory.end(), [](auto const & lhs, auto const & rhs){ return lhs.first.identifier < rhs.first.identifier; });
-	std::size_t lastGeneration = lastElement->first.generation;
-	spdlog::info("Last run had {} generations.", lastGeneration);
+	//spdlog::info("Exporting previous data to EA...");
+	//SimulationHistory const & simulationHistory = database.getSimulationHistory();
+	//if (simulationHistory.empty()) {
+	//	spdlog::info("No previous data found.");
+	//	return;
+	//}
+	//auto const & lastElement = std::max_element(simulationHistory.begin(), simulationHistory.end(), [](auto const & lhs, auto const & rhs){ return lhs.first.identifier < rhs.first.identifier; });
+	//std::size_t lastGeneration = lastElement->first.generation;
+	//spdlog::info("Last run had {} generations.", lastGeneration);
 
-	for (std::size_t gen(0); gen <= lastGeneration; ++gen) {
-		Spec::Generation generation;
-		for (auto const & historyPair : simulationHistory) {
-			auto const & simInfo = historyPair.first;
-			if (simInfo.generation != gen) {
-				continue;
-			}
-			Spec::IndividualPtr iptr = std::make_shared<Spec::SIndividual>(simInfo.generation, simInfo.identifier, simInfo);
-			generation.emplace_back(iptr);
-		}
-		ea.addGeneration(generation);
-	}
+	//for (std::size_t gen(0); gen <= lastGeneration; ++gen) {
+	//	Spec::Generation generation;
+	//	for (auto const & historyPair : simulationHistory) {
+	//		auto const & simInfo = historyPair.first;
+	//		if (simInfo.generation != gen) {
+	//			continue;
+	//		}
+	//		Spec::IndividualPtr iptr = std::make_shared<Spec::SIndividual>(simInfo.generation, simInfo.identifier, simInfo);
+	//		generation.emplace_back(iptr);
+	//	}
+	//	ea.addGeneration(generation);
+	//}
 }

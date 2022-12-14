@@ -4,8 +4,8 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs directionalLInt(std::size_t shift, VariationParams variationParameters, Spec::IndividualPtrs parents) {
-		auto & parent(*parents.front());
+	SimulationDataPtrs directionalLInt(std::size_t shift, VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto & parent(*iptrs.front());
 		auto & parentGenotype = parent.genotype;
 
 		if (parent.parents.empty()) {

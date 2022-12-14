@@ -4,8 +4,9 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs deletionSingle(VariationParams variationParameters, SimulationDataPtrs parents) {
-		auto const& parent = *parents.front();
+	SimulationDataPtrs deletionSingle(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto parentPtr = iptrs.front();
+		auto const & parent = *parentPtr->genotype;
 
 		SimulationDataPtr childDataPtr = std::make_shared<SimulationData>();
 

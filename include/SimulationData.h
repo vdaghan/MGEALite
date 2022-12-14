@@ -28,36 +28,10 @@ struct SimulationData {
 	MGEA::VectorMap outputs;
 	std::optional<std::string> metrics;
 	std::optional<std::string> error;
-	bool valid() {
-		if (error) {
-			return false;
-		}
-		std::size_t const length(time.size());
-		for (auto & t : torque) {
-			if (length != t.second.size()) {
-				return false;
-			}
-		}
-		for (auto & o : outputs) {
-			if (length != o.second.size()) {
-				return false;
-			}
-		}
-		return true;
-	};
+	bool valid();
+	void updateUsing(SimulationData const &);
 };
 
 using SimulationDataPtr = std::shared_ptr<SimulationData>;
 using MaybeSimulationDataPtr = MGEA::Maybe<SimulationDataPtr>;
 using SimulationDataPtrs = std::list<SimulationDataPtr>;
-
-struct SimulationDataPtrPair {
-	SimulationDataPtr source;
-	SimulationDataPtr target;
-};
-void updateSimulationDataPtr(SimulationDataPtrPair);
-
-void to_json(JSON &, SimulationData const &);
-void from_json(JSON const &, SimulationData &);
-MaybeSimulationDataPtr importSimulationData(std::filesystem::path);
-MGEA::ErrorCode exportSimulationData(SimulationDataPtr, std::filesystem::path);

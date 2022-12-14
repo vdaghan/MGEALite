@@ -22,8 +22,9 @@ namespace MGEA {
 		}
 	}
 
-	SimulationDataPtrs waveletSNV(VariationParams variationParameters, SimulationDataPtrs parents) {
-		auto const& parent = *parents.front();
+	SimulationDataPtrs waveletSNV(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto parentPtr = iptrs.front();
+		auto const & parent = *parentPtr->genotype;
 
 		SimulationDataPtr childDataPtr = std::make_shared<SimulationData>();
 

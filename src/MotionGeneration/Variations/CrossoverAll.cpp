@@ -4,9 +4,11 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs crossoverAll(VariationParams variationParameters, SimulationDataPtrs sdptrs) {
-		auto const& parent1 = *sdptrs.front();
-		auto const& parent2 = *sdptrs.back();
+	SimulationDataPtrs crossoverAll(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto parent1Ptr = iptrs.front();
+		auto parent2Ptr = iptrs.back();
+		auto const & parent1 = *parent1Ptr->genotype;
+		auto const & parent2 = *parent2Ptr->genotype;
 
 		SimulationDataPtr child1DataPtr = std::make_shared<SimulationData>();
 		SimulationDataPtr child2DataPtr = std::make_shared<SimulationData>();

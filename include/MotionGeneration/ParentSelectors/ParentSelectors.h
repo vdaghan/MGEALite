@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Database.h"
 #include "MotionGeneration/MotionParameters.h"
 #include "MotionGeneration/SharedSynchronisationHelpers.h"
 #include "MotionGeneration/Specification.h"

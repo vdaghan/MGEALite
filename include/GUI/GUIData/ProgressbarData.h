@@ -43,9 +43,6 @@ namespace MGEA {
 					auto const & evaluatedIndividuals(eaProgress.numberOfEvaluatedIndividualsInGeneration);
 					m_fraction = static_cast<float>(evaluatedIndividuals) / individualsFloat;
 					m_text = std::format("Evaluation {:.2f}% ({}/{})", 100.0 * m_fraction, evaluatedIndividuals, individuals);
-				} else if (DEvA::EAStage::Distance == eaStage) {
-					m_fraction = 0.0;
-					m_text = "Distances Calculation.";
 				} else if (DEvA::EAStage::SelectSurvivors == eaStage) {
 					m_fraction = 0.0;
 					m_text = "Survivor Selection.";

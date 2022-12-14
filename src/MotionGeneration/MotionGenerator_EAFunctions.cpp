@@ -20,7 +20,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorCrossoverAll.name = "CrossoverAll";
 	variationFunctorCrossoverAll.numberOfParents = 2;
 	variationFunctorCrossoverAll.parentSelectionFunction = std::bind_front(DEvA::StandardParentSelectors<Spec>::randomN<2>, "fitness");
-	variationFunctorCrossoverAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, &MGEA::crossoverAll);
+	variationFunctorCrossoverAll.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverAll);
 	variationFunctorCrossoverAll.probability = 1.0;
 	variationFunctorCrossoverAll.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorCrossoverAll);
@@ -29,7 +29,7 @@ void MotionGenerator::createVariationFunctors() {
 	//variationFunctorCrossoverSingle.name = "CrossoverSingle";
 	//variationFunctorCrossoverSingle.numberOfParents = 2;
 	//variationFunctorCrossoverSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCrossoverSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
+	//variationFunctorCrossoverSingle.variationFunctionFromGenotypes = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::crossoverSingle);
 	//variationFunctorCrossoverSingle.probability = 1.0;
 	//variationFunctorCrossoverSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCrossoverSingle);
@@ -38,7 +38,7 @@ void MotionGenerator::createVariationFunctors() {
 	//variationFunctorCutAndCrossfillAll.name = "CutAndCrossfillAll";
 	//variationFunctorCutAndCrossfillAll.numberOfParents = 2;
 	//variationFunctorCutAndCrossfillAll.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCutAndCrossfillAll.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillAll);
+	//variationFunctorCutAndCrossfillAll.variationFunctionFromGenotypes = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillAll);
 	//variationFunctorCutAndCrossfillAll.probability = 1.0;
 	//variationFunctorCutAndCrossfillAll.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCutAndCrossfillAll);
@@ -46,7 +46,7 @@ void MotionGenerator::createVariationFunctors() {
 	//Spec::SVariationFunctor variationFunctorCutAndCrossfillSingle;
 	//variationFunctorCutAndCrossfillSingle.name = "CutAndCrossfillSingle";
 	//variationFunctorCutAndCrossfillSingle.parentSelectionFunction = DEvA::StandardParentSelectors<Spec>::bestNofM<2, 10>;
-	//variationFunctorCutAndCrossfillSingle.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
+	//variationFunctorCutAndCrossfillSingle.variationFunctionFromGenotypes = std::bind_front(&MotionGenerator::computeVariation, this, &MGEA::cutAndCrossfillSingle);
 	//variationFunctorCutAndCrossfillSingle.probability = 1.0;
 	//variationFunctorCutAndCrossfillSingle.removeParentsFromMatingPool = false;
 	//variationFunctors.push_back(variationFunctorCutAndCrossfillSingle);
@@ -170,7 +170,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorDeletionLIntBP.name = "DeletionLIntBP";
 	variationFunctorDeletionLIntBP.numberOfParents = 1;
 	variationFunctorDeletionLIntBP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "balance");
-	variationFunctorDeletionLIntBP.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::deletionLInt, 2));
+	variationFunctorDeletionLIntBP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::deletionLInt, 2));
 	variationFunctorDeletionLIntBP.probability = 1.0;
 	variationFunctorDeletionLIntBP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorDeletionLIntBP);
@@ -179,7 +179,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorDeletionLIntFP.name = "DeletionLIntFP";
 	variationFunctorDeletionLIntFP.numberOfParents = 1;
 	variationFunctorDeletionLIntFP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "fitness");
-	variationFunctorDeletionLIntFP.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::deletionLInt, 2));
+	variationFunctorDeletionLIntFP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::deletionLInt, 2));
 	variationFunctorDeletionLIntFP.probability = 1.0;
 	variationFunctorDeletionLIntFP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorDeletionLIntFP);
@@ -188,7 +188,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorDirectionalLIntBP.name = "DirectionalLIntBP";
 	variationFunctorDirectionalLIntBP.numberOfParents = 1;
 	variationFunctorDirectionalLIntBP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "balance");
-	variationFunctorDirectionalLIntBP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariationWithIndividualPointers, this, std::bind_front(&MGEA::directionalLInt, 2));
+	variationFunctorDirectionalLIntBP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::directionalLInt, 2));
 	variationFunctorDirectionalLIntBP.probability = 1.0;
 	variationFunctorDirectionalLIntBP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorDirectionalLIntBP);
@@ -197,7 +197,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorDirectionalLIntFP.name = "DirectionalLIntFP";
 	variationFunctorDirectionalLIntFP.numberOfParents = 1;
 	variationFunctorDirectionalLIntFP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "fitness");
-	variationFunctorDirectionalLIntFP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariationWithIndividualPointers, this, std::bind_front(&MGEA::directionalLInt, 2));
+	variationFunctorDirectionalLIntFP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::directionalLInt, 2));
 	variationFunctorDirectionalLIntFP.probability = 1.0;
 	variationFunctorDirectionalLIntFP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorDirectionalLIntFP);
@@ -206,7 +206,7 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorSNVLIntBP.name = "SNVLIntBP";
 	variationFunctorSNVLIntBP.numberOfParents = 1;
 	variationFunctorSNVLIntBP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "balance");
-	variationFunctorSNVLIntBP.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::snvLInt, 2));
+	variationFunctorSNVLIntBP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::snvLInt, 2));
 	variationFunctorSNVLIntBP.probability = 1.0;
 	variationFunctorSNVLIntBP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorSNVLIntBP);
@@ -215,30 +215,14 @@ void MotionGenerator::createVariationFunctors() {
 	variationFunctorSNVLIntFP.name = "SNVLIntFP";
 	variationFunctorSNVLIntFP.numberOfParents = 1;
 	variationFunctorSNVLIntFP.parentSelectionFunction = std::bind_front(MGEA::metricProportionalN<1>, "fitness");
-	variationFunctorSNVLIntFP.variationFunctionFromGenotypeProxies = std::bind_front(&MotionGenerator::computeVariationWithGenotypeProxies, this, std::bind_front(&MGEA::snvLInt, 2));
+	variationFunctorSNVLIntFP.variationFunctionFromIndividualPtrs = std::bind_front(&MotionGenerator::computeVariation, this, std::bind_front(&MGEA::snvLInt, 2));
 	variationFunctorSNVLIntFP.probability = 1.0;
 	variationFunctorSNVLIntFP.removeParentsFromMatingPool = false;
 	ea.registerVariationFunctor(variationFunctorSNVLIntFP);
 }
 
-Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) {
-	auto simLogPtr = database.getSimulationLog(genPx);
-	auto iptr(ea.find(genPx));
-	iptr->genotype = simLogPtr->data();
-	if (simLogPtr->outputExists()) {
-		return genPx;
-	}
-	auto maybeSimulationDataPtr = database.requestSimulationResult(simLogPtr->info()).get();
-	if (std::unexpected(MGEA::ErrorCode::SimulationError) == maybeSimulationDataPtr) {
-		return std::unexpected(DEvA::ErrorCode::InvalidTransform);
-	}
-	if (maybeSimulationDataPtr.has_value() and maybeSimulationDataPtr.value()) {
-		if (!maybeSimulationDataPtr.value()->valid()) {
-			return std::unexpected(DEvA::ErrorCode::InvalidTransform);
-		}
-		return genPx;
-	}
-	return std::unexpected(DEvA::ErrorCode::InvalidTransform);
+Spec::MaybePhenotype MotionGenerator::transform(Spec::Genotype genotype) {
+	return datastore.simulate(genotype);
 }
 
 //Spec::MetricVariantMap MotionGenerator::evaluateIndividualFromGenotypeProxy(Spec::GenotypeProxy genPx) {
@@ -359,86 +343,6 @@ Spec::MaybePhenotypeProxy MotionGenerator::transform(Spec::GenotypeProxy genPx) 
 //	return metrics;
 //}
 
-Spec::Distance MotionGenerator::calculateTorqueDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
-	auto simLogPtr1(database.getSimulationLog(id1));
-	auto simLogPtr2(database.getSimulationLog(id2));
-	auto simDataPtr1(simLogPtr1->data());
-	auto simDataPtr2(simLogPtr2->data());
-
-	auto numSamples(motionParameters.simSamples);
-	auto jointNames(motionParameters.jointNames);
-	double distance(0);
-	for (auto& jointName : jointNames) {
-		auto& torque1(simDataPtr1->torque.at(jointName));
-		auto& torque2(simDataPtr2->torque.at(jointName));
-		for (std::size_t i(0); i != numSamples; ++i) {
-			auto t1(torque1.at(i));
-			auto t2(torque2.at(i));
-			distance += std::abs(t1-t2);
-		}
-	}
-	return distance;
-}
-
-Spec::Distance MotionGenerator::calculateTorqueSignDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
-	auto simLogPtr1(database.getSimulationLog(id1));
-	auto simLogPtr2(database.getSimulationLog(id2));
-	auto simDataPtr1(simLogPtr1->data());
-	auto simDataPtr2(simLogPtr2->data());
-
-	auto numSamples(motionParameters.simSamples);
-	auto jointNames(motionParameters.jointNames);
-	std::size_t distance(0);
-	for (auto & jointName : jointNames) {
-		auto & torque1(simDataPtr1->torque.at(jointName));
-		auto & torque2(simDataPtr2->torque.at(jointName));
-		for (std::size_t i(0); i != numSamples; ++i) {
-			auto t1(torque1.at(i));
-			auto t2(torque2.at(i));
-			if (0.0 == t1 or 0.0 == t2) {
-				continue;
-			}
-			if (t1 * t2 < 0.0) {
-				++distance;
-			}
-		}
-	}
-	return distance;
-}
-
-Spec::Distance MotionGenerator::calculateAngleDistance(DEvA::IndividualIdentifier id1, DEvA::IndividualIdentifier id2) {
-	auto simLogPtr1(database.getSimulationLog(id1));
-	auto simLogPtr2(database.getSimulationLog(id2));
-	auto simDataPtr1(simLogPtr1->data());
-	auto simDataPtr2(simLogPtr2->data());
-
-	auto numSamples(motionParameters.simSamples);
-	std::vector<std::string> outputNames{};
-	for (auto & outputPair : simDataPtr1->outputs) {
-		auto& outputName(outputPair.first);
-		if (!outputName.contains("Angle")) {
-			continue;
-		}
-		outputNames.push_back(outputName);
-	}
-	std::size_t distance(0);
-	for (auto & outputName : outputNames) {
-		auto & angle1(simDataPtr1->outputs.at(outputName));
-		auto & angle2(simDataPtr2->outputs.at(outputName));
-		for (std::size_t i(0); i != numSamples; ++i) {
-			auto t1(angle1.at(i));
-			auto t2(angle2.at(i));
-			if (0.0 == t1 or 0.0 == t2) {
-				continue;
-			}
-			if (t1 * t2 < 0.0) {
-				++distance;
-			}
-		}
-	}
-	return distance;
-}
-
 void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 	sptr->time = motionParameters.time();
 	sptr->alignment = motionParameters.alignment;
@@ -451,7 +355,7 @@ void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 	sptr->contacts = motionParameters.contactParameters;
 }
 
-Spec::GenotypeProxies MotionGenerator::computeVariationWithGenotypeProxies(std::function<SimulationDataPtrs(MGEA::VariationParams, SimulationDataPtrs)> vFunc, Spec::GenotypeProxies parentProxies) {
+Spec::Genotypes MotionGenerator::computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, Spec::IndividualPtrs)> vFunc, Spec::IndividualPtrs parents) {
 	std::size_t const simLength = motionParameters.simSamples;
 	std::size_t const numJoints = motionParameters.jointNames.size();
 	if (0 == simLength || 0 == numJoints) {
@@ -459,54 +363,6 @@ Spec::GenotypeProxies MotionGenerator::computeVariationWithGenotypeProxies(std::
 	}
 
 	auto& timer = DTimer::simple("computeVariation()").newSample().begin();
-	std::list<SimulationDataPtr> parentData;
-	for (auto& parentProxy : parentProxies) {
-		SimulationLogPtr parentLogPtr = database.getSimulationLog(parentProxy);
-		SimulationDataPtr parentDataPtr = parentLogPtr->data();
-		parentData.push_back(parentDataPtr);
-	}
-
-	MGEA::VariationParams variationParameters{
-		.motionParameters = motionParameters,
-		.pauseFlag = pauseFlag,
-		.stopFlag = stopFlag
-	};
-
-	auto children = vFunc(variationParameters, parentData);
-
-	Spec::GenotypeProxies childProxies;
-	for (auto& child : children) {
-		if (checkStopFlagAndMaybeWait()) {
-			return {};
-		}
-		applyMotionParameters(child);
-		auto childIndividualIdentifier = ea.reserveNewIndividualIdentifier();
-		//auto childIndividualPtr = ea.createNewIndividual(childIndividualIdentifier);
-		auto childLogPtr = database.registerSimulation(childIndividualIdentifier);
-		// TODO Check if we could successfully create a new input?
-		updateSimulationDataPtr({ .source = child, .target = childLogPtr->data() });
-		MGEA::ErrorCode startError = database.startSimulation(childIndividualIdentifier);
-		// TODO Check if start was successful?
-		childProxies.push_back(childIndividualIdentifier);
-	}
-	timer.end();
-	return childProxies;
-}
-
-Spec::GenotypeProxies MotionGenerator::computeVariationWithIndividualPointers(std::function<SimulationDataPtrs(MGEA::VariationParams, Spec::IndividualPtrs)> vFunc, Spec::IndividualPtrs parents) {
-	std::size_t const simLength = motionParameters.simSamples;
-	std::size_t const numJoints = motionParameters.jointNames.size();
-	if (0 == simLength || 0 == numJoints) {
-		return {};
-	}
-
-	auto& timer = DTimer::simple("computeVariation()").newSample().begin();
-
-	for (auto & parent : parents) {
-		SimulationLogPtr parentLogPtr = database.getSimulationLog(parent->genotypeProxy);
-		SimulationDataPtr parentDataPtr = parentLogPtr->data();
-		parent->genotype = parentDataPtr;
-	}
 
 	MGEA::VariationParams variationParameters{
 		.motionParameters = motionParameters,
@@ -516,46 +372,39 @@ Spec::GenotypeProxies MotionGenerator::computeVariationWithIndividualPointers(st
 
 	auto children = vFunc(variationParameters, parents);
 
-	Spec::GenotypeProxies childProxies;
-	for (auto& child : children) {
+	for (auto & child : children) {
 		if (checkStopFlagAndMaybeWait()) {
 			return {};
 		}
 		applyMotionParameters(child);
-		auto childIndividualIdentifier = ea.reserveNewIndividualIdentifier();
-		//auto childIndividualPtr = ea.createNewIndividual(childIndividualIdentifier);
-		auto childLogPtr = database.registerSimulation(childIndividualIdentifier);
-		// TODO Check if we could successfully create a new input?
-		updateSimulationDataPtr({ .source = child, .target = childLogPtr->data() });
-		MGEA::ErrorCode startError = database.startSimulation(childIndividualIdentifier);
-		// TODO Check if start was successful?
-		childProxies.push_back(childIndividualIdentifier);
+		//auto childIndividualIdentifier = ea.reserveNewIndividualIdentifier();
+		////auto childIndividualPtr = ea.createNewIndividual(childIndividualIdentifier);
+		//auto childLogPtr = database.registerSimulation(childIndividualIdentifier);
+		//// TODO Check if we could successfully create a new input?
+		//updateSimulationDataPtr({ .source = child, .target = childLogPtr->data() });
+		//MGEA::ErrorCode startError = database.startSimulation(childIndividualIdentifier);
+		//// TODO Check if start was successful?
 	}
 	timer.end();
-	return childProxies;
+	return children;
 }
 
-Spec::GenotypeProxies MotionGenerator::computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc) {
+Spec::Genotypes MotionGenerator::computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc) {
 	MGEA::InitialiserParams initialiserParams{
 		.motionParameters = motionParameters,
 		.pauseFlag = pauseFlag,
-		.stopFlag = stopFlag,
-		.database = database
+		.stopFlag = stopFlag
 	};
 
-	auto simDataPtrs(gFunc(initialiserParams));
-
-	Spec::GenotypeProxies genotypeProxies;
-	for (auto& simDataPtr : simDataPtrs) {
-		applyMotionParameters(simDataPtr);
-		auto individualIdentifier = ea.reserveNewIndividualIdentifier();
-		auto logPtr = database.registerSimulation(individualIdentifier);
-		*logPtr->data() = *simDataPtr;
-		MGEA::ErrorCode startError = database.startSimulation(individualIdentifier);
-		genotypeProxies.push_back(individualIdentifier);
+	Spec::Genotypes genotypes(gFunc(initialiserParams));
+	for (auto & genotype : genotypes) {
+		if (checkStopFlagAndMaybeWait()) {
+			return {};
+		}
+		applyMotionParameters(genotype);
 	}
 
-	return genotypeProxies;
+	return genotypes;
 }
 
 void MotionGenerator::onEpochStart(std::size_t generation) {
@@ -569,32 +418,32 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 
 	auto & timer = DTimer::simple("stats").newSample().begin();
 	auto const & bestIndividualPtr = lastGeneration.front();
-	database.saveVisualisationTarget(bestIndividualPtr->genotypeProxy);
+	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
 	auto & bestIndividualMetric(ea.bestIndividual->metricMap);
 	double bestFitness(bestIndividualMetric.at("fitness").as<double>());
 	spdlog::info("Best fitness: {}", bestFitness);
 
-	std::list<double> simulationTimes;
-	for (auto & iptr : lastGeneration) {
-		if (iptr->genotypeProxy.generation != generation) {
-			continue;
-		}
-		auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
-		auto const & metadata = simulationLogPtr->data()->metadata;
-		if (metadata.contains("totalTime")) {
-			auto const & totalTime = metadata.at("totalTime");
-			simulationTimes.push_back(totalTime);
-		}
-	}
-	if (!simulationTimes.empty()) {
-		auto minmax = std::minmax_element(simulationTimes.begin(), simulationTimes.end());
-		double total = std::accumulate(simulationTimes.begin(), simulationTimes.end(), 0.0);
-		double mean = total / static_cast<double>(simulationTimes.size());
-		spdlog::info("(min, mean, max) simulation times were: ({:.3f}s, {:.3f}s, {:.3f}s)", *minmax.first, mean, *minmax.second);
-		//spdlog::info("Total simulation time was: {:.3f}s", total);
-		spdlog::info("Total simulation time was: {}", DTimer::printTime(static_cast<std::size_t>(total * 1000.0)));
-	}
+	//std::list<double> simulationTimes;
+	//for (auto & iptr : lastGeneration) {
+	//	if (iptr->genotypeProxy.generation != generation) {
+	//		continue;
+	//	}
+	//	auto simulationLogPtr = database.getSimulationLog(iptr->genotypeProxy);
+	//	auto const & metadata = simulationLogPtr->data()->metadata;
+	//	if (metadata.contains("totalTime")) {
+	//		auto const & totalTime = metadata.at("totalTime");
+	//		simulationTimes.push_back(totalTime);
+	//	}
+	//}
+	//if (!simulationTimes.empty()) {
+	//	auto minmax = std::minmax_element(simulationTimes.begin(), simulationTimes.end());
+	//	double total = std::accumulate(simulationTimes.begin(), simulationTimes.end(), 0.0);
+	//	double mean = total / static_cast<double>(simulationTimes.size());
+	//	spdlog::info("(min, mean, max) simulation times were: ({:.3f}s, {:.3f}s, {:.3f}s)", *minmax.first, mean, *minmax.second);
+	//	//spdlog::info("Total simulation time was: {:.3f}s", total);
+	//	spdlog::info("Total simulation time was: {}", DTimer::printTime(static_cast<std::size_t>(total * 1000.0)));
+	//}
 	timer.end();
 	spdlog::info("\n{}", DTimer::print());
 }

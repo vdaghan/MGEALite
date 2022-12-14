@@ -8,17 +8,15 @@
 #include <thread>
 #include <vector>
 
-#include "DEvA/EvolutionaryAlgorithm.h"
-#include <DTimer/DTimer.h>
-
 #include "mgealite_version.h"
 #include "deva_version.h"
-#include "Database.h"
 #include "GUI/GUIStateDrawer.h"
 #include "GUI/GUI.h"
 #include "Logging/SpdlogCommon.h"
 #include "MotionGeneration/MotionGenerator.h"
 #include "SharedSynchronisation.h"
+
+#include <DTimer/DTimer.h>
 
 int main() {
 	// Logger must be initialised before GUI since GUI needs

@@ -4,8 +4,9 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs snvLInt(std::size_t shift, VariationParams variationParameters, SimulationDataPtrs parents) {
-		auto const & parent = *parents.front();
+	SimulationDataPtrs snvLInt(std::size_t shift, VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+		auto parentPtr = iptrs.front();
+		auto const & parent = *parentPtr->genotype;
 
 		SimulationDataPtr childDataPtr = std::make_shared<SimulationData>();
 

@@ -60,6 +60,16 @@ namespace MGEA {
 		iptrs = retVal;
 
 		std::size_t curCount(iptrs.size());
-		spdlog::info("\tsurvivorSelectionOverMetric: {} -> {}", prevCount, curCount);
+
+		std::stable_sort(iptrs.begin(), iptrs.end(), [&](auto & iptr1, auto & iptr2){
+			return iptr1->id < iptr2->id;
+		});
+		auto last = std::unique(iptrs.begin(), iptrs.end(), [](auto & iptr1, auto & iptr2){
+			return iptr1->id == iptr2->id;
+		});
+		iptrs.erase(last, iptrs.end());
+
+		std::size_t uniqueCount(iptrs.size());
+		spdlog::info("\tsurvivorSelectionOverMetric: {} -> {} -> {}", prevCount, curCount, uniqueCount);
 	}
 }

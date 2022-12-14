@@ -3,9 +3,11 @@
 
 #include "MotionGeneration/MotionGenerator.h"
 
+#include "MotionGeneration/Metrics/Metrics.h"
+
 void MotionGenerator::createMetricFunctors() {
 	auto balanceEvaluateLambda = [&](Spec::IndividualPtr iptr) {
-		auto & simDataPtr(iptr->genotype);
+		auto & simDataPtr(*iptr->maybePhenotype);
 
 		auto & comX = simDataPtr->outputs.at("centerOfMassX");
 		auto & palmX = simDataPtr->outputs.at("palmX");
@@ -24,10 +26,11 @@ void MotionGenerator::createMetricFunctors() {
 		.computeFromIndividualPtrFunction = balanceEvaluateLambda,
 		.betterThanFunction = balanceComparisonLambda
 	};
+	balanceMetricFunctor.constructDefaultJSONConverter<double>();
 	ea.registerMetricFunctor(balanceMetricFunctor);
 
 	auto fitnessEvaluateLambda = [&](Spec::IndividualPtr iptr) {
-		auto & simDataPtr(iptr->genotype);
+		auto & simDataPtr(*iptr->maybePhenotype);
 		double timeStep = motionParameters.simStep;
 		auto absLambda = [](double prev, double next) {
 			return prev + std::abs(next);
@@ -42,15 +45,15 @@ void MotionGenerator::createMetricFunctors() {
 		double comZSum = std::accumulate(comZ.begin(), comZ.end(), 0.0, absLambda);
 
 		double fitness;
-		if (fingertipZSum <= 0.0 and palmZSum <= 0.0) {
+		//if (fingertipZSum <= 0.0 and palmZSum <= 0.0) {
+		if (maxFingertipZ <= 0.001 and maxPalmZ <= 0.001) {
 			fitness = comZSum * timeStep / motionParameters.simStop();
-		}
-		else {
+		} else {
 			fitness = 0.0;
-			if (fingertipZSum > 0.0) {
+			if (maxFingertipZ > 0.001) {
 				fitness -= maxFingertipZ;
 			}
-			if (palmZSum > 0.0) {
+			if (maxPalmZ > 0.001) {
 				fitness -= maxPalmZ;
 			}
 		}
@@ -67,10 +70,11 @@ void MotionGenerator::createMetricFunctors() {
 		.computeFromIndividualPtrFunction = fitnessEvaluateLambda,
 		.betterThanFunction = fitnessComparisonLambda
 	};
+	fitnessMetricFunctor.constructDefaultJSONConverter<double>();
 	ea.registerMetricFunctor(fitnessMetricFunctor);
 
 	auto angularVelocitySignEvaluateLambda = [&](Spec::IndividualPtr iptr) {
-		auto & simDataPtr(iptr->genotype);
+		auto & simDataPtr(*iptr->maybePhenotype);
 		return MGEA::computeAngularVelocitySign(simDataPtr->angles);
 	};
 	auto angularVelocitySignComparisonLambda = [](std::any lhs, std::any rhs) {
@@ -98,5 +102,6 @@ void MotionGenerator::createMetricFunctors() {
 		.computeFromIndividualPtrFunction = angularVelocitySignEvaluateLambda,
 		.equivalentToFunction = angularVelocitySignComparisonLambda
 	};
+	angularVelocitySignMetricFunctor.constructDefaultJSONConverter<MGEA::OrderedVector>();
 	ea.registerMetricFunctor(angularVelocitySignMetricFunctor);
 }
