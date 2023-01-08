@@ -56,9 +56,12 @@ Spec::MaybePhenotype Datastore::simulate(Spec::Genotype genotype) {
 	}
 	{
 		std::lock_guard<std::mutex> lock(promiseMutex);
-		simulationResultPromises.emplace(std::make_pair(id, std::promise<Spec::MaybePhenotype>()));
+		//simulationResultPromises.emplace(std::make_pair(id, std::promise<Spec::MaybePhenotype>()));
+		simulationResultPromises.emplace(id, std::promise<Spec::MaybePhenotype>());
 	}
-	auto simulationResult(simulationResultPromises.at(id).get_future().get());
+	auto & simulationResultPromise(simulationResultPromises.at(id));
+	auto simulationResultFuture(simulationResultPromise.get_future());
+	auto simulationResult(simulationResultFuture.get());
 	{
 		std::lock_guard<std::mutex> lock(promiseMutex);
 		simulationResultPromises.erase(id);

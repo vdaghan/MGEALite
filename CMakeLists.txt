@@ -17,7 +17,7 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.5.0.0)
+project(MGEALite LANGUAGES CXX VERSION 0.5.0.1)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 add_custom_target(MGEADependencies COMMAND dot -Tsvg ${CMAKE_BINARY_DIR}/MGEALite.dot -o ${CMAKE_BINARY_DIR}/MGEALite.svg)
@@ -37,7 +37,8 @@ FetchContent_MakeAvailable(spdlog DEvA DTimer json glfw imgui implot)
 
 set(Logging_SOURCES "${CMAKE_SOURCE_DIR}/src/Logging/SpdlogCommon.cpp")
 set(JSON_SOURCES "${CMAKE_SOURCE_DIR}/src/JSON/SimulationDataPtr.cpp")
-set(MotionGeneration_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp"
+set(MotionGeneration_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/ContactParameters.cpp"
+							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator_EAFunctions.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionGenerator_MetricFunctors.cpp"
 							 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/MotionParameters.cpp")

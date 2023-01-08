@@ -67,7 +67,7 @@ int main() {
 	while (!sharedSync.get("start") and !sharedSync.get("stop")) {
 		std::this_thread::sleep_for(std::chrono::milliseconds(250));
 	}
-	auto result = motionGenerator.search(1000);
+	auto result = motionGenerator.search(50);
 	if (DEvA::StepResult::Convergence == result) {
 		spdlog::info("Search converged.");
 	} else if (DEvA::StepResult::Inconclusive == result) {

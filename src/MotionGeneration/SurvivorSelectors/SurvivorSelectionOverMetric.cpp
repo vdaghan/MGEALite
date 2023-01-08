@@ -11,32 +11,34 @@ namespace MGEA {
 	void survivorSelectionOverMetric(std::string metric, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs) {
 		std::size_t prevCount(iptrs.size());
 		std::list<Spec::IndividualPtrs> sets{};
-		for (auto it(iptrs.begin()); it != iptrs.end(); ++it) {
-			auto & iptr(*it);
+		std::mutex setsMutex{};
+		std::for_each(std::execution::par, iptrs.begin(), iptrs.end(), [&](auto const & iptr) -> void {
 			auto & imetric(iptr->metricMap.at(metric));
-			bool alreadyInSet(false);
-			for (auto sit(sets.begin()); sit != sets.end(); ++sit) {
-				auto & siptr(sit->front());
-				auto & smetric(siptr->metricMap.at(metric));
-				if (imetric == smetric) {
-					alreadyInSet = true;
-					break;
-				}
+			bool unique(std::none_of(iptrs.begin(), iptrs.end(), [&](auto const & optr){
+				auto & ometric(optr->metricMap.at(metric));
+				return imetric == ometric;
+			}));
+			if (unique) {
+				Spec::IndividualPtrs set{};
+				set.emplace_back(iptr);
+				std::lock_guard<std::mutex> lock(setsMutex);
+				sets.emplace_back(set);
+				return;
 			}
-			if (alreadyInSet) {
-				continue;
+			std::lock_guard<std::mutex> lock(setsMutex);
+			auto setIterator(std::find_if(std::execution::par, sets.begin(), sets.end(), [&](auto const & set){
+				auto & optr(set.front());
+				auto & ometric(optr->metricMap.at(metric));
+				return imetric == ometric;
+			}));
+			if (sets.end() == setIterator) {
+				Spec::IndividualPtrs set{};
+				set.emplace_back(iptr);
+				sets.emplace_back(set);
+			} else {
+				setIterator->emplace_back(iptr);
 			}
-			Spec::IndividualPtrs set{};
-			set.emplace_back(iptr);
-			for (auto nit(std::next(it)); nit != iptrs.end(); ++nit) {
-				auto & niptr(*nit);
-				auto & nmetric(niptr->metricMap.at(metric));
-				if (nmetric == imetric) {
-					set.emplace_back(niptr);
-				}
-			}
-			sets.emplace_back(set);
-		}
+		});
 
 		spdlog::info("\tsurvivorSelectionOverMetric: number of different values of metric {} in sets = {}", metric, sets.size());
 		std::size_t maxSetSizeBeforeSelection(0);

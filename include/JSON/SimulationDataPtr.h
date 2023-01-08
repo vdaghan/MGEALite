@@ -4,6 +4,7 @@
 #include "DEvA/JSON/Common.h"
 
 #include "SimulationData.h"
+#include "JSON/ContactParameters.h"
 
 template <>
 struct nlohmann::adl_serializer<SimulationDataPtr> {

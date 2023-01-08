@@ -32,8 +32,8 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	Spec::FSurvivorSelection combinedSurvivorSelectorLambda = [=](Spec::IndividualPtrs & iptrs) {
 		MGEA::cullEquals(iptrs);
 		MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
-		MGEA::paretoFront(paretoMetrics, iptrs);
 		MGEA::survivorSelectionOverMetric("angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
+		//MGEA::paretoFront(paretoMetrics, iptrs);
 	};
 	ea.registerEAFunction(DEvA::EAFunction::SurvivorSelection, combinedSurvivorSelectorLambda);
 	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, [](Spec::SMetricMap const& metricMap) { return false; });
