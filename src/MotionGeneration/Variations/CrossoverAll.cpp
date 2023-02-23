@@ -4,9 +4,9 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs crossoverAll(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
-		auto parent1Ptr = iptrs.front();
-		auto parent2Ptr = iptrs.back();
+	SimulationDataPtrs crossoverAll(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
+		auto & parent1Ptr = iptrs.front();
+		auto & parent2Ptr = iptrs.back();
 		auto const & parent1 = *parent1Ptr->genotype;
 		auto const & parent2 = *parent2Ptr->genotype;
 
@@ -20,7 +20,7 @@ namespace MGEA {
 
 		double const weight = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(0.0, 1.0);
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
+		std::size_t const simLength = motionParameters.simSamples;
 		std::vector<double> const tmpTorque(simLength);
 		for (auto& joints : parent1.torque) {
 			auto const& jointName = joints.first;

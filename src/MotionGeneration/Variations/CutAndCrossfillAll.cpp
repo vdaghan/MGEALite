@@ -4,7 +4,7 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs cutAndCrossfillAll(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs cutAndCrossfillAll(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
 		auto parent1Ptr = iptrs.front();
 		auto parent2Ptr = iptrs.back();
 		auto const & parent1 = *parent1Ptr->genotype;
@@ -18,8 +18,8 @@ namespace MGEA {
 		child2DataPtr->time = parent2.time;
 		child2DataPtr->params = parent2.params;
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
-		std::size_t const numJoints = variationParameters.motionParameters.jointNames.size();
+		std::size_t const simLength = motionParameters.simSamples;
+		std::size_t const numJoints = motionParameters.jointNames.size();
 		std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
 		std::size_t const randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
 

@@ -8,7 +8,9 @@
 #include <algorithm>
 
 namespace MGEA {
-	void survivorSelectionOverMetric(std::string metric, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs) {
+	void survivorSelectionOverMetric(DEvA::ParameterMap parameters, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs) {
+		std::string metric(parameters.at("metric").get<std::string>());
+
 		std::size_t prevCount(iptrs.size());
 		std::list<Spec::IndividualPtrs> sets{};
 		std::mutex setsMutex{};

@@ -4,11 +4,12 @@
 #include "MotionGeneration/Initialisers/Initialisers.h"
 
 namespace MGEA {
-	SimulationDataPtrs genesisRandom(std::size_t numIndividuals, InitialiserParams initialiserParams) {
+	SimulationDataPtrs genesisRandom(MotionParameters motionParameters, DEvA::ParameterMap parameters) {
 		SimulationDataPtrs simDataPtrs;
 
+		std::size_t numIndividuals(parameters.at("N").get<std::size_t>());
 		auto generateRandomVector = [&](std::pair<double, double> limits) -> std::vector<double> {
-			std::vector<double> retVal(initialiserParams.motionParameters.simSamples);
+			std::vector<double> retVal(motionParameters.simSamples);
 			auto vectorGenerator = [&]() {
 				return DEvA::RandomNumberGenerator::get()->getRealBetween<double>(limits.first, limits.second);
 			};
@@ -18,8 +19,8 @@ namespace MGEA {
 
 		for (size_t n(0); n != numIndividuals; ++n) {
 			auto simDataPtr = std::make_shared<SimulationData>();
-			for (auto& jointName : initialiserParams.motionParameters.jointNames) {
-				auto& jointLimits = initialiserParams.motionParameters.jointLimits.at(jointName);
+			for (auto& jointName : motionParameters.jointNames) {
+				auto& jointLimits = motionParameters.jointLimits.at(jointName);
 				auto randomVector = generateRandomVector(jointLimits);
 				simDataPtr->torque.emplace(std::make_pair(jointName, randomVector));
 			}

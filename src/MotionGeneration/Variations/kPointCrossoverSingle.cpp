@@ -4,7 +4,7 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs kPointCrossoverSingle(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs kPointCrossoverSingle(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
 		auto parent1Ptr = iptrs.front();
 		auto parent2Ptr = iptrs.back();
 		auto const & parent1 = *parent1Ptr->genotype;
@@ -20,8 +20,8 @@ namespace MGEA {
 		child2DataPtr->params = parent2.params;
 		child2DataPtr->torque = parent2.torque;
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
-		std::size_t const numJoints = variationParameters.motionParameters.jointNames.size();
+		std::size_t const simLength = motionParameters.simSamples;
+		std::size_t const numJoints = motionParameters.jointNames.size();
 		std::size_t const k = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(1, simLength);
 		std::vector<std::size_t> kPoints(simLength);
 		std::iota(kPoints.begin(), kPoints.end(), 0);

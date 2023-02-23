@@ -8,7 +8,7 @@
 #include <numbers>
 
 namespace MGEA {
-	SimulationDataPtrs halfSineSingle(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs halfSineSingle(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
 		auto parentPtr = iptrs.front();
 		auto const & parent = *parentPtr->genotype;
 
@@ -28,11 +28,11 @@ namespace MGEA {
 			return randSignal;
 		};
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
-		std::size_t const numJoints = variationParameters.motionParameters.jointNames.size();
+		std::size_t const simLength = motionParameters.simSamples;
+		std::size_t const numJoints = motionParameters.jointNames.size();
 		std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
-		std::string const & randJointName = variationParameters.motionParameters.jointNames.at(randJointIndex);
-		std::pair<double, double> const & jointLimits = variationParameters.motionParameters.jointLimits.at(randJointName);
+		std::string const & randJointName = motionParameters.jointNames.at(randJointIndex);
+		std::pair<double, double> const & jointLimits = motionParameters.jointLimits.at(randJointName);
 		double randJointHeight(DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second));
 		std::size_t const randSignalWidth = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(1, simLength - 1);
 		std::size_t const randSignalStartIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - randSignalWidth - 1);

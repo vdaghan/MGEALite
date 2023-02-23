@@ -4,9 +4,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS True)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR})
 
 include(ExternalProject)
 include(FetchContent)
@@ -17,12 +17,12 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.5.0.1)
+project(MGEALite LANGUAGES CXX VERSION 0.5.0.2)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 add_custom_target(MGEADependencies COMMAND dot -Tsvg ${CMAKE_BINARY_DIR}/MGEALite.dot -o ${CMAKE_BINARY_DIR}/MGEALite.svg)
 
-FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 3a479e3a3b6222a2f924bf486db7ff95330a359b GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.5.0.6
+FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 5bdc0edb8e1fc4d35f12058854026252e79e6504 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.5.0.13
 FetchContent_Declare(DTimer GIT_REPOSITORY https://github.com/vdaghan/DTimer.git GIT_TAG 03c3a8cd8f3d0c5976a2d596c41979318c5a6a08 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DTimer) # 0.1.0.1
 FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG 76fb40d95455f249bd70824ecfcae7a8f0930fa3 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.10.0
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 7482de6071d21db77a7236155da44c172a7f6c9e GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/glfw) # release-3.3.8
@@ -48,6 +48,7 @@ set(Initialisers_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/
 						 "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Initialisers/Zero.cpp")
 set(Metrics_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Metrics/AngularVelocitySign.cpp"
                     "${CMAKE_SOURCE_DIR}/src/MotionGeneration/Metrics/Metrics.cpp")
+set(ParentSelectors_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/ParentSelectors/MetricProportional.cpp")
 set(SurvivorSelectors_SOURCES "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/CullEquals.cpp"
                               "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/CullPartiallyDominated.cpp"
                               "${CMAKE_SOURCE_DIR}/src/MotionGeneration/SurvivorSelectors/ParetoFront.cpp"
@@ -96,9 +97,9 @@ set(GUI_SOURCES "${CMAKE_SOURCE_DIR}/src/GUI/GUIStateDrawer.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/ImPlotExtensions.cpp"
 				"${CMAKE_SOURCE_DIR}/src/GUI/PlotData.cpp")
 set(MGEALite_SOURCES_ALL ${Logging_SOURCES} ${JSON_SOURCES} ${MotionGeneration_SOURCES}
-						 ${Initialisers_SOURCES} ${Metrics_SOURCES} ${SurvivorSelectors_SOURCES}
-						 ${Variations_SOURCES} ${Wavelet_SOURCES} ${MGEALite_SOURCES} ${IMGUI_SOURCES}
-						 ${GUI_SOURCES})
+						 ${Initialisers_SOURCES} ${Metrics_SOURCES} ${ParentSelectors_SOURCES}
+						 ${SurvivorSelectors_SOURCES} ${Variations_SOURCES} ${Wavelet_SOURCES}
+						 ${MGEALite_SOURCES} ${IMGUI_SOURCES} ${GUI_SOURCES})
 
 set(MGEALite_INCLUDES_SYSINT "${spdlog_SOURCE_DIR}/include" "${json_SOURCE_DIR}/include")
 
@@ -126,5 +127,10 @@ endif(WIN32)
 
 file(GLOB Data_Directory "${CMAKE_SOURCE_DIR}/data/*")
 file(COPY ${Data_Directory} DESTINATION ${CMAKE_BINARY_DIR}/data)
+
+add_custom_command(TARGET MGEALite POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/EASetup.json" ${CMAKE_BINARY_DIR}
+    COMMENT "Copying EASetup.json to ${CMAKE_BINARY_DIR}"
+)
 
 add_subdirectory("tests")

@@ -7,31 +7,25 @@
 #include "DEvA/EvolutionaryAlgorithm.h"
 
 namespace MGEA {
-	struct VariationParams {
-		MotionParameters& motionParameters;
-		std::atomic<bool>& pauseFlag;
-		std::atomic<bool>& stopFlag;
-	};
+	SimulationDataPtrs crossoverAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs crossoverSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs cutAndCrossfillAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs cutAndCrossfillSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs deletionAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs deletionSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs insertionAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs insertionSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs kPointCrossoverAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs kPointCrossoverSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs snv(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs uniformCrossoverAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs uniformCrossoverSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs waveletSNV(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs halfSineAsynchronous(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs halfSineSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs halfSineSynchronous(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
 
-	SimulationDataPtrs crossoverAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs crossoverSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs cutAndCrossfillAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs cutAndCrossfillSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs deletionAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs deletionSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs insertionAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs insertionSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs kPointCrossoverAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs kPointCrossoverSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs snv(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs uniformCrossoverAll(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs uniformCrossoverSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs waveletSNV(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs halfSineAsynchronous(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs halfSineSingle(VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs halfSineSynchronous(VariationParams, Spec::IndividualPtrs);
-
-	SimulationDataPtrs deletionLInt(std::size_t, VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs directionalLInt(std::size_t, VariationParams, Spec::IndividualPtrs);
-	SimulationDataPtrs snvLInt(std::size_t, VariationParams, Spec::IndividualPtrs);
+	SimulationDataPtrs deletionLInt(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs directionalLInt(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
+	SimulationDataPtrs snvLInt(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
 }

@@ -20,21 +20,19 @@ class MotionGenerator {
 		MotionParameters motionParameters;
 		Datastore datastore;
 		DEvA::EvolutionaryAlgorithm<Spec> ea;
+		void setupStandardFunctions(MotionParameters);
+
 		std::size_t currentGeneration;
 		std::size_t maxGenerations;
 		std::atomic<bool> pauseFlag;
 		bool checkStopFlagAndMaybeWait();
 		std::atomic<bool> stopFlag;
-		void exportGenerationData();
 
 		// EA Functions
 		void createMetricFunctors();
-		void createVariationFunctors();
 		Spec::MaybePhenotype transform(Spec::Genotype);
 
 		void applyMotionParameters(SimulationDataPtr);
-		[[nodiscard]] Spec::Genotypes computeVariation(std::function<SimulationDataPtrs(MGEA::VariationParams, Spec::IndividualPtrs)> vFunc, Spec::IndividualPtrs parents);
-		[[nodiscard]] Spec::Genotypes computeGenesis(std::function<SimulationDataPtrs(MGEA::InitialiserParams)> gFunc);
 
 		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);

@@ -8,7 +8,7 @@
 #include <numbers>
 
 namespace MGEA {
-	SimulationDataPtrs halfSineAsynchronous(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs halfSineAsynchronous(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
 		auto parentPtr = iptrs.front();
 		auto const & parent = *parentPtr->genotype;
 
@@ -28,14 +28,14 @@ namespace MGEA {
 			return randSignal;
 		};
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
-		std::size_t const numJoints = variationParameters.motionParameters.jointNames.size();
+		std::size_t const simLength = motionParameters.simSamples;
+		std::size_t const numJoints = motionParameters.jointNames.size();
 		std::size_t signalWidth(0);
 		std::size_t startIndex(0);
 		std::size_t signalEndIndex(simLength - 1);
-		for (auto& jointName : variationParameters.motionParameters.jointNames) {
+		for (auto& jointName : motionParameters.jointNames) {
 			auto& jointTorque(childDataPtr->torque.at(jointName));
-			auto& jointLimits(variationParameters.motionParameters.jointLimits.at(jointName));
+			auto& jointLimits(motionParameters.jointLimits.at(jointName));
 			signalWidth = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(1, simLength - 1);
 			std::size_t minStartIndex(startIndex + 1 >= signalWidth ? startIndex - signalWidth + 1 : 0);
 			std::size_t maxStartIndex(simLength - signalWidth - 1);

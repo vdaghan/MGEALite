@@ -16,8 +16,8 @@ namespace MGEA {
 		std::atomic<bool> & stopFlag;
 	};
 
-	SimulationDataPtrs genesisBoundary(InitialiserParams);
-	SimulationDataPtrs genesisBoundaryWavelet(InitialiserParams);
-	SimulationDataPtrs genesisRandom(std::size_t, InitialiserParams);
-	SimulationDataPtrs genesisZero(InitialiserParams);
+	SimulationDataPtrs genesisBoundary(MotionParameters, DEvA::ParameterMap);
+	SimulationDataPtrs genesisBoundaryWavelet(MotionParameters, DEvA::ParameterMap);
+	SimulationDataPtrs genesisRandom(MotionParameters, DEvA::ParameterMap);
+	SimulationDataPtrs genesisZero(MotionParameters, DEvA::ParameterMap);
 }

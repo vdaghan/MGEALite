@@ -9,7 +9,7 @@
 #include "Logging/SpdlogCommon.h"
 #include "Wavelet/HaarWavelet.h"
 
-#include "DEvA/Filestore.h"
+#include "DEvA/Project/Filestore.h"
 #include <DTimer/DTimer.h>
 
 #include <algorithm>
@@ -22,22 +22,47 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 , stopFlag(false)
 {
 	ea.datastore = std::make_shared<DEvA::Filestore<Spec>>();
+
+	ea.functions.genesisWrapper = [&](auto genesisFunction) {
+		typename Spec::Genotypes genotypes(genesisFunction());
+		for (auto & genotype : genotypes) {
+			applyMotionParameters(genotype);
+		}
+		return genotypes;
+	};
+	auto variationWrapper = [&](auto variationFunctor, auto parents) {
+		auto children = variationFunctor(parents);
+		for (auto& child : children) {
+			applyMotionParameters(child);
+		}
+		return children;
+	};
+	ea.functions.variationFromGenotypesWrapper = variationWrapper;
+	ea.functions.variationFromIndividualPtrsWrapper = variationWrapper;
+
+	setupStandardFunctions(mP);
+	ea.importSetup("./EASetup.json");
+
 	maxGenerations = 0;
-	ea.registerEAFunction(DEvA::EAFunction::Initialisation, [&]() { return computeGenesis(std::bind_front(MGEA::genesisZero)); });
-	ea.registerEAFunction(DEvA::EAFunction::Transformation, std::bind_front(&MotionGenerator::transform, this));
-	ea.registerEAFunction(DEvA::EAFunction::SortIndividuals, [&](Spec::IndividualPtr lhs, Spec::IndividualPtr rhs) {
-		return lhs->metricMap.at("fitness") < rhs->metricMap.at("fitness");
-	});
 	std::vector<std::string> paretoMetrics{ "fitness", "balance" };
-	Spec::FSurvivorSelection combinedSurvivorSelectorLambda = [=](Spec::IndividualPtrs & iptrs) {
-		MGEA::cullEquals(iptrs);
-		MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
-		MGEA::survivorSelectionOverMetric("angularVelocitySign", std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
+	Spec::FPSurvivorSelection combinedSurvivorSelectorLambda = [=](DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+		MGEA::cullEquals({}, iptrs);
+		//MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
+		DEvA::ParameterMap angularVelocitySignMetric({ {"metric", "angularVelocitySign"} });
+		JSON j(paretoMetrics);
+		DEvA::ParameterMap paretoMetrics({ {"metrics", j}});
+		MGEA::survivorSelectionOverMetric(angularVelocitySignMetric, std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
 		//MGEA::paretoFront(paretoMetrics, iptrs);
 	};
-	ea.registerEAFunction(DEvA::EAFunction::SurvivorSelection, combinedSurvivorSelectorLambda);
-	ea.registerEAFunction(DEvA::EAFunction::ConvergenceCheck, [](Spec::SMetricMap const& metricMap) { return false; });
-
+	ea.functions.survivorSelection.defineParametrised("EightQueenVariation", combinedSurvivorSelectorLambda, {});
+	ea.functions.survivorSelection.use({ "EightQueenVariation" });
+	ea.functions.transform.define("Simulate", std::bind_front(&MotionGenerator::transform, this));
+	ea.functions.transform.use({ "Simulate" });
+	ea.functions.convergenceCheck.define("ConvergenceCheck", [](auto T) { return false; });
+	ea.functions.convergenceCheck.use({ "ConvergenceCheck" });
+	ea.functions.survivorSelection.define("SurvivorSelection", [](auto T) { return; });
+	ea.functions.survivorSelection.use({ "SurvivorSelection" });
+	
 	createMetricFunctors();
 	ea.useMetricFunctor("angularVelocitySign");
 	ea.useMetricFunctor("balance");
@@ -47,14 +72,6 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 		//database.saveSimulationMetrics(simLogPtr->info(), {});
 	};
 	ea.registerCallback(DEvA::Callback::Evaluation, evaluationCallback);
-	createVariationFunctors();
-	ea.useVariationFunctor("CrossoverAll");
-	ea.useVariationFunctor("DeletionLIntBP");
-	ea.useVariationFunctor("DeletionLIntFP");
-	ea.useVariationFunctor("DirectionalLIntBP");
-	ea.useVariationFunctor("DirectionalLIntFP");
-	ea.useVariationFunctor("SNVLIntBP");
-	ea.useVariationFunctor("SNVLIntFP");
 
 	ea.onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	ea.onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
@@ -62,7 +79,6 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.onStopCallback = [&]() { stopFlag.store(true); };
 	ea.lambda = 256;
 	ea.logger.callback = DEvALoggerCallback;
-	exportGenerationData();
 };
 
 DEvA::StepResult MotionGenerator::search(std::size_t n) {
@@ -85,27 +101,3 @@ bool MotionGenerator::checkStopFlagAndMaybeWait() {
 	return stopFlag.load();
 }
 
-void MotionGenerator::exportGenerationData() {
-	//spdlog::info("Exporting previous data to EA...");
-	//SimulationHistory const & simulationHistory = database.getSimulationHistory();
-	//if (simulationHistory.empty()) {
-	//	spdlog::info("No previous data found.");
-	//	return;
-	//}
-	//auto const & lastElement = std::max_element(simulationHistory.begin(), simulationHistory.end(), [](auto const & lhs, auto const & rhs){ return lhs.first.identifier < rhs.first.identifier; });
-	//std::size_t lastGeneration = lastElement->first.generation;
-	//spdlog::info("Last run had {} generations.", lastGeneration);
-
-	//for (std::size_t gen(0); gen <= lastGeneration; ++gen) {
-	//	Spec::Generation generation;
-	//	for (auto const & historyPair : simulationHistory) {
-	//		auto const & simInfo = historyPair.first;
-	//		if (simInfo.generation != gen) {
-	//			continue;
-	//		}
-	//		Spec::IndividualPtr iptr = std::make_shared<Spec::SIndividual>(simInfo.generation, simInfo.identifier, simInfo);
-	//		generation.emplace_back(iptr);
-	//	}
-	//	ea.addGeneration(generation);
-	//}
-}

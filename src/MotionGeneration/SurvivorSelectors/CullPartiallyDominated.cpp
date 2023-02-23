@@ -6,7 +6,8 @@
 #include <algorithm>
 
 namespace MGEA {
-	void cullPartiallyDominated(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs) {
+	void cullPartiallyDominated(DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+		std::vector<std::string> metrics(parameters.at("metrics").get<std::vector<std::string>>());
 		if (iptrs.empty() or metrics.empty()) {
 			return;
 		}

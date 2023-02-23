@@ -1,0 +1,136 @@
+{
+  "functions": {
+    "definitions": {
+      "parentSelection": {
+        "Random2Fitness": {
+          "function": "StdParentSelectorRandomN",
+          "parameters": {
+            "N": 2,
+            "metric": "fitness"
+          }
+        },
+        "MetricProportional1Balance": {
+          "function": "MGEAParentSelectorMetricProportional",
+          "parameters": {
+            "N": 1,
+            "metric": "balance"
+          }
+        },
+        "MetricProportional1Fitness": {
+          "function": "MGEAParentSelectorMetricProportional",
+          "parameters": {
+            "N": 1,
+            "metric": "fitness"
+          }
+        }
+      },
+      "variationFromIndividualPtrs": {
+        "DeletionLint2": {
+          "function": "MGEAVariationFromIndividualPtrsDeletionLInt",
+          "parameters": {
+            "shift": 2
+          }
+        },
+        "DirectionalLint2": {
+          "function": "MGEAVariationFromIndividualPtrsDirectionalLInt",
+          "parameters": {
+            "shift": 2
+          }
+        },
+        "SNVLint2": {
+          "function": "MGEAVariationFromIndividualPtrsSNVLInt",
+          "parameters": {
+            "shift": 2
+          }
+        }
+      },
+      "individualSort": {
+        "fitnessBased": {
+          "function": "StdIndividualSorterMetric",
+          "parameters": {
+            "metric": "fitness"
+          }
+        }
+      },
+      "survivorSelection": {
+      },
+      "convergenceCheck": {
+      }
+     },
+    "used": [
+      "MGEAGenesisZero",
+      "fitnessBased",
+      "CrossoverAll",
+      "DeletionLintBP",
+      "DeletionLintFP",
+      "DirectionalLintBP",
+      "DirectionalLintFP",
+      "SNVLintBP",
+      "SNVLintFP",
+      "cullEquals",
+      "onlyPositivesFitness"
+    ]
+  },
+  "variationFunctors": {
+    "definitions": {
+      "CrossoverAll": {
+        "numberOfParents": 2,
+        "parentSelection": "Random2Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsCrossoverAll",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "DeletionLintBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "DeletionLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "DeletionLintFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "DeletionLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "DirectionalLintBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "DirectionalLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "DirectionalLintFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "DirectionalLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "SNVLintBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "SNVLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "SNVLintFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "SNVLint2",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      }
+    },
+    "used": [
+      "CrossoverAll",
+      "DeletionLintBP",
+      "DeletionLintFP",
+      "DirectionalLintBP",
+      "DirectionalLintFP",
+      "SNVLintBP",
+      "SNVLintFP"
+    ]
+  }
+ }

@@ -4,7 +4,9 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs deletionLInt(std::size_t shift, VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs deletionLInt(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
+		std::size_t shift(parameters.at("shift").get<std::size_t>());
+
 		auto parentPtr = iptrs.front();
 		auto const & parent = *parentPtr->genotype;
 
@@ -14,8 +16,8 @@ namespace MGEA {
 		childDataPtr->params = parent.params;
 		childDataPtr->torque = parent.torque;
 
-		std::size_t const simLength = variationParameters.motionParameters.simSamples;
-		std::size_t const numJoints = variationParameters.motionParameters.jointNames.size();
+		std::size_t const simLength = motionParameters.simSamples;
+		std::size_t const numJoints = motionParameters.jointNames.size();
 		//std::size_t const randJointIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numJoints - 1);
 		//std::string const& randJointName = variationParameters.motionParameters.jointNames.at(randJointIndex);
 		std::size_t const numControlPoints(simLength >> shift);
@@ -25,7 +27,7 @@ namespace MGEA {
 
 		std::size_t stride(std::size_t(1) << shift);
 
-		for (auto const & jointName : variationParameters.motionParameters.jointNames) {
+		for (auto const & jointName : motionParameters.jointNames) {
 			auto& torqueVector(childDataPtr->torque.at(jointName));
 
 			std::vector<double> controlPoints(numControlPoints);

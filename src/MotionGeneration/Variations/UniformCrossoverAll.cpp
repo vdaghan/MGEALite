@@ -4,7 +4,7 @@
 #include "MotionGeneration/Variations/Variations.h"
 
 namespace MGEA {
-	SimulationDataPtrs uniformCrossoverAll(VariationParams variationParameters, Spec::IndividualPtrs iptrs) {
+	SimulationDataPtrs uniformCrossoverAll(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
 		auto parent1Ptr = iptrs.front();
 		auto parent2Ptr = iptrs.back();
 		auto const & parent1 = *parent1Ptr->genotype;
@@ -24,7 +24,7 @@ namespace MGEA {
 			return DEvA::RandomNumberGenerator::get()->getIntBetween<int>(0, 1);
 		};
 
-		for (std::size_t ind(0); ind != variationParameters.motionParameters.simSamples; ++ind) {
+		for (std::size_t ind(0); ind != motionParameters.simSamples; ++ind) {
 			int const switchParent = choiceLambda();
 			if (1 == switchParent) {
 				for (auto& joints : parent1.torque) {

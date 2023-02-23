@@ -6,25 +6,25 @@
 #include "Wavelet/HaarWavelet.h"
 
 namespace MGEA {
-	SimulationDataPtrs genesisBoundaryWavelet(InitialiserParams initialiserParams) {
+	SimulationDataPtrs genesisBoundaryWavelet(MotionParameters motionParameters, DEvA::ParameterMap parameters) {
 		SimulationDataPtrs simDataPtrs;
 
 		auto generateBoundaryWaveletVector = [&](std::size_t timeIndex, double value) -> std::vector<double> {
-			std::vector<double> retVal(initialiserParams.motionParameters.simSamples, 0.0);
+			std::vector<double> retVal(motionParameters.simSamples, 0.0);
 			retVal[timeIndex] = value;
 			return haarWaveletDecode(retVal);
 		};
 
-		std::vector<double> const zeroVector(initialiserParams.motionParameters.simSamples, 0.0);
-		std::size_t numJoints(initialiserParams.motionParameters.jointNames.size());
+		std::vector<double> const zeroVector(motionParameters.simSamples, 0.0);
+		std::size_t numJoints(motionParameters.jointNames.size());
 		for (std::size_t jointIndex(0); jointIndex != numJoints; ++jointIndex) {
-			std::string const& jointName = initialiserParams.motionParameters.jointNames[jointIndex];
-			for (std::size_t timeIndex(0); timeIndex * 8 != initialiserParams.motionParameters.simSamples; ++timeIndex) {
-				auto& jointLimitsPair = initialiserParams.motionParameters.jointLimits.at(jointName);
+			std::string const& jointName = motionParameters.jointNames[jointIndex];
+			for (std::size_t timeIndex(0); timeIndex * 8 != motionParameters.simSamples; ++timeIndex) {
+				auto& jointLimitsPair = motionParameters.jointLimits.at(jointName);
 				std::array<double, 2> jointLimitsArray{ jointLimitsPair.first, jointLimitsPair.second };
 				for (auto& jointLimit : jointLimitsArray) {
 					auto simDataPtr = std::make_shared<SimulationData>();
-					for (auto& jN : initialiserParams.motionParameters.jointNames) {
+					for (auto& jN : motionParameters.jointNames) {
 						std::vector<double> boundaryVector;
 						if (jointName != jN) {
 							boundaryVector = zeroVector;

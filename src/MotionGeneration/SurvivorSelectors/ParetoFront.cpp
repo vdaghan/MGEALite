@@ -6,7 +6,8 @@
 #include "Logging/SpdlogCommon.h"
 
 namespace MGEA {
-	void paretoFront(std::vector<std::string> metrics, Spec::IndividualPtrs & iptrs) {
+	void paretoFront(DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+		std::vector<std::string> metrics(parameters.at("metrics").get<std::vector<std::string>>());
 		std::size_t prevCount(iptrs.size());
 		auto isDominatedLambda = [&](auto const & iptr) {
 			for (auto& other : iptrs) {
