@@ -58,15 +58,17 @@ MotionGenerator::MotionGenerator(std::string folder, MotionParameters mP)
 	ea.functions.survivorSelection.use({ "EightQueenVariation" });
 	ea.functions.transform.define("Simulate", std::bind_front(&MotionGenerator::transform, this));
 	ea.functions.transform.use({ "Simulate" });
-	ea.functions.convergenceCheck.define("ConvergenceCheck", [](auto T) { return false; });
-	ea.functions.convergenceCheck.use({ "ConvergenceCheck" });
-	ea.functions.survivorSelection.define("SurvivorSelection", [](auto T) { return; });
-	ea.functions.survivorSelection.use({ "SurvivorSelection" });
+	//ea.functions.convergenceCheck.define("StdConvergenceCheckerNever", [](auto T) { return false; });
+	//ea.functions.convergenceCheck.use({ "StdConvergenceCheckerNever" });
 	
 	createMetricFunctors();
-	ea.useMetricFunctor("angularVelocitySign");
-	ea.useMetricFunctor("balance");
-	ea.useMetricFunctor("fitness");
+	auto compileResult = ea.compile();
+	if (not compileResult) {
+		spdlog::error("MotionGenerator::MotionGenerator: metrics compile error");
+	}
+	//ea.useMetricFunctor("angularVelocitySign");
+	//ea.useMetricFunctor("balance");
+	//ea.useMetricFunctor("fitness");
 	auto evaluationCallback = [&](DEvA::IndividualIdentifier id) {
 		//auto const & simLogPtr = database.getSimulationLog(id);
 		//database.saveSimulationMetrics(simLogPtr->info(), {});

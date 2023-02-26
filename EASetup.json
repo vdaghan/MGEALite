@@ -51,12 +51,8 @@
             "metric": "fitness"
           }
         }
-      },
-      "survivorSelection": {
-      },
-      "convergenceCheck": {
       }
-     },
+    },
     "used": [
       "MGEAGenesisZero",
       "fitnessBased",
@@ -68,7 +64,9 @@
       "SNVLintBP",
       "SNVLintFP",
       "cullEquals",
-      "onlyPositivesFitness"
+      "onlyPositivesFitness",
+      "StdConvergenceCheckerNever",
+      "MGEASurvivorSelectorCullEquals"
     ]
   },
   "variationFunctors": {
@@ -132,5 +130,29 @@
       "SNVLintBP",
       "SNVLintFP"
     ]
+  },
+  "metricFunctors": {
+    "definitions": {
+      "balance": {
+        "type": "double",
+        "basicBetterThan": "lesser",
+        "computeFromIndividualPtr": "computeBalance"
+      },
+      "fitness": {
+        "type": "double",
+        "basicBetterThan": "greater",
+        "computeFromIndividualPtr": "computeFitness"
+      },
+      "angularVelocitySign": {
+        "equivalence": "angularVelocitySignEquivalence",
+        "computeFromIndividualPtr": "angularVelocitySign",
+        "metricToJSON": "orderedVector"
+      }
+    },
+    "usedForIndividuals": [
+      "balance",
+      "fitness",
+      "angularVelocitySign"
+    ]
   }
- }
+}

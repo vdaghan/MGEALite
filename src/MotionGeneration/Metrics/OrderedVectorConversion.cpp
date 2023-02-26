@@ -3,8 +3,11 @@
 
 #include "MotionGeneration/Metrics/Metrics.h"
 
+#include <cmath>
+#include <vector>
+
 namespace MGEA {
-	OrderedVector angularVelocitySign(Spec::IndividualPtr iptr) {
-		return {};
+	JSON orderedVectorConversion(std::any value) {
+		return std::any_cast<MGEA::OrderedVector>(value);
 	}
 }

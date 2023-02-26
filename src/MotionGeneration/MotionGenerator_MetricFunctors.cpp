@@ -6,7 +6,7 @@
 #include "MotionGeneration/Metrics/Metrics.h"
 
 void MotionGenerator::createMetricFunctors() {
-	auto balanceEvaluateLambda = [&](Spec::IndividualPtr iptr) {
+	auto computeBalanceLambda = [&](Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
 
 		auto & comX = simDataPtr->outputs.at("centerOfMassX");
@@ -21,15 +21,9 @@ void MotionGenerator::createMetricFunctors() {
 	auto balanceComparisonLambda = [](std::any const & lhs, std::any const & rhs) {
 		return std::any_cast<double>(lhs) < std::any_cast<double>(rhs);
 	};
-	DEvA::MetricFunctor<Spec> balanceMetricFunctor{
-		.name = "balance",
-		.computeFromIndividualPtrFunction = balanceEvaluateLambda,
-		.betterThanFunction = balanceComparisonLambda
-	};
-	balanceMetricFunctor.constructDefaultJSONConverter<double>();
-	ea.registerMetricFunctor(balanceMetricFunctor);
+	ea.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeBalance", computeBalanceLambda));
 
-	auto fitnessEvaluateLambda = [&](Spec::IndividualPtr iptr) {
+	auto computeFitnessLambda = [&](Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
 		double timeStep = motionParameters.simStep;
 		auto absLambda = [](double prev, double next) {
@@ -60,48 +54,16 @@ void MotionGenerator::createMetricFunctors() {
 
 		return fitness;
 	};
-	auto fitnessComparisonLambda = [](std::any lhs, std::any rhs) {
-		double lhsFitness(std::any_cast<double>(lhs));
-		double rhsFitness(std::any_cast<double>(rhs));
-		return lhsFitness > rhsFitness;
-	};
-	DEvA::MetricFunctor<Spec> fitnessMetricFunctor{
-		.name = "fitness",
-		.computeFromIndividualPtrFunction = fitnessEvaluateLambda,
-		.betterThanFunction = fitnessComparisonLambda
-	};
-	fitnessMetricFunctor.constructDefaultJSONConverter<double>();
-	ea.registerMetricFunctor(fitnessMetricFunctor);
+	ea.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeFitness", computeFitnessLambda));
 
-	auto angularVelocitySignEvaluateLambda = [&](Spec::IndividualPtr iptr) {
-		auto & simDataPtr(*iptr->maybePhenotype);
-		return MGEA::computeAngularVelocitySign(simDataPtr->angles);
-	};
-	auto angularVelocitySignComparisonLambda = [](std::any lhs, std::any rhs) {
-		MGEA::OrderedVector lhsAngularVelocitySign(std::any_cast<MGEA::OrderedVector>(lhs));
-		MGEA::OrderedVector rhsAngularVelocitySign(std::any_cast<MGEA::OrderedVector>(rhs));
-		std::size_t minVectorSize(std::min(lhsAngularVelocitySign.size(), rhsAngularVelocitySign.size()));
-		for (std::size_t i(0); i != minVectorSize; ++i) {
-			std::size_t numAngles(lhsAngularVelocitySign.at(i).size());
-			if (numAngles != rhsAngularVelocitySign.at(i).size()) {
-				throw;
-			}
-			for (std::size_t j(0); j != numAngles; ++j) {
-				bool equalValue(lhsAngularVelocitySign.at(i).at(j) == rhsAngularVelocitySign.at(i).at(j));
-				bool lhsIsZero(lhsAngularVelocitySign.at(i).at(j) == 0);
-				bool rhsIsZero(rhsAngularVelocitySign.at(i).at(j) == 0);
-				if (not (equalValue or lhsIsZero or rhsIsZero)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	};
-	DEvA::MetricFunctor<Spec> angularVelocitySignMetricFunctor{
-		.name = "angularVelocitySign",
-		.computeFromIndividualPtrFunction = angularVelocitySignEvaluateLambda,
-		.equivalentToFunction = angularVelocitySignComparisonLambda
-	};
-	angularVelocitySignMetricFunctor.constructDefaultJSONConverter<MGEA::OrderedVector>();
-	ea.registerMetricFunctor(angularVelocitySignMetricFunctor);
+	ea.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
+	ea.metricFunctors.equivalences.emplace(std::pair("angularVelocitySignEquivalence", &MGEA::angularVelocitySignEquivalent));
+	ea.metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVector", &MGEA::orderedVectorConversion));
+	//DEvA::MetricFunctor<Spec> angularVelocitySignMetricFunctor{
+	//	.name = "angularVelocitySign",
+	//	.computeFromIndividualPtrFunction = &MGEA::angularVelocitySign,
+	//	.equivalentToFunction = &MGEA::angularVelocitySignEquivalent
+	//};
+	//angularVelocitySignMetricFunctor.constructDefaultJSONConverter<MGEA::OrderedVector>();
+	//ea.registerMetricFunctor(angularVelocitySignMetricFunctor);
 }
