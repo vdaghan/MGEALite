@@ -17,24 +17,65 @@
 #include <cmath>
 #include <valarray>
 
-void MotionGenerator::setupStandardFunctions(MotionParameters motionParameters) {
-	ea.functions.genesis.defineParametrised("MGEAGenesisBoundary", std::bind_front(MGEA::genesisBoundary, motionParameters), {});
-	ea.functions.genesis.defineParametrised("MGEAGenesisBoundaryWavelet", std::bind_front(MGEA::genesisBoundaryWavelet, motionParameters), {});
-	ea.functions.genesis.defineParametrisable("MGEAGenesisRandom", std::bind_front(MGEA::genesisRandom, motionParameters));
-	ea.functions.genesis.defineParametrised("MGEAGenesisZero", std::bind_front(MGEA::genesisZero, motionParameters), {});
+void MotionGenerator::importMotionParameters(std::filesystem::path const & filename) {
+	if (not std::filesystem::exists(filename)) {
+		return;
+	}
+	std::ifstream f;
+	f.open(filename, std::ios_base::in);
+	if (not f.is_open()) {
+		return;
+	}
+	JSON parseResult{};
+	try {
+		parseResult = JSON::parse(f);
+		f.close();
+	} catch (const std::exception &) {
+		f.close();
+		return;
+	}
 
-	ea.functions.parentSelection.defineParametrisable("MGEAParentSelectorMetricProportional", MGEA::metricProportional);
+	if (not parseResult.contains("motionParameters")) {
+		throw std::runtime_error("MotionGenerator::importMotionParameters: No motionParameters found in file " + filename.string());
+	}
+	auto & motionParametersJSON = parseResult.at("motionParameters");
+	motionParameters.simStart = motionParametersJSON.at("simStart").get<double>();
+	motionParameters.simStep = motionParametersJSON.at("simStep").get<double>();
+	motionParameters.simSamples = motionParametersJSON.at("simSamples").get<std::size_t>();
+	motionParameters.alignment = motionParametersJSON.at("alignment").get<int>();
+	motionParameters.timeout = motionParametersJSON.at("timeout").get<double>();
+	motionParameters.masses = motionParametersJSON.at("masses").get<std::map<std::string, double>>();
+	motionParameters.jointNames = motionParametersJSON.at("jointNames").get<std::vector<std::string>>();
+	motionParameters.jointLimits = motionParametersJSON.at("jointLimits").get<std::map<std::string, std::pair<double, double>>>();
+	auto & contactParametersJSON = motionParametersJSON.at("contactParameters");
+	ContactParameters contactParameters{};
+	contactParameters.stiffness = contactParametersJSON.at("stiffness").get<double>();
+	contactParameters.damping = contactParametersJSON.at("damping").get<double>();
+	contactParameters.transitionRegionWidth = contactParametersJSON.at("transitionRegionWidth").get<double>();
+	contactParameters.staticFriction = contactParametersJSON.at("staticFriction").get<double>();
+	contactParameters.dynamicFriction = contactParametersJSON.at("dynamicFriction").get<double>();
+	contactParameters.criticalVelocity = contactParametersJSON.at("criticalVelocity").get<double>();
+	motionParameters.contactParameters = contactParameters;
+}
 
-	ea.functions.survivorSelection.defineParametrised("MGEASurvivorSelectorCullEquals", MGEA::cullEquals, {});
-	ea.functions.survivorSelection.defineParametrisable("MGEASurvivorSelectorCullPartiallyDominated", MGEA::cullPartiallyDominated);
-	ea.functions.survivorSelection.defineParametrisable("MGEASurvivorSelectorParetoFront", MGEA::paretoFront);
+void MotionGenerator::setupStandardFunctions() {
+	functions.genesis.defineParametrised("MGEAGenesisBoundary", std::bind_front(MGEA::genesisBoundary, motionParameters), {});
+	functions.genesis.defineParametrised("MGEAGenesisBoundaryWavelet", std::bind_front(MGEA::genesisBoundaryWavelet, motionParameters), {});
+	functions.genesis.defineParametrisable("MGEAGenesisRandom", std::bind_front(MGEA::genesisRandom, motionParameters));
+	functions.genesis.defineParametrised("MGEAGenesisZero", std::bind_front(MGEA::genesisZero, motionParameters), {});
+
+	functions.parentSelection.defineParametrisable("MGEAParentSelectorMetricProportional", MGEA::metricProportional);
+
+	functions.survivorSelection.defineParametrised("MGEASurvivorSelectorCullEquals", MGEA::cullEquals, {});
+	functions.survivorSelection.defineParametrisable("MGEASurvivorSelectorCullPartiallyDominated", MGEA::cullPartiallyDominated);
+	functions.survivorSelection.defineParametrisable("MGEASurvivorSelectorParetoFront", MGEA::paretoFront);
 	//ea.functions.survivorSelection.defineParametrisable("MGEASurvivorSelectorCullEquals", MGEA::survivorSelectionOverMetric);
 
 	auto parametrisedVariationFromIPtrsLambda = [&](std::string functionName, auto function) {
-		ea.functions.variationFromIndividualPtrs.defineParametrised(functionName, std::bind_front(function, motionParameters), {});
+		functions.variationFromIndividualPtrs.defineParametrised(functionName, std::bind_front(function, motionParameters), {});
 	};
 	auto parametrisableVariationFromIPtrsLambda = [&](std::string functionName, auto function) {
-		ea.functions.variationFromIndividualPtrs.defineParametrisable(functionName, std::bind_front(function, motionParameters));
+		functions.variationFromIndividualPtrs.defineParametrisable(functionName, std::bind_front(function, motionParameters));
 	};
 
 	parametrisedVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsCrossoverAll", MGEA::crossoverAll);
@@ -57,6 +98,10 @@ void MotionGenerator::setupStandardFunctions(MotionParameters motionParameters) 
 	parametrisableVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsDeletionLInt", MGEA::deletionLInt);
 	parametrisableVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsDirectionalLInt", MGEA::directionalLInt);
 	parametrisableVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsSNVLInt", MGEA::snvLInt);
+
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
+	metricFunctors.equivalences.emplace(std::pair("angularVelocitySignEquivalence", &MGEA::angularVelocitySignEquivalent));
+	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVector", &MGEA::orderedVectorConversion));
 }
 
 Spec::MaybePhenotype MotionGenerator::transform(Spec::Genotype genotype) {
@@ -178,19 +223,18 @@ void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 }
 
 void MotionGenerator::onEpochStart(std::size_t generation) {
-	currentGeneration = generation;
 	spdlog::info("Epoch {} started.", generation);
 }
 
 void MotionGenerator::onEpochEnd(std::size_t generation) {
 	spdlog::info("Epoch {} ended.", generation);
-	auto & lastGeneration = ea.genealogy.back();
+	auto & lastGeneration = genealogy.back();
 
 	auto & timer = DTimer::simple("stats").newSample().begin();
 	auto const & bestIndividualPtr = lastGeneration.front();
 	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
-	auto & bestIndividualMetric(ea.bestIndividual->metricMap);
+	auto & bestIndividualMetric(bestIndividual->metricMap);
 	double bestFitness(bestIndividualMetric.at("fitness").as<double>());
 	spdlog::info("Best fitness: {}", bestFitness);
 

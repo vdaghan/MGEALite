@@ -9,27 +9,19 @@
 
 #include <string>
 
-class MotionGenerator {
+class MotionGenerator : public DEvA::EvolutionaryAlgorithm<Spec> {
 	public:
-		MotionGenerator(std::string, MotionParameters);
+		MotionGenerator(std::string, std::string);
 		DEvA::StepResult search(std::size_t);
-		void pause();
-		void stop();
 		template<typename T> void hookCallbacks(T &);
-	private:
-		MotionParameters motionParameters;
-		Datastore datastore;
-		DEvA::EvolutionaryAlgorithm<Spec> ea;
-		void setupStandardFunctions(MotionParameters);
 
-		std::size_t currentGeneration;
-		std::size_t maxGenerations;
-		std::atomic<bool> pauseFlag;
-		bool checkStopFlagAndMaybeWait();
-		std::atomic<bool> stopFlag;
+		MotionParameters motionParameters;
+	private:
+		void importMotionParameters(std::filesystem::path const &);
+		Datastore datastore;
+		void setupStandardFunctions();
 
 		// EA Functions
-		void createMetricFunctors();
 		Spec::MaybePhenotype transform(Spec::Genotype);
 
 		void applyMotionParameters(SimulationDataPtr);
@@ -40,5 +32,5 @@ class MotionGenerator {
 
 template<typename T>
 void MotionGenerator::hookCallbacks(T & t) {
-	ea.onEAStatsUpdateCallback = std::bind_front(&T::updateEAStatistics, &t);
+	onEAStatsUpdateCallback = std::bind_front(&T::updateEAStatistics, &t);
 }

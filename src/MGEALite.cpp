@@ -8,15 +8,12 @@
 #include <thread>
 #include <vector>
 
-#include "mgealite_version.h"
-#include "deva_version.h"
 #include "GUI/GUIStateDrawer.h"
 #include "GUI/GUI.h"
-#include "Logging/SpdlogCommon.h"
-#include "MotionGeneration/MotionGenerator.h"
 #include "SharedSynchronisation.h"
-
 #include <DTimer/DTimer.h>
+
+#include "MGEA.h"
 
 int main() {
 	// Logger must be initialised before GUI since GUI needs
@@ -34,30 +31,74 @@ int main() {
 	spdlog::info("DEvA version: {}", getDEvAVersion());
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
-	MotionParameters motionParameters;
-	motionParameters.simStart = 0.0;
-	motionParameters.simStep = 0.01;
-	motionParameters.simSamples = 256;
-	motionParameters.alignment = -1;
-	motionParameters.timeout = 30.0;
-	double totalMass(80.0);
-	motionParameters.masses.emplace(std::make_pair("hands", 1.2 * totalMass / 100.0));
-	motionParameters.masses.emplace(std::make_pair("arms", (5.3 + 3.1) * totalMass / 100.0));
-	motionParameters.masses.emplace(std::make_pair("trunk", (50.0) * totalMass / 100.0));
-	motionParameters.masses.emplace(std::make_pair("head", (6.5) * totalMass / 100.0));
-	motionParameters.masses.emplace(std::make_pair("legs", (19.3 + 9.0) * totalMass / 100.0));
-	motionParameters.masses.emplace(std::make_pair("feet", (2.8) * totalMass / 100.0));
-	motionParameters.jointNames.push_back("wrist");
-	motionParameters.jointNames.push_back("shoulder");
-	motionParameters.jointNames.push_back("hip");
-	//motionParameters.jointNames.push_back("ankle");
-	motionParameters.jointLimits.emplace(std::make_pair("wrist", std::make_pair(-30.0, 50.0)));
-	motionParameters.jointLimits.emplace(std::make_pair("shoulder", std::make_pair(-200.0, 200.0)));
-	motionParameters.jointLimits.emplace(std::make_pair("hip", std::make_pair(-500.0, 320.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1
-	//motionParameters.jointLimits.emplace(std::make_pair("ankle", std::make_pair(-70.0, 200.0))); // https://bmcsportsscimedrehabil.biomedcentral.com/articles/10.1186/s13102-022-00401-9/figures/1
-	motionParameters.contactParameters = bodyGroundContactParameters();
+	MotionGenerator motionGenerator("./data", "./EASetup.json");
 
-	MotionGenerator motionGenerator("./data", motionParameters);
+	std::vector<std::string> paretoMetrics{ "fitness", "balance" };
+	Spec::FPSurvivorSelection combinedSurvivorSelectorLambda = [=](DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+		MGEA::cullEquals({}, iptrs);
+		//MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
+		DEvA::ParameterMap angularVelocitySignMetric({ {"metric", "angularVelocitySign"} });
+		JSON j(paretoMetrics);
+		DEvA::ParameterMap paretoMetrics({ {"metrics", j} });
+		MGEA::survivorSelectionOverMetric(angularVelocitySignMetric, std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
+		MGEA::paretoFront(paretoMetrics, iptrs);
+	};
+	auto computeBalanceLambda = [&](Spec::IndividualPtr iptr) {
+		auto & simDataPtr(*iptr->maybePhenotype);
+
+		auto & comX = simDataPtr->outputs.at("centerOfMassX");
+		auto & palmX = simDataPtr->outputs.at("palmX");
+		double balance = std::inner_product(comX.begin(), comX.end(), palmX.begin(), 0.0, std::plus<>(), [](auto const & cX, auto const & pX) {
+			return std::abs(cX - pX);
+			});
+		double timeStep = motionGenerator.motionParameters.simStep;
+		balance = balance * timeStep / motionGenerator.motionParameters.simStop();
+		return balance;
+	};
+	auto computeFitnessLambda = [&](Spec::IndividualPtr iptr) {
+		auto & simDataPtr(*iptr->maybePhenotype);
+		double timeStep = motionGenerator.motionParameters.simStep;
+		auto absLambda = [](double prev, double next) {
+			return prev + std::abs(next);
+		};
+		auto & fingertipZ = simDataPtr->outputs.at("fingertipZ");
+		double fingertipZSum = std::accumulate(fingertipZ.begin(), fingertipZ.end(), 0.0);
+		double maxFingertipZ = *std::max_element(fingertipZ.begin(), fingertipZ.end());
+		auto & palmZ = simDataPtr->outputs.at("palmZ");
+		double palmZSum = std::accumulate(palmZ.begin(), palmZ.end(), 0.0);
+		double maxPalmZ = *std::max_element(palmZ.begin(), palmZ.end());
+		auto & comZ = simDataPtr->outputs.at("centerOfMassZ");
+		double comZSum = std::accumulate(comZ.begin(), comZ.end(), 0.0, absLambda);
+
+		double fitness;
+		//if (fingertipZSum <= 0.0 and palmZSum <= 0.0) {
+		if (maxFingertipZ <= 0.001 and maxPalmZ <= 0.001) {
+			fitness = comZSum * timeStep / motionGenerator.motionParameters.simStop();
+		} else {
+			fitness = 0.0;
+			if (maxFingertipZ > 0.001) {
+				fitness -= maxFingertipZ;
+			}
+			if (maxPalmZ > 0.001) {
+				fitness -= maxPalmZ;
+			}
+		}
+
+		return fitness;
+	};
+
+	motionGenerator.functions.survivorSelection.defineParametrised("EightQueenVariation", combinedSurvivorSelectorLambda, {});
+	motionGenerator.functions.survivorSelection.use({ "EightQueenVariation" });
+	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeBalance", computeBalanceLambda));
+	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeFitness", computeFitnessLambda));
+
+	auto compileResult = motionGenerator.compile();
+	if (not compileResult) {
+		spdlog::error("MotionGenerator::MotionGenerator: metrics compile error");
+	}
+
+	motionGenerator.lambda = 256;
+
 	sharedSync.addCallback("stop", CallbackType::OnTrue, [&]() {motionGenerator.stop(); });
 	motionGenerator.hookCallbacks<PlotData>(gui.guiStateDrawer.plotData);
 	//motionGenerator.onMotionGenerationStateChange = [&](std::size_t gen, MotionGenerationState const & mGS){

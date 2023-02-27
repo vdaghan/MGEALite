@@ -1,4 +1,37 @@
 {
+  "motionParameters": {
+    "simStart" : 0.0,
+    "simStep": 0.01,
+    "simSamples": 256,
+    "alignment": -1,
+    "timeout": 30.0,
+    "masses": {
+      "hands": 12,
+      "arms": 12,
+      "trunk": 1,
+      "head": 1,
+      "legs": 12,
+      "feet": 12
+    },
+    "jointNames": [
+      "wrist",
+      "shoulder",
+      "hip"
+    ],
+    "jointLimits": {
+      "wrist": [ -30.0, 50.0 ],
+      "shoulder": [ -200.0, 200.0 ],
+      "hip": [ -500.0, 320.0 ]
+    },
+    "contactParameters": {
+      "stiffness": 1000000.0,
+      "damping": 100000.0,
+      "transitionRegionWidth": 0.0001,
+      "staticFriction": 3.0,
+      "dynamicFriction": 2.0,
+      "criticalVelocity": 0.001
+    }
+  },
   "functions": {
     "definitions": {
       "parentSelection": {
@@ -55,18 +88,14 @@
     },
     "used": [
       "MGEAGenesisZero",
+      "Random2Fitness",
+      "MetricProportional1Balance",
+      "MetricProportional1Fitness",
+      "DeletionLint2",
+      "DirectionalLint2",
+      "SNVLint2",
       "fitnessBased",
-      "CrossoverAll",
-      "DeletionLintBP",
-      "DeletionLintFP",
-      "DirectionalLintBP",
-      "DirectionalLintFP",
-      "SNVLintBP",
-      "SNVLintFP",
-      "cullEquals",
-      "onlyPositivesFitness",
-      "StdConvergenceCheckerNever",
-      "MGEASurvivorSelectorCullEquals"
+      "StdConvergenceCheckerNever"
     ]
   },
   "variationFunctors": {
