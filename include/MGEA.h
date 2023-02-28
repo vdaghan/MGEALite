@@ -9,3 +9,4 @@
 #include "MotionGeneration/ParentSelectors/ParentSelectors.h"
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 #include "MotionGeneration/Variations/Variations.h"
+#include "MotionGeneration/Specification.h"

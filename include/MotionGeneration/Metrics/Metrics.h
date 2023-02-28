@@ -12,4 +12,5 @@ namespace MGEA {
 	bool angularVelocitySignEquivalent(std::any lhs, std::any rhs);
 
 	double angleDifferenceSum(Spec::IndividualPtr);
+	double angleDifferenceSumLinearWeighted(Spec::IndividualPtr);
 }

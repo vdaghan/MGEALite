@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace MGEA {
-	double angleDifferenceSum(Spec::IndividualPtr iptr) {
+	double angleDifferenceSumLinearWeighted(Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
 		VectorMap const & angles(simDataPtr->angles);
 
@@ -20,12 +20,15 @@ namespace MGEA {
 		OrderedVector differencesVector{};
 		for (auto & angleVector : anglesVector) {
 			DataVector differenceVector{};
-			std::transform(angleVector.begin(), angleVector.end(), std::back_inserter(differenceVector), [&](auto const & angle) {
-				return std::abs(angle - angleVector[0]);
-			});
+			std::size_t numSteps(256);
+			for (std::size_t i(0); i != numSteps; ++i) {
+				double value(std::abs(angleVector[i] - angleVector[0]));
+				double scale(1.0 - 0.9 * static_cast<double>(i) / static_cast<double>(numSteps));
+				differenceVector.emplace_back(value * scale);
+			}
 			differencesVector.emplace_back(differenceVector);
 		}
-		
+
 		DataVector sumsOfAbsoluteDifferences{};
 		for (auto & differenceVector : differencesVector) {
 			double difference(std::accumulate(differenceVector.begin(), differenceVector.end(), 0.0));

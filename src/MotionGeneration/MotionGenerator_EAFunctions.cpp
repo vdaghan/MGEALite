@@ -99,6 +99,8 @@ void MotionGenerator::setupStandardFunctions() {
 	parametrisableVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsDirectionalLInt", MGEA::directionalLInt);
 	parametrisableVariationFromIPtrsLambda("MGEAVariationFromIndividualPtrsSNVLInt", MGEA::snvLInt);
 
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSum", &MGEA::angleDifferenceSum));
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSumLinearWeighted", &MGEA::angleDifferenceSumLinearWeighted));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
 	metricFunctors.equivalences.emplace(std::pair("angularVelocitySignEquivalence", &MGEA::angularVelocitySignEquivalent));
 	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVector", &MGEA::orderedVectorConversion));
@@ -234,6 +236,7 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	auto const & bestIndividualPtr = lastGeneration.front();
 	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
+	spdlog::info("Best individual: generation {}, id {}", bestIndividualPtr->id.generation, bestIndividualPtr->id.identifier);
 	auto & bestIndividualMetric(bestIndividual->metricMap);
 	double bestFitness(bestIndividualMetric.at("fitness").as<double>());
 	spdlog::info("Best fitness: {}", bestFitness);
