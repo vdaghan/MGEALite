@@ -40,8 +40,8 @@ namespace MGEA {
 			auto& c1JointData = child1DataPtr->torque[jointName];
 			auto& c2JointData = child2DataPtr->torque[jointName];
 			for (std::size_t ind(0); ind != simLength; ++ind) {
-				c1JointData[ind] = weight * p1JointData[ind] + (1 - weight) * p2JointData[ind];
-				c2JointData[ind] = (1 - weight) * p1JointData[ind] + weight * p2JointData[ind];
+				c1JointData[ind] = weight * p1JointData[ind] + (1.0 - weight) * p2JointData[ind];
+				c2JointData[ind] = (1.0 - weight) * p1JointData[ind] + weight * p2JointData[ind];
 			}
 			++i;
 		}

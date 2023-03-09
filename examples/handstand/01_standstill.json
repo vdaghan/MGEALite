@@ -85,17 +85,14 @@
             "N": 256
           }
         }
-       }
+      }
     },
-    "used": [
-      "MGEAGenesisZero",
-      "Clamp256",
-      "Random2Fitness",
-      "MetricProportional1Fitness",
-      "SNVLint2",
-      "fitnessBased",
-      "StdConvergenceCheckerNever"
-    ]
+    "compile": {
+      "genesis": [ "MGEAGenesisZero" ],
+      "individualSort": [ "fitnessBased" ],
+      "survivorSelection": [ "Clamp256" ],
+      "convergenceCheck": [ "StdConvergenceCheckerNever" ]
+    }
   },
   "variationFunctors": {
     "definitions": {

@@ -51,7 +51,7 @@ namespace MGEA {
 					continue;
 				}
 				double maxMultiplierHere(0.0);
-				if (diff >= 0) {
+				if (diff >= 0.0) {
 					maxMultiplierHere = (jointLimits.second - grandparentTorque) / diff;
 				} else {
 					maxMultiplierHere = (grandparentTorque - jointLimits.first) / diff;

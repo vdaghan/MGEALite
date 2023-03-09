@@ -7,7 +7,7 @@
 #include <vector>
 
 namespace MGEA {
-	OrderedVector angularVelocitySign(Spec::IndividualPtr iptr) {
+	std::any angularVelocitySign(DEvA::ParameterMap parameterMap, Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
 		VectorMap const & angles(simDataPtr->angles);
 

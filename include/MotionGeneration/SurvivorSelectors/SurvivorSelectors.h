@@ -9,8 +9,9 @@
 #include <vector>
 
 namespace MGEA {
-	void cullEquals(DEvA::ParameterMap, Spec::IndividualPtrs &);
-	void cullPartiallyDominated(DEvA::ParameterMap, Spec::IndividualPtrs &);
+	using IPtrs = Spec::IndividualPtrs;
+	IPtrs cullEquals(DEvA::ParameterMap, IPtrs);
+	IPtrs cullPartiallyDominated(DEvA::ParameterMap, IPtrs);
 	template <typename MetricType>
 	void onlyPositivesIfThereIsAny(std::string metric, Spec::IndividualPtrs & iptrs) {
 		std::size_t prevCount(iptrs.size());
@@ -29,6 +30,6 @@ namespace MGEA {
 		std::size_t curCount(iptrs.size());
 		spdlog::info("\tonlyPositivesIfThereIsAny: {} -> {}", prevCount, curCount);
 	}
-	void paretoFront(DEvA::ParameterMap, Spec::IndividualPtrs &);
-	void survivorSelectionOverMetric(DEvA::ParameterMap, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs);
+	IPtrs paretoFront(DEvA::ParameterMap, IPtrs);
+	void survivorSelectionOverMetric(DEvA::ParameterMap, Spec::BPSurvivorSelection::Function fSelection, Spec::IndividualPtrs & iptrs);
 }

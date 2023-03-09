@@ -35,34 +35,16 @@
   "functions": {
     "definitions": {
       "parentSelection": {
-        "Random2Fitness": {
-          "function": "StdParentSelectorRandomN",
-          "parameters": {
-            "N": 2,
-            "metric": "fitness"
-          }
-        },
-        "MetricProportional1Fitness": {
-          "function": "MGEAParentSelectorMetricProportional",
+        "BestOf5Fitness": {
+          "function": "StdParentSelectorBestNofM",
           "parameters": {
             "N": 1,
+            "M": 5,
             "metric": "fitness"
           }
         }
       },
       "variationFromIndividualPtrs": {
-        "DeletionLint2": {
-          "function": "MGEAVariationFromIndividualPtrsDeletionLInt",
-          "parameters": {
-            "shift": 2
-          }
-        },
-        "DirectionalLint2": {
-          "function": "MGEAVariationFromIndividualPtrsDirectionalLInt",
-          "parameters": {
-            "shift": 2
-          }
-        },
         "SNVLint2": {
           "function": "MGEAVariationFromIndividualPtrsSNVLInt",
           "parameters": {
@@ -96,16 +78,9 @@
   },
   "variationFunctors": {
     "definitions": {
-      "CrossoverAll": {
-        "numberOfParents": 2,
-        "parentSelection": "Random2Fitness",
-        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsCrossoverAll",
-        "probability": 1.0,
-        "removeParentsFromMatingPool": false
-      },
       "SNVLintFP": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Fitness",
+        "parentSelection": "BestOf5Fitness",
         "variationFromIndividualPtrs": "SNVLint2",
         "probability": 1.0,
         "removeParentsFromMatingPool": false
@@ -118,9 +93,10 @@
   "metricFunctors": {
     "definitions": {
       "fitness": {
-        "type": "double",
-        "basicBetterThan": "lesser",
-        "computeFromIndividualPtr": "angleDifferenceSum"
+        "betterThan": "fitnessBetterThan",
+        "equivalence": "fitnessEquivalence",
+        "computeFromIndividualPtr": "computeFitness",
+        "metricToJSON": "fitnessToJSON"
       }
     },
     "usedForIndividuals": [

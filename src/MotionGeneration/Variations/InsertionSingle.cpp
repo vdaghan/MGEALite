@@ -13,6 +13,7 @@ namespace MGEA {
 		childDataPtr->time = parent.time;
 		childDataPtr->params = parent.params;
 		childDataPtr->torque = parent.torque;
+		childDataPtr->torqueSplines = parent.torqueSplines;
 
 		std::size_t const simLength = motionParameters.simSamples;
 		std::size_t const numJoints = motionParameters.jointNames.size();
@@ -20,19 +21,21 @@ namespace MGEA {
 		std::string const& randJointName = motionParameters.jointNames.at(randJointIndex);
 		std::size_t const randTimeIndex = DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1);
 		std::pair<double, double> const& jointLimits = motionParameters.jointLimits.at(randJointName);
-		double const randTorque = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second);
+		//double const randTorque = DEvA::RandomNumberGenerator::get()->getRealBetween<double>(jointLimits.first, jointLimits.second);
 
-		std::size_t jointIndex(0);
-		for (auto& pair : childDataPtr->torque) {
-			if (randJointIndex != jointIndex) {
-				++jointIndex;
-				continue;
-			}
+		auto & jointTorque(childDataPtr->torque.at(randJointName));
+		if (childDataPtr->torqueSplines) {
+			auto & jointSpline(childDataPtr->torqueSplines->at(randJointName));
+			std::size_t const randTimeIndex(DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1));
+			auto randTorque(generateCenteredRandomDouble(jointLimits.first, jointTorque.at(randTimeIndex), jointLimits.second));
+			jointSpline.addControlPoint({ .index = randTimeIndex, .value = randTorque });
+			jointTorque = jointSpline.evaluate();
+		} else {
+			auto randTorque(generateCenteredRandomDouble(jointLimits.first, jointTorque.at(randTimeIndex), jointLimits.second));
 			for (std::size_t i(simLength - 1); i != randTimeIndex; --i) {
-				pair.second.at(i) = pair.second.at(i - 1);
+				jointTorque.at(i) = jointTorque.at(i - 1);
 			}
-			pair.second.at(randTimeIndex) = randTorque;
-			++jointIndex;
+			jointTorque.at(randTimeIndex) = randTorque;
 		}
 
 		return { childDataPtr };

@@ -7,6 +7,8 @@
 #include "DEvA/EvolutionaryAlgorithm.h"
 
 namespace MGEA {
+	double generateCenteredRandomDouble(double, double, double);
+
 	SimulationDataPtrs crossoverAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
 	SimulationDataPtrs crossoverSingle(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);
 	SimulationDataPtrs cutAndCrossfillAll(MotionParameters, DEvA::ParameterMap, Spec::IndividualPtrs);

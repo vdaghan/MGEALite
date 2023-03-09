@@ -8,7 +8,7 @@
 #include <algorithm>
 
 namespace MGEA {
-	void survivorSelectionOverMetric(DEvA::ParameterMap parameters, Spec::FSurvivorSelection fSelection, Spec::IndividualPtrs & iptrs) {
+	void survivorSelectionOverMetric(DEvA::ParameterMap parameters, Spec::BPSurvivorSelection::Function fSelection, Spec::IndividualPtrs & iptrs) {
 		std::string metric(parameters.at("metric").get<std::string>());
 
 		std::size_t prevCount(iptrs.size());
@@ -18,7 +18,7 @@ namespace MGEA {
 			auto & imetric(iptr->metricMap.at(metric));
 			bool unique(std::none_of(iptrs.begin(), iptrs.end(), [&](auto const & optr){
 				auto & ometric(optr->metricMap.at(metric));
-				return imetric == ometric;
+				return imetric.isEquivalentTo(ometric);
 			}));
 			if (unique) {
 				Spec::IndividualPtrs set{};
@@ -31,7 +31,7 @@ namespace MGEA {
 			auto setIterator(std::find_if(std::execution::par, sets.begin(), sets.end(), [&](auto const & set){
 				auto & optr(set.front());
 				auto & ometric(optr->metricMap.at(metric));
-				return imetric == ometric;
+				return imetric.isEquivalentTo(ometric);
 			}));
 			if (sets.end() == setIterator) {
 				Spec::IndividualPtrs set{};

@@ -102,6 +102,8 @@ void MotionGenerator::setupStandardFunctions() {
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSum", &MGEA::angleDifferenceSum));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSumLinearWeighted", &MGEA::angleDifferenceSumLinearWeighted));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("averageOfAngleDifferenceSumsStepped", &MGEA::averageOfAngleDifferenceSumsStepped));
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("maximumAngleDifferenceStepped", &MGEA::maximumAngleDifferenceStepped));
 	metricFunctors.equivalences.emplace(std::pair("angularVelocitySignEquivalence", &MGEA::angularVelocitySignEquivalent));
 	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVector", &MGEA::orderedVectorConversion));
 }
@@ -237,9 +239,24 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
 	spdlog::info("Best individual: generation {}, id {}", bestIndividualPtr->id.generation, bestIndividualPtr->id.identifier);
+
 	auto & bestIndividualMetric(bestIndividual->metricMap);
-	double bestFitness(bestIndividualMetric.at("fitness").as<double>());
-	spdlog::info("Best fitness: {}", bestFitness);
+	if (bestIndividualMetric.contains("fitness")) {
+		if (bestIndividualMetric.at("fitness").value.type() == std::type_index(typeid(double))) {
+			double bestFitness(bestIndividualMetric.at("fitness").as<double>());
+			spdlog::info("Best fitness: {}", bestFitness);
+		} else if (bestIndividualMetric.at("fitness").metricToJSONObjectFunction) {
+			auto metricAsJSON(bestIndividualMetric.at("fitness").metricToJSONObjectFunction(bestIndividualMetric.at("fitness").value));
+			spdlog::info("Best fitness: {}", metricAsJSON.dump());
+		}
+	}
+	if (bestIndividual->genotype->torqueSplines) {
+		for (auto & [jointName, torqueSpline] : bestIndividual->genotype->torqueSplines.value()) {
+			auto & controlPoints(torqueSpline.controlPoints);
+			JSON controlPointsAsJSON = controlPoints;
+			spdlog::info("There are {} control points for {}: {}", controlPoints.size(), jointName, controlPointsAsJSON.dump());
+		}
+	}
 
 	//std::list<double> simulationTimes;
 	//for (auto & iptr : lastGeneration) {

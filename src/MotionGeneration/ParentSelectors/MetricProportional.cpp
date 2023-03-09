@@ -12,7 +12,7 @@ namespace MGEA {
 		auto bestWorstIteratorPair(std::minmax_element(domain.begin(), domain.end(), [&](auto const& lhs, auto const& rhs) {
 				auto const & lhsMetric = lhs->metricMap.at(metricName);
 				auto const & rhsMetric = rhs->metricMap.at(metricName);
-				return lhsMetric < rhsMetric;
+				return lhsMetric.isBetterThan(rhsMetric);
 			}));
 		auto & worstMetric = (*bestWorstIteratorPair.second)->metricMap.at(metricName);
 		auto & bestMetric = (*bestWorstIteratorPair.first)->metricMap.at(metricName);

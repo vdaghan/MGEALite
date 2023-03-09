@@ -20,7 +20,8 @@ std::optional<std::size_t> stringToSizeT(std::string s) {
 }
 
 Datastore::Datastore(std::filesystem::path path)
-	: m_path(path),
+	: simId(0),
+	m_path(path),
 	m_queuePath(path / "queue"),
 	m_visualisationPath(path / "visualisation"),
 	keepSyncing(false)
@@ -59,7 +60,9 @@ Spec::MaybePhenotype Datastore::simulate(Spec::Genotype genotype) {
 		//simulationResultPromises.emplace(std::make_pair(id, std::promise<Spec::MaybePhenotype>()));
 		simulationResultPromises.emplace(id, std::promise<Spec::MaybePhenotype>());
 	}
+	promiseMutex.lock();
 	auto & simulationResultPromise(simulationResultPromises.at(id));
+	promiseMutex.unlock();
 	auto simulationResultFuture(simulationResultPromise.get_future());
 	auto simulationResult(simulationResultFuture.get());
 	{

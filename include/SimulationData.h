@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "Metric.h"
 #include "MGEAError.h"
+#include "Math/ClampedSpline.h"
 #include "MotionGeneration/MotionParameters.h"
 
 #include <filesystem>
@@ -10,10 +11,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-
-#include <nlohmann/json.hpp>
-
-using JSON = nlohmann::ordered_json;
 
 struct SimulationData {
 	MGEA::DataVector time;
@@ -23,6 +20,7 @@ struct SimulationData {
 	std::map<std::string, double> masses;
 	std::map<std::string, double> metadata;
 	std::optional<ContactParameters> contacts;
+	std::optional<MGEA::ClampedSplineMap> torqueSplines;
 	MGEA::VectorMap torque;
 	MGEA::VectorMap angles;
 	MGEA::VectorMap outputs;

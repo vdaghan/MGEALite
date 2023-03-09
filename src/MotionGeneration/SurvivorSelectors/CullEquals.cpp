@@ -8,7 +8,7 @@
 #include <algorithm>
 
 namespace MGEA {
-	void cullEquals(DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+	IPtrs cullEquals(DEvA::ParameterMap parameters, IPtrs iptrs) {
 		std::size_t prevCount(iptrs.size());
 		Spec::IndividualPtrs retVal{};
 		for (auto it(iptrs.begin()); it != iptrs.end(); ++it) {
@@ -29,9 +29,8 @@ namespace MGEA {
 			}
 		}
 
-		iptrs = retVal;
-
 		std::size_t curCount(iptrs.size());
 		spdlog::info("\tcullEquals: {} -> {}", prevCount, curCount);
+		return retVal;
 	}
 }

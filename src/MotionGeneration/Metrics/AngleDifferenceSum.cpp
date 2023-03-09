@@ -4,10 +4,11 @@
 #include "MotionGeneration/Metrics/Metrics.h"
 
 #include <cmath>
+#include <numbers>
 #include <vector>
 
 namespace MGEA {
-	double angleDifferenceSum(Spec::IndividualPtr iptr) {
+	std::any angleDifferenceSum(DEvA::ParameterMap parameterMap, Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
 		VectorMap const & angles(simDataPtr->angles);
 
@@ -17,6 +18,8 @@ namespace MGEA {
 			return {};
 		}
 
+		double const simStep(iptr->genotype->params.at("simStep"));
+		double const simStop(iptr->genotype->params.at("simStop"));
 		OrderedVector differencesVector{};
 		for (auto & angleVector : anglesVector) {
 			DataVector differenceVector{};
@@ -32,6 +35,8 @@ namespace MGEA {
 			sumsOfAbsoluteDifferences.emplace_back(difference);
 		}
 
-		return std::accumulate(sumsOfAbsoluteDifferences.begin(), sumsOfAbsoluteDifferences.end(), 0.0);
+		double sumOfAbsoluteDifferences(std::accumulate(sumsOfAbsoluteDifferences.begin(), sumsOfAbsoluteDifferences.end(), 0.0));
+		double averageSumOfAbsoluteDifferences(sumOfAbsoluteDifferences * simStep / simStop);
+		return averageSumOfAbsoluteDifferences * 360.0 / (2.0 * std::numbers::pi);
 	}
 }

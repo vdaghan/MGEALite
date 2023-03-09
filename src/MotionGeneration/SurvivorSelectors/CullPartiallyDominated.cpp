@@ -6,16 +6,16 @@
 #include <algorithm>
 
 namespace MGEA {
-	void cullPartiallyDominated(DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+	IPtrs cullPartiallyDominated(DEvA::ParameterMap parameters, IPtrs iptrs) {
 		std::vector<std::string> metrics(parameters.at("metrics").get<std::vector<std::string>>());
 		if (iptrs.empty() or metrics.empty()) {
-			return;
+			return {};
 		}
 
 		std::list<Spec::IndividualPtr> retVal{};
 		for (auto & metricName : metrics) {
 			auto const & minElementIt(std::min_element(iptrs.begin(), iptrs.end(), [&](auto const & lhs, auto const & rhs) -> bool {
-				return (lhs->metricMap.at(metricName)) < (rhs->metricMap.at(metricName));
+				return (lhs->metricMap.at(metricName)).isBetterThan(rhs->metricMap.at(metricName));
 			}));
 			if (minElementIt != iptrs.end()) {
 				auto const & minElement(*minElementIt);
@@ -31,6 +31,6 @@ namespace MGEA {
 			}
 		}
 
-		iptrs = retVal;
+		return retVal;
 	}
 }

@@ -14,6 +14,8 @@ endfunction()
 
 prepareExample(Handstand_00_standstill "00_standstill")
 prepareExample(Handstand_01_standstill "01_standstill")
+prepareExample(Handstand_02_standstill "02_standstill")
+prepareExample(Handstand_03_standstill "03_standstill")
 
 
 

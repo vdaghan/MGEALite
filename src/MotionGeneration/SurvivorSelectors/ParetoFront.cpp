@@ -6,7 +6,7 @@
 #include "Logging/SpdlogCommon.h"
 
 namespace MGEA {
-	void paretoFront(DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
+	IPtrs paretoFront(DEvA::ParameterMap parameters, IPtrs iptrs) {
 		std::vector<std::string> metrics(parameters.at("metrics").get<std::vector<std::string>>());
 		std::size_t prevCount(iptrs.size());
 		auto isDominatedLambda = [&](auto const & iptr) {
@@ -15,7 +15,7 @@ namespace MGEA {
 				for (auto& metricName : metrics) {
 					auto & metricValue(iptr->metricMap.at(metricName));
 					auto & otherMetricValue(other->metricMap.at(metricName));
-					if (not (otherMetricValue < metricValue)) {
+					if (not (otherMetricValue.isBetterThan(metricValue))) {
 						isDominatedByOther = false;
 						break;
 					}
@@ -35,10 +35,11 @@ namespace MGEA {
 		iptrs.sort([&](auto& lhs, auto& rhs) {
 			auto lhsFitness(lhs->metricMap.at("fitness"));
 			auto rhsFitness(rhs->metricMap.at("fitness"));
-			return lhsFitness < rhsFitness;
+			return lhsFitness.isBetterThan(rhsFitness);
 		});
 
 		std::size_t curCount(iptrs.size());
 		spdlog::info("\tparetoFront: {} -> {}", prevCount, curCount);
+		return iptrs;
 	}
 }

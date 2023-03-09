@@ -96,7 +96,12 @@
       "SNVLint2",
       "fitnessBased",
       "StdConvergenceCheckerNever"
-    ]
+    ],
+    "compile": {
+      "genesis": [ "MGEAGenesisZero" ],
+      "individualSort": [ "fitnessBased" ],
+      "convergenceCheck": [ "StdConvergenceCheckerNever" ]
+    }
   },
   "variationFunctors": {
     "definitions": {

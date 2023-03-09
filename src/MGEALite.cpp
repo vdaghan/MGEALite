@@ -34,14 +34,15 @@ int main() {
 	MotionGenerator motionGenerator("./data", "./EASetup.json");
 
 	std::vector<std::string> paretoMetrics{ "fitness", "balance" };
-	Spec::FPSurvivorSelection combinedSurvivorSelectorLambda = [=](DEvA::ParameterMap parameters, Spec::IndividualPtrs & iptrs) {
-		MGEA::cullEquals({}, iptrs);
+	Spec::BPSurvivorSelection::Parametrisable combinedSurvivorSelectorLambda = [=](DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
+		iptrs = MGEA::cullEquals({}, iptrs);
 		//MGEA::onlyPositivesIfThereIsAny<double>("fitness", iptrs);
 		DEvA::ParameterMap angularVelocitySignMetric({ {"metric", "angularVelocitySign"} });
 		JSON j(paretoMetrics);
 		DEvA::ParameterMap paretoMetrics({ {"metrics", j} });
-		MGEA::survivorSelectionOverMetric(angularVelocitySignMetric, std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
-		MGEA::paretoFront(paretoMetrics, iptrs);
+		//MGEA::survivorSelectionOverMetric(angularVelocitySignMetric, std::bind_front(&MGEA::cullPartiallyDominated, paretoMetrics), iptrs);
+		iptrs = MGEA::paretoFront(paretoMetrics, iptrs);
+		return iptrs;
 	};
 	auto computeBalanceLambda = [&](Spec::IndividualPtr iptr) {
 		auto & simDataPtr(*iptr->maybePhenotype);
@@ -87,8 +88,8 @@ int main() {
 		return fitness;
 	};
 
-	motionGenerator.functions.survivorSelection.defineParametrised("EightQueenVariation", combinedSurvivorSelectorLambda, {});
-	motionGenerator.functions.survivorSelection.use({ "EightQueenVariation" });
+	motionGenerator.functions.survivorSelection.defineParametrised("Combined", combinedSurvivorSelectorLambda, {});
+	motionGenerator.functions.survivorSelection.compile("CombinedCompiled", { "Combined" });
 	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeBalance", computeBalanceLambda));
 	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeFitness", computeFitnessLambda));
 

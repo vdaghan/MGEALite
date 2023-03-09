@@ -23,7 +23,7 @@ MotionGenerator::MotionGenerator(std::string dataFolder, std::string setupFile)
 	importSetup(setupFile);
 	DEvA::EvolutionaryAlgorithm<Spec>::datastore = std::make_shared<DEvA::Filestore<Spec>>();
 
-	functions.genesisWrapper = [&](auto genesisFunction) {
+	functions.genesis.wrapper = [&](auto genesisFunction) {
 		typename Spec::Genotypes genotypes(genesisFunction());
 		for (auto & genotype : genotypes) {
 			applyMotionParameters(genotype);
@@ -37,11 +37,11 @@ MotionGenerator::MotionGenerator(std::string dataFolder, std::string setupFile)
 		}
 		return children;
 	};
-	functions.variationFromGenotypesWrapper = variationWrapper;
-	functions.variationFromIndividualPtrsWrapper = variationWrapper;
+	functions.variationFromGenotypes.wrapper = variationWrapper;
+	functions.variationFromIndividualPtrs.wrapper = variationWrapper;
 
-	functions.transform.define("Simulate", std::bind_front(&MotionGenerator::transform, this));
-	functions.transform.use({ "Simulate" });
+	functions.transform.definePlain("Simulate", std::bind_front(&MotionGenerator::transform, this));
+	functions.transform.compile("SimulateCompiled", { "Simulate" });
 
 	onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);

@@ -6,11 +6,17 @@
 #include <any>
 
 namespace MGEA {
-	JSON orderedVectorConversion(std::any value);
+	using SteppedDouble = std::pair<std::size_t, double>;
 
-	OrderedVector angularVelocitySign(Spec::IndividualPtr);
+	JSON orderedVectorConversion(std::any value);
+	JSON steppedDoubleConversion(std::any value);
+	bool steppedDoubleEquivalence(std::any lhs, std::any rhs);
+
+	std::any angularVelocitySign(DEvA::ParameterMap, Spec::IndividualPtr);
 	bool angularVelocitySignEquivalent(std::any lhs, std::any rhs);
 
-	double angleDifferenceSum(Spec::IndividualPtr);
-	double angleDifferenceSumLinearWeighted(Spec::IndividualPtr);
+	std::any angleDifferenceSum(DEvA::ParameterMap, Spec::IndividualPtr);
+	std::any angleDifferenceSumLinearWeighted(DEvA::ParameterMap, Spec::IndividualPtr);
+	std::any averageOfAngleDifferenceSumsStepped(DEvA::ParameterMap, Spec::IndividualPtr);
+	std::any maximumAngleDifferenceStepped(DEvA::ParameterMap, Spec::IndividualPtr);
 }

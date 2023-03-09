@@ -1,8 +1,13 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
+
+#include <list>
 #include <map>
 #include <string>
 #include <vector>
+
+using JSON = nlohmann::ordered_json;
 
 namespace MGEA {
 	using DataVector = std::vector<double>;

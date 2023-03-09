@@ -35,38 +35,12 @@
   "functions": {
     "definitions": {
       "parentSelection": {
-        "Random2Fitness": {
-          "function": "StdParentSelectorRandomN",
-          "parameters": {
-            "N": 2,
-            "metric": "fitness"
-          }
-        },
-        "MetricProportional1Fitness": {
-          "function": "MGEAParentSelectorMetricProportional",
+        "BestOf5Fitness": {
+          "function": "StdParentSelectorBestNofM",
           "parameters": {
             "N": 1,
+            "M": 1,
             "metric": "fitness"
-          }
-        }
-      },
-      "variationFromIndividualPtrs": {
-        "DeletionLint2": {
-          "function": "MGEAVariationFromIndividualPtrsDeletionLInt",
-          "parameters": {
-            "shift": 2
-          }
-        },
-        "DirectionalLint2": {
-          "function": "MGEAVariationFromIndividualPtrsDirectionalLInt",
-          "parameters": {
-            "shift": 2
-          }
-        },
-        "SNVLint2": {
-          "function": "MGEAVariationFromIndividualPtrsSNVLInt",
-          "parameters": {
-            "shift": 2
           }
         }
       },
@@ -79,10 +53,10 @@
         }
       },
       "survivorSelection": {
-        "Clamp256": {
+        "Clamp1": {
           "function": "StdSurvivorSelectorClamp",
           "parameters": {
-            "N": 256
+            "N": 1
           }
         }
       }
@@ -90,37 +64,52 @@
     "compile": {
       "genesis": [ "MGEAGenesisZero" ],
       "individualSort": [ "fitnessBased" ],
-      "survivorSelection": [ "Clamp256" ],
+      "survivorSelection": [ "Clamp1" ],
+      "variationFromIndividualPtrs": [ "MGEAVariationFromIndividualPtrsSNV" ],
       "convergenceCheck": [ "StdConvergenceCheckerNever" ]
     }
   },
   "variationFunctors": {
     "definitions": {
-      "CrossoverAll": {
-        "numberOfParents": 2,
-        "parentSelection": "Random2Fitness",
-        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsCrossoverAll",
+      "snv": {
+        "numberOfParents": 1,
+        "parentSelection": "BestOf5Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
         "probability": 1.0,
         "removeParentsFromMatingPool": false
       },
-      "SNVLintFP": {
+      "insertion": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Fitness",
-        "variationFromIndividualPtrs": "SNVLint2",
-        "probability": 1.0,
+        "parentSelection": "BestOf5Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
+        "probability": 0.1,
+        "removeParentsFromMatingPool": false
+      },
+      "deletion": {
+        "numberOfParents": 1,
+        "parentSelection": "BestOf5Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
+        "probability": 0.1,
         "removeParentsFromMatingPool": false
       }
     },
     "used": [
-      "SNVLintFP"
+      "snv",
+      "insertion",
+      "deletion"
     ]
   },
   "metricFunctors": {
     "definitions": {
       "fitness": {
-        "type": "double",
-        "basicBetterThan": "lesser",
-        "computeFromIndividualPtr": "angleDifferenceSum"
+        "betterThan": "fitnessBetterThan",
+        "equivalence": "fitnessEquivalence",
+        "computeFromIndividualPtr": "computeFitness",
+        "computeParameters": {
+          "maxSteps": 256,
+          "stepThreshold": 2.0
+        },
+        "metricToJSON": "fitnessToJSON"
       }
     },
     "usedForIndividuals": [
