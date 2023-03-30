@@ -5,18 +5,18 @@
 
 namespace MGEA {
 	SimulationDataPtrs crossoverSingle(MotionParameters motionParameters, DEvA::ParameterMap parameters, Spec::IndividualPtrs iptrs) {
-		auto parent1Ptr = iptrs.front();
-		auto parent2Ptr = iptrs.back();
-		auto const & parent1 = *parent1Ptr->genotype;
-		auto const & parent2 = *parent2Ptr->genotype;
+		auto & parent1Ptr = iptrs.front();
+		auto & parent2Ptr = iptrs.back();
+		auto const & parent1Genotype = *parent1Ptr->genotype;
+		auto const & parent2Genotype = *parent2Ptr->genotype;
 
 		SimulationDataPtr child1DataPtr = std::make_shared<SimulationData>();
 		SimulationDataPtr child2DataPtr = std::make_shared<SimulationData>();
 
-		child1DataPtr->time = parent1.time;
-		child1DataPtr->params = parent1.params;
-		child2DataPtr->time = parent2.time;
-		child2DataPtr->params = parent2.params;
+		child1DataPtr->time = parent1Genotype.time;
+		child1DataPtr->params = parent1Genotype.params;
+		child2DataPtr->time = parent2Genotype.time;
+		child2DataPtr->params = parent2Genotype.params;
 
 		std::size_t const simLength = motionParameters.simSamples;
 		std::size_t const numJoints = motionParameters.jointNames.size();
@@ -25,10 +25,10 @@ namespace MGEA {
 
 		std::size_t i(0);
 		std::vector<double> const tmpTorque(simLength);
-		for (auto& joints : parent1.torque) {
-			auto const& jointName = joints.first;
-			auto const& p1JointData = parent1.torque.at(jointName);
-			auto const& p2JointData = parent2.torque.at(jointName);
+		for (auto & joints : parent1Genotype.torque) {
+			auto const & jointName = joints.first;
+			auto const & p1JointData = parent1Genotype.torque.at(jointName);
+			auto const & p2JointData = parent2Genotype.torque.at(jointName);
 			if (randJointIndex != i) {
 				child1DataPtr->torque.emplace(jointName, p1JointData);
 				child2DataPtr->torque.emplace(jointName, p2JointData);

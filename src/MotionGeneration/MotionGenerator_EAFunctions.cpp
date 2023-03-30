@@ -61,6 +61,8 @@ void MotionGenerator::importMotionParameters(std::filesystem::path const & filen
 void MotionGenerator::setupStandardFunctions() {
 	functions.genesis.defineParametrised("MGEAGenesisBoundary", std::bind_front(MGEA::genesisBoundary, motionParameters), {});
 	functions.genesis.defineParametrised("MGEAGenesisBoundaryWavelet", std::bind_front(MGEA::genesisBoundaryWavelet, motionParameters), {});
+	functions.genesis.defineParametrised("MGEAGenesisImportFromFolderDefault", std::bind_front(MGEA::genesisImportFromFolder, motionParameters), {});
+	functions.genesis.defineParametrisable("MGEAGenesisImportFromFolder", std::bind_front(MGEA::genesisImportFromFolder, motionParameters));
 	functions.genesis.defineParametrisable("MGEAGenesisRandom", std::bind_front(MGEA::genesisRandom, motionParameters));
 	functions.genesis.defineParametrised("MGEAGenesisZero", std::bind_front(MGEA::genesisZero, motionParameters), {});
 
@@ -101,11 +103,20 @@ void MotionGenerator::setupStandardFunctions() {
 
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSum", &MGEA::angleDifferenceSum));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angleDifferenceSumLinearWeighted", &MGEA::angleDifferenceSumLinearWeighted));
-	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("averageOfAngleDifferenceSumsStepped", &MGEA::averageOfAngleDifferenceSumsStepped));
+
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("maximumAngleDifference", &MGEA::maximumAngleDifference));
 	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("maximumAngleDifferenceStepped", &MGEA::maximumAngleDifferenceStepped));
+	metricFunctors.equivalences.emplace(std::pair("steppedDoubleEquivalence", &MGEA::steppedDoubleEquivalence));
+	metricFunctors.orderings.emplace(std::pair("steppedDoubleLesser", &MGEA::steppedDoubleLesser));
+	metricFunctors.orderings.emplace(std::pair("steppedDoubleGreater", &MGEA::steppedDoubleGreater));
+	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("steppedDoubleConversion", &MGEA::steppedDoubleConversion));
+
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("outputBetweenTwoValues", &MGEA::outputBetweenTwoValues));
+
+	metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("angularVelocitySign", &MGEA::angularVelocitySign));
 	metricFunctors.equivalences.emplace(std::pair("angularVelocitySignEquivalence", &MGEA::angularVelocitySignEquivalent));
-	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVector", &MGEA::orderedVectorConversion));
+	metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("orderedVectorConversion", &MGEA::orderedVectorConversion));
 }
 
 Spec::MaybePhenotype MotionGenerator::transform(Spec::Genotype genotype) {
@@ -239,22 +250,27 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
 	spdlog::info("Best individual: generation {}, id {}", bestIndividualPtr->id.generation, bestIndividualPtr->id.identifier);
+	std::string bestIndividualParents{};
+	for (auto & parent : bestIndividualPtr->variationInfo.parentIds) {
+		auto parentGeneration(std::to_string(parent.generation));
+		auto parentIdentifier(std::to_string(parent.identifier));
+		bestIndividualParents += "(" + parentGeneration + ", " + parentIdentifier + ") ";
+	}
+	spdlog::info("Best individual variation: {} from parent(s) {}", bestIndividualPtr->variationInfo.name, bestIndividualParents);
 
 	auto & bestIndividualMetric(bestIndividual->metricMap);
-	if (bestIndividualMetric.contains("fitness")) {
-		if (bestIndividualMetric.at("fitness").value.type() == std::type_index(typeid(double))) {
-			double bestFitness(bestIndividualMetric.at("fitness").as<double>());
-			spdlog::info("Best fitness: {}", bestFitness);
-		} else if (bestIndividualMetric.at("fitness").metricToJSONObjectFunction) {
-			auto metricAsJSON(bestIndividualMetric.at("fitness").metricToJSONObjectFunction(bestIndividualMetric.at("fitness").value));
-			spdlog::info("Best fitness: {}", metricAsJSON.dump());
+	for (auto & [metricName, metric] : bestIndividual->metricMap) {
+		if (metric.value.type() == std::type_index(typeid(double))) {
+			spdlog::info("Best individual {}: {}", metricName, metric.as<double>());
+		} else if (metric.metricToJSONObjectFunction) {
+			auto metricAsJSON(metric.metricToJSONObjectFunction(metric.value));
+			spdlog::info("Best individual {}: {}", metricName, metricAsJSON.dump());
 		}
 	}
 	if (bestIndividual->genotype->torqueSplines) {
 		for (auto & [jointName, torqueSpline] : bestIndividual->genotype->torqueSplines.value()) {
 			auto & controlPoints(torqueSpline.controlPoints);
-			JSON controlPointsAsJSON = controlPoints;
-			spdlog::info("There are {} control points for {}: {}", controlPoints.size(), jointName, controlPointsAsJSON.dump());
+			spdlog::info("There are {} control points for {}: {}", controlPoints.size(), jointName, torqueSpline.str());
 		}
 	}
 

@@ -11,28 +11,15 @@
 
 #include "MGEA.h"
 
-bool fitnessBetterThan(std::any const & lhs, std::any const & rhs) {
-	auto lhsPair(std::any_cast<MGEA::SteppedDouble>(lhs));
-	auto rhsPair(std::any_cast<MGEA::SteppedDouble>(rhs));
-	if (lhsPair.first != rhsPair.first) {
-		return lhsPair.first > rhsPair.first;
-	}
-	return lhsPair.second < rhsPair.second;
-}
-
 int main() {
 	spdlog::info("DEvA version: {}", getDEvAVersion());
 	spdlog::info("MGEALite version: {}", getMGEALiteVersion());
 
 	MotionGenerator motionGenerator("./data", "./03_standstill.json");
-	motionGenerator.metricFunctors.orderings.emplace(std::pair("fitnessBetterThan", fitnessBetterThan));
-	motionGenerator.metricFunctors.equivalences.emplace(std::pair("fitnessEquivalence", MGEA::steppedDoubleEquivalence));
-	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeFitness", MGEA::maximumAngleDifferenceStepped));
-	motionGenerator.metricFunctors.metricToJSONObjectFunctions.emplace(std::pair("fitnessToJSON", MGEA::steppedDoubleConversion));
 
 	auto compileResult = motionGenerator.compile();
-	motionGenerator.lambda = 256;
-	auto result = motionGenerator.search(50);
+	motionGenerator.lambda = 1024;
+	auto result = motionGenerator.search(256);
 
 	return 0;
 }

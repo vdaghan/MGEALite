@@ -3,8 +3,10 @@
 #include "DEvA/Error.h"
 #include "DEvA/JSON/Common.h"
 
-#include "SimulationData.h"
 #include "JSON/ContactParameters.h"
+#include "JSON/ClampedSpline.h"
+#include "JSON/SplineControlPoint.h"
+#include "SimulationData.h"
 
 template <>
 struct nlohmann::adl_serializer<SimulationDataPtr> {
@@ -30,6 +32,9 @@ struct nlohmann::adl_serializer<SimulationDataPtr> {
 		}
 		if (j.contains("contacts")) {
 			sptr->contacts = j.at("contacts").get<ContactParameters>();
+		}
+		if (j.contains("torqueSplines")) {
+			sptr->torqueSplines = j.at("torqueSplines").get<MGEA::ClampedSplineMap>();
 		}
 		if (j.contains("torque")) {
 			j.at("torque").get_to(sptr->torque);
@@ -86,6 +91,9 @@ struct nlohmann::adl_serializer<SimulationDataPtr> {
 		}
 		if (sptr->contacts) {
 			j["contacts"] = sptr->contacts.value();
+		}
+		if (sptr->torqueSplines) {
+			j["torqueSplines"] = sptr->torqueSplines.value();
 		}
 		if (!sptr->torque.empty()) {
 			j["torque"] = sptr->torque;

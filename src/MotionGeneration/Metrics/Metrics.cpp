@@ -21,4 +21,22 @@ namespace MGEA {
 		auto rhsPair(std::any_cast<MGEA::SteppedDouble>(rhs));
 		return (lhsPair.first == rhsPair.first) and (lhsPair.second == rhsPair.second);
 	}
+
+	bool steppedDoubleLesser(std::any lhs, std::any rhs) {
+		auto lhsPair(std::any_cast<MGEA::SteppedDouble>(lhs));
+		auto rhsPair(std::any_cast<MGEA::SteppedDouble>(rhs));
+		if (lhsPair.first != rhsPair.first) {
+			return lhsPair.first > rhsPair.first;
+		}
+		return lhsPair.second < rhsPair.second;
+	}
+
+	bool steppedDoubleGreater(std::any lhs, std::any rhs) {
+		auto lhsPair(std::any_cast<MGEA::SteppedDouble>(lhs));
+		auto rhsPair(std::any_cast<MGEA::SteppedDouble>(rhs));
+		if (lhsPair.first != rhsPair.first) {
+			return lhsPair.first > rhsPair.first;
+		}
+		return lhsPair.second > rhsPair.second;
+	}
 }

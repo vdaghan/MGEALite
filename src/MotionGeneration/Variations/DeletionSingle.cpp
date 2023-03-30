@@ -25,14 +25,25 @@ namespace MGEA {
 
 		auto & jointTorque(childDataPtr->torque.at(randJointName));
 		if (childDataPtr->torqueSplines) {
-			auto & jointSpline(childDataPtr->torqueSplines->at(randJointName));
-			std::size_t numControlPoints(jointSpline.controlPoints.size());
-			std::size_t const randControlPointIndex(DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, numControlPoints - 1));
-			if (0 == randControlPointIndex or numControlPoints - 1 == randControlPointIndex) {
-				return {};
-			}
-			jointSpline.removeNthControlPoint(randControlPointIndex);
-			jointTorque = jointSpline.evaluate();
+			auto & splines(childDataPtr->torqueSplines.value());
+			auto & spline(splines.at(randJointName));
+			spline.removeTimePointAndShiftRest(randTimeIndex);
+			jointTorque = spline.evaluate();
+			//std::vector<std::pair<std::string, std::size_t>> splinePairs{};
+			//for (auto & [jointName, controlPointIndex] : childDataPtr->torqueSplines.value()) {
+			//	for (std::size_t i(1); i < splines.at(jointName).controlPoints.size() - 1; ++i) {
+			//		splinePairs.push_back(std::make_pair(jointName, i));
+			//	}
+			//}
+			//if (splinePairs.empty()) {
+			//	return {};
+			//}
+			//std::size_t const randomDeletionIndex(DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, splinePairs.size() - 1));
+			//auto & splinePair(splinePairs.at(randomDeletionIndex));
+			//auto & spline(splines.at(splinePair.first));
+			////splines.at(splinePair.first).removeNthControlPointAndShiftRest(splinePair.second);
+			//splines.at(splinePair.first).removeTimePointAndShiftRest(splinePair.second);
+			//childDataPtr->torque.at(splinePair.first) = spline.evaluate();
 		} else {
 			for (std::size_t i(randTimeIndex); i < simLength - 1; ++i) {
 				jointTorque.at(i) = jointTorque.at(i + 1);

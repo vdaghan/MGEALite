@@ -11,11 +11,10 @@
 
 namespace MGEA {
 	double generateCenteredRandomDouble(double min, double mean, double max) {
-		double meanToNearestExtrema(std::min(mean - min, max - mean));
-		//double threeSigma(std::max((max - min) / 100.0, meanToNearestExtrema));
-		//std::normal_distribution<double> dist(mean, meanToNearestExtrema / 3.0);
-		std::normal_distribution<double> dist(mean, 10.0);
-		double randomValue(dist(DEvA::RandomNumberGenerator::get()->generator));
+		//std::normal_distribution<double> dist(mean, ((max - min) / 10.0)/6.0);
+		//std::uniform_real_distribution<double> dist(min, max);
+		//double randomValue(dist(DEvA::RandomNumberGenerator::get()->generator));
+		double randomValue(DEvA::RandomNumberGenerator::get()->getRealBetween<double>(min, max));
 		if (randomValue < min) {
 			randomValue = min;
 		} else if (randomValue > max) {

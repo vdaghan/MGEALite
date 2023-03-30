@@ -26,7 +26,6 @@ namespace MGEA {
 		auto & jointTorque(childDataPtr->torque.at(randJointName));
 		if (childDataPtr->torqueSplines) {
 			auto & jointSpline(childDataPtr->torqueSplines->at(randJointName));
-			std::size_t const randTimeIndex(DEvA::RandomNumberGenerator::get()->getIntBetween<std::size_t>(0, simLength - 1));
 			auto randTorque(generateCenteredRandomDouble(jointLimits.first, jointTorque.at(randTimeIndex), jointLimits.second));
 			jointSpline.addControlPoint({ .index = randTimeIndex, .value = randTorque });
 			jointTorque = jointSpline.evaluate();

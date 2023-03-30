@@ -13,15 +13,7 @@ namespace MGEA {
 
 	void ClampedSpline::addControlPoint(SplineControlPoint cP) {
 		controlPoints.emplace_back(cP);
-		auto indexSort = [](auto const & lhs, auto const & rhs) {
-			return lhs.index < rhs.index;
-		};
-		std::stable_sort(controlPoints.begin(), controlPoints.end(), indexSort);
-		auto indexEqual = [](auto const & lhs, auto const & rhs) {
-			return lhs.index == rhs.index;
-		};
-		auto it(std::unique(controlPoints.begin(), controlPoints.end(), indexEqual));
-		controlPoints.erase(it, controlPoints.end());
+		cleanup();
 	}
 	
 	bool ClampedSpline::removeControlPointAt(std::size_t index) {
@@ -44,6 +36,51 @@ namespace MGEA {
 		std::advance(it, index);
 		controlPoints.erase(it);
 		return true;
+	}
+
+	bool ClampedSpline::removeNthControlPointAndShiftRest(std::size_t index) {
+		if (index >= controlPoints.size()) {
+			return false;
+		}
+		auto it(controlPoints.begin());
+		std::advance(it, index);
+		while (std::next(it) != controlPoints.end()) {
+			auto nextIt(std::next(it));
+			it->value = nextIt->value;
+			it = nextIt;
+		}
+		cleanup();
+		return true;
+	}
+
+	bool ClampedSpline::removeTimePointAndShiftRest(std::size_t index) {
+		auto maxTimepoint(size());
+		if (index >= maxTimepoint) {
+			return false;
+		}
+		auto it(controlPoints.begin());
+		auto endIt(controlPoints.end());
+		while (it->index < index and std::next(it)->index <= index) {
+			++it;
+		}
+		if (it->index != index) {
+			++it;
+		}
+		while (it != controlPoints.end() and it->index != maxTimepoint) {
+			--(it->index);
+			++it;
+		}
+		cleanup();
+		return true;
+	}
+
+	std::string ClampedSpline::str() {
+		std::string retVal("[ ");
+		for (auto & controlPoint : controlPoints) {
+			retVal += "(" + std::to_string(controlPoint.index) + ", " + std::to_string(controlPoint.value) + ") ";
+		}
+		retVal += "]";
+		return retVal;
 	}
 
 	DataVector ClampedSpline::evaluate() {
@@ -77,4 +114,34 @@ namespace MGEA {
 
 		return retVal;
 	};
+	
+	void ClampedSpline::cleanup() {
+		auto indexSort = [](auto const & lhs, auto const & rhs) {
+			return lhs.index < rhs.index;
+		};
+		std::stable_sort(controlPoints.begin(), controlPoints.end(), indexSort);
+
+		if (controlPoints.size() >= 3) {
+			for (auto it(std::next(controlPoints.begin())); std::next(it) != controlPoints.end(); ++it) {
+				auto prevIt(std::prev(it));
+				auto nextIt(std::next(it));
+				if (prevIt->value == it->value and it->value == nextIt->value) {
+					it = controlPoints.erase(it);
+				}
+			}
+		}
+
+		if (controlPoints.size() >= 2) {
+			auto it(controlPoints.begin());
+			auto nextIt(std::next(it));
+			while (nextIt != controlPoints.end()) {
+				if (it->index == nextIt->index) {
+					it = controlPoints.erase(it);
+				} else {
+					++it;
+				}
+				nextIt = std::next(it);
+			}
+		}
+	}
 }

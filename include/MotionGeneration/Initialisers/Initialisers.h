@@ -18,6 +18,7 @@ namespace MGEA {
 
 	SimulationDataPtrs genesisBoundary(MotionParameters, DEvA::ParameterMap);
 	SimulationDataPtrs genesisBoundaryWavelet(MotionParameters, DEvA::ParameterMap);
+	SimulationDataPtrs genesisImportFromFolder(MotionParameters, DEvA::ParameterMap);
 	SimulationDataPtrs genesisRandom(MotionParameters, DEvA::ParameterMap);
 	SimulationDataPtrs genesisZero(MotionParameters, DEvA::ParameterMap);
 }

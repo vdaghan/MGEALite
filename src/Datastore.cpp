@@ -51,19 +51,23 @@ Datastore::~Datastore() {
 Spec::MaybePhenotype Datastore::simulate(Spec::Genotype genotype) {
 	std::size_t id(simId.fetch_add(1));
 	auto const simulationInputPath(toInputPath(id));
-	auto exportError = MGEA::exportSimulationDataPtrToFile(genotype, simulationInputPath);
-	if (DEvA::ErrorCode::OK != exportError) {
-		return std::unexpected(exportError);
-	}
+	DEvA::ErrorCode exportError(DEvA::ErrorCode::Fail);
+	do {
+		exportError = MGEA::exportSimulationDataPtrToFile(genotype, simulationInputPath);
+		if (exportError != DEvA::ErrorCode::OK) {
+			//spdlog::warn("Could not export to {}. Retrying...", simulationInputPath.string());
+			std::this_thread::sleep_for(std::chrono::milliseconds(250));
+		}
+	} while (DEvA::ErrorCode::OK != exportError);
 	{
 		std::lock_guard<std::mutex> lock(promiseMutex);
-		//simulationResultPromises.emplace(std::make_pair(id, std::promise<Spec::MaybePhenotype>()));
-		simulationResultPromises.emplace(id, std::promise<Spec::MaybePhenotype>());
+		std::promise<Spec::MaybePhenotype> simulationPromise;
+		simulationResultPromises.emplace(id, std::move(simulationPromise));
 	}
 	promiseMutex.lock();
 	auto & simulationResultPromise(simulationResultPromises.at(id));
-	promiseMutex.unlock();
 	auto simulationResultFuture(simulationResultPromise.get_future());
+	promiseMutex.unlock();
 	auto simulationResult(simulationResultFuture.get());
 	{
 		std::lock_guard<std::mutex> lock(promiseMutex);
@@ -116,8 +120,6 @@ std::list<std::size_t> Datastore::fulfillPromises(Progress progress) {
 	std::lock_guard<std::mutex> lock(promiseMutex);
 	std::list<std::size_t> fulfilledPromises;
 	for (auto & idWithInputAndOutput : progress.idsWithInputsAndOutputs) {
-		auto & promise(simulationResultPromises.at(idWithInputAndOutput));
-
 		auto const simulationOutputPath(toOutputPath(idWithInputAndOutput));
 		if (not std::filesystem::exists(simulationOutputPath)) {
 			continue;
@@ -126,6 +128,11 @@ std::list<std::size_t> Datastore::fulfillPromises(Progress progress) {
 		if (not simulationOutput and std::unexpected(DEvA::ErrorCode::InvalidTransform) != simulationOutput) {
 			continue;
 		}
+		if (not simulationResultPromises.contains(idWithInputAndOutput)) {
+			spdlog::warn("There should be a promise with id {}, but there is not...", idWithInputAndOutput);
+			continue;
+		}
+		auto & promise(simulationResultPromises.at(idWithInputAndOutput));
 		simulationResultPromises.at(idWithInputAndOutput).set_value(simulationOutput);
 		fulfilledPromises.emplace_back(idWithInputAndOutput);
 	}
@@ -135,8 +142,11 @@ std::list<std::size_t> Datastore::fulfillPromises(Progress progress) {
 std::list<std::filesystem::path> Datastore::getObsoleteFiles(std::list<std::size_t> toDelete) {
 	std::list<std::filesystem::path> obsoleteFiles;
 	for (auto & idToDelete : toDelete) {
-		obsoleteFiles.emplace_back(toInputPath(idToDelete));
-		obsoleteFiles.emplace_back(toOutputPath(idToDelete));
+		auto inputPath(toInputPath(idToDelete));
+		auto outputPath(toOutputPath(idToDelete));
+		obsoleteFiles.emplace_back(inputPath);
+		obsoleteFiles.emplace_back(outputPath);
+		//spdlog::info("Files {} and {} are marked obsolete.", inputPath.string(), outputPath.string());
 	}
 	return obsoleteFiles;
 }
@@ -166,10 +176,10 @@ void Datastore::deleteFiles() {
 }
 
 void Datastore::syncWithFilesystem() {
-	auto && simulationFiles(scanFiles());
-	auto && progress(getProgress(simulationFiles));
-	auto && fulfilledPromises(fulfillPromises(progress));
-	auto && newObsoleteFiles(getObsoleteFiles(fulfilledPromises));
+	auto simulationFiles(scanFiles());
+	auto progress(getProgress(simulationFiles));
+	auto fulfilledPromises(fulfillPromises(progress));
+	auto newObsoleteFiles(getObsoleteFiles(fulfilledPromises));
 	updateDeleteQueue(newObsoleteFiles);
 	deleteFiles();
 }
