@@ -6,7 +6,6 @@
 #include "MotionGeneration/Initialisers/Initialisers.h"
 #include "MotionGeneration/Metrics/Metrics.h"
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
-#include "Logging/SpdlogCommon.h"
 #include "Wavelet/HaarWavelet.h"
 
 #include "DEvA/Project/Filestore.h"
@@ -43,9 +42,7 @@ MotionGenerator::MotionGenerator(std::string dataFolder, std::string setupFile)
 	functions.transform.definePlain("Simulate", std::bind_front(&MotionGenerator::transform, this));
 	functions.transform.compile("SimulateCompiled", { "Simulate" });
 
-	onEpochStartCallback = std::bind_front(&MotionGenerator::onEpochStart, this);
 	onEpochEndCallback = std::bind_front(&MotionGenerator::onEpochEnd, this);
-	logger.callback = DEvALoggerCallback;
 };
 
 DEvA::StepResult MotionGenerator::search(std::size_t n) {

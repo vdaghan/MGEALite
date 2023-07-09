@@ -3,8 +3,6 @@
 
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 
-#include "Logging/SpdlogCommon.h"
-
 #include <algorithm>
 #include <ranges>
 
@@ -27,26 +25,20 @@ namespace MGEA {
 		return false;
 	}
 
-	bool dominatedForMetric(auto const & iptr1, auto const & iptr2, std::string const & metricName) {
-		auto const & metricValue1(iptr1->metricMap.at(metricName));
-		auto const & metricValue2(iptr2->metricMap.at(metricName));
-		return metricValue2.isBetterThan(metricValue1);
-	}
-
-	bool dominatedBy(auto const & iptr1, auto const & iptr2, std::vector<std::string> const & metrics) {
+	bool isDominatedBy(auto const & iptr1, auto const & iptr2, std::vector<std::string> const & metrics) {
 		std::size_t dominatedCount = std::ranges::count(metrics, true, [&](auto const & metricName) {
-			return dominatedForMetric(iptr1, iptr2, metricName);
-			});
+			auto const & metricValue1(iptr1->metricMap.at(metricName));
+			auto const & metricValue2(iptr2->metricMap.at(metricName));
+			return metricValue2.isBetterThan(metricValue1) or metricValue2.isEquivalentTo(metricValue1);
+		});
 		return dominatedCount == metrics.size();
 	}
 
-	bool isDominated(Spec::IndividualPtr const & iptr, Spec::IndividualPtrs const & iptrs, std::vector<std::string> const & metrics) {
-		auto dominatedByLambda = [&metrics](auto const & iptr1, auto const & iptr2) {
-			return dominatedBy(iptr1, iptr2, metrics);
-		};
-
-		return std::any_of(std::execution::par, iptrs.begin(), iptrs.end(), [&iptr, &dominatedByLambda](auto const & other) -> bool {
-			return dominatedByLambda(iptr, other);
+	bool isDominatedIn(Spec::IndividualPtr const & iptr, Spec::IndividualPtrs const & iptrs, std::vector<std::string> const & metrics) {
+		return std::any_of(std::execution::par, iptrs.begin(), iptrs.end(), [&](auto const & other) -> bool {
+			bool sameId(iptr->id == other->id);
+			bool dominated(isDominatedBy(iptr, other, metrics));
+			return not sameId and dominated;
 		});
 	}
 
@@ -54,7 +46,7 @@ namespace MGEA {
 		std::vector<std::string> metrics(parameters.at("metrics").get<std::vector<std::string>>());
 		std::size_t prevCount(iptrs.size());
 		auto isDominatedLambda = [&](auto const & iptr) {
-			return not isDominated(iptr, iptrs, metrics);
+			return not isDominatedIn(iptr, iptrs, metrics);
 		};
 
 		IPtrs nondominatedIndividuals{};

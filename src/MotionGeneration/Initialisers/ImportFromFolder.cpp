@@ -18,21 +18,30 @@ namespace MGEA {
 			folder = parameters.at("folder").get<std::string>();
 		}
 
-		std::list<std::filesystem::path> simulationDataPaths{};
 		std::filesystem::path genesisPath(folder);
-		for (auto & d : std::filesystem::directory_iterator{ genesisPath }) {
-			if (d.path() == genesisPath) {
-				continue;
-			}
-			std::string const fileNameStem = d.path().stem().string();
-			std::string const fileNameExtension = d.path().extension().string();
+		std::list<std::filesystem::path> simulationDataPaths{};
 
-			if (fileNameExtension.empty() or fileNameExtension.substr(1) != "deva") {
-				continue;
+		if (parameters.contains("files")) {
+			std::vector<std::string> files = parameters.at("files").get<std::vector<std::string>>();
+			for (auto const & file : files) {
+				simulationDataPaths.push_back(genesisPath / file);
 			}
+		} else {
+			for (auto & d : std::filesystem::directory_iterator{ genesisPath }) {
+				if (d.path() == genesisPath) {
+					continue;
+				}
+				std::string const fileNameStem = d.path().stem().string();
+				std::string const fileNameExtension = d.path().extension().string();
 
-			simulationDataPaths.push_back(d.path());
+				if (fileNameExtension.empty() or fileNameExtension.substr(1) != "deva") {
+					continue;
+				}
+
+				simulationDataPaths.push_back(d.path());
+			}
 		}
+
 
 		SimulationDataPtrs simDataPtrs{};
 		for (auto const & simDataPath : simulationDataPaths) {

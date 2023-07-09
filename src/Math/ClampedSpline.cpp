@@ -105,10 +105,9 @@ namespace MGEA {
 				double dx(x2-x1);
 				double a(-2.0 * (y2 - y1) / std::pow(dx, 3.0));
 				double b((y2 - y1 - a * std::pow(dx, 3.0)) / std::pow(dx, 2.0));
-				retVal[i]
-					= a * std::pow(x - x1, 3.0)
-					+ b * std::pow(x - x1, 2.0)
-					+ y1;
+				retVal[i] = a * std::pow(x - x1, 3.0)
+						  + b * std::pow(x - x1, 2.0)
+						  + y1;
 			}
 		}
 

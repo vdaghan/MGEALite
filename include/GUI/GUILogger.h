@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Logging/SpdlogCommon.h"
+#include <DEvA/Logger.h>
 #include "spdlog/sinks/base_sink.h"
 
 #include <atomic>

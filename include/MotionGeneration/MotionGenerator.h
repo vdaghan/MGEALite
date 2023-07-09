@@ -26,7 +26,6 @@ class MotionGenerator : public DEvA::EvolutionaryAlgorithm<Spec> {
 
 		void applyMotionParameters(SimulationDataPtr);
 
-		void onEpochStart(std::size_t);
 		void onEpochEnd(std::size_t);
 };
 

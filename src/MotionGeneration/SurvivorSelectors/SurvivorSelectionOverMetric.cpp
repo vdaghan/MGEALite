@@ -3,8 +3,6 @@
 
 #include "MotionGeneration/SurvivorSelectors/SurvivorSelectors.h"
 
-#include "Logging/SpdlogCommon.h"
-
 #include <algorithm>
 
 namespace MGEA {

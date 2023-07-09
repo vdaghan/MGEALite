@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Logging/SpdlogCommon.h"
 #include "MotionGeneration/Specification.h"
 
 #include <algorithm>

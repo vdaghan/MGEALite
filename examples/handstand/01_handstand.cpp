@@ -70,8 +70,8 @@ int main() {
 	motionGenerator.metricFunctors.computeFromIndividualPtrFunctions.emplace(std::pair("computeFitness", computeFitnessLambda));
 
 	auto compileResult = motionGenerator.compile();
-	motionGenerator.lambda = 4096;
-	auto result = motionGenerator.search(128);
+	motionGenerator.lambda = 256;
+	auto result = motionGenerator.search(1024);
 
 	return 0;
 }

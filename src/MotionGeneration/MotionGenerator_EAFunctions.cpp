@@ -10,8 +10,6 @@
 #include "MotionGeneration/Variations/Variations.h"
 #include "Wavelet/HaarWavelet.h"
 
-#include "Logging/SpdlogCommon.h"
-
 #include <DTimer/DTimer.h>
 
 #include <cmath>
@@ -237,36 +235,12 @@ void MotionGenerator::applyMotionParameters(SimulationDataPtr sptr) {
 	sptr->contacts = motionParameters.contactParameters;
 }
 
-void MotionGenerator::onEpochStart(std::size_t generation) {
-	spdlog::info("Epoch {} started.", generation);
-}
-
 void MotionGenerator::onEpochEnd(std::size_t generation) {
-	spdlog::info("Epoch {} ended.", generation);
-	auto & lastGeneration = genealogy.back();
+	//auto & timer = DTimer::simple("stats").newSample().begin();
 
-	auto & timer = DTimer::simple("stats").newSample().begin();
-	auto const & bestIndividualPtr = lastGeneration.front();
+	auto const & bestIndividualPtr = genealogy.back().front();
 	//database.saveVisualisationTarget(bestIndividualPtr->id);
 
-	spdlog::info("Best individual: generation {}, id {}", bestIndividualPtr->id.generation, bestIndividualPtr->id.identifier);
-	std::string bestIndividualParents{};
-	for (auto & parent : bestIndividualPtr->variationInfo.parentIds) {
-		auto parentGeneration(std::to_string(parent.generation));
-		auto parentIdentifier(std::to_string(parent.identifier));
-		bestIndividualParents += "(" + parentGeneration + ", " + parentIdentifier + ") ";
-	}
-	spdlog::info("Best individual variation: {} from parent(s) {}", bestIndividualPtr->variationInfo.name, bestIndividualParents);
-
-	auto & bestIndividualMetric(bestIndividual->metricMap);
-	for (auto & [metricName, metric] : bestIndividual->metricMap) {
-		if (metric.value.type() == std::type_index(typeid(double))) {
-			spdlog::info("Best individual {}: {}", metricName, metric.as<double>());
-		} else if (metric.metricToJSONObjectFunction) {
-			auto metricAsJSON(metric.metricToJSONObjectFunction(metric.value));
-			spdlog::info("Best individual {}: {}", metricName, metricAsJSON.dump());
-		}
-	}
 	if (bestIndividual->genotype->torqueSplines) {
 		for (auto & [jointName, torqueSpline] : bestIndividual->genotype->torqueSplines.value()) {
 			auto & controlPoints(torqueSpline.controlPoints);
@@ -294,6 +268,7 @@ void MotionGenerator::onEpochEnd(std::size_t generation) {
 	//	//spdlog::info("Total simulation time was: {:.3f}s", total);
 	//	spdlog::info("Total simulation time was: {}", DTimer::printTime(static_cast<std::size_t>(total * 1000.0)));
 	//}
-	timer.end();
-	spdlog::info("\n{}", DTimer::print());
+
+	//timer.end();
+	//spdlog::info("\n{}", DTimer::print());
 }

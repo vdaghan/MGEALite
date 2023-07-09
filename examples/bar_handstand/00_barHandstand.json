@@ -14,19 +14,17 @@
       "feet": 2.24
     },
     "jointNames": [
-      "wrist",
       "shoulder",
       "hip"
     ],
     "jointLimits": {
-      "wrist": [ -15.0, 7.0 ],
       "shoulder": [ -150.0, 350.0 ],
       "hip": [ -750, 350.0 ]
     },
     "contactParameters": {
-      "stiffness": 1000000.0,
-      "damping": 500000.0,
-      "transitionRegionWidth": 0.0001,
+      "stiffness": 10000.0,
+      "damping": 5000.0,
+      "transitionRegionWidth": 0.01,
       "staticFriction": 3.0,
       "dynamicFriction": 2.0,
       "criticalVelocity": 0.001
@@ -34,51 +32,41 @@
   },
   "functions": {
     "definitions": {
-      "genesis": {
-        "ImportFile": {
-          "function": "MGEAGenesisImportFromFolder",
-          "parameters": {
-            "files": [
-              "01_handstand.deva"
-            ]
-          }
-        }
-      },
       "parentSelection": {
-        "Random2Fitness": {
+        "Random2COMHeight": {
           "function": "StdParentSelectorRandomN",
           "parameters": {
             "N": 2,
-            "metric": "fitness"
+            "metric": "rotation"
           }
         },
-        "MetricProportional1Balance": {
+        "MetricProportional1Rotation": {
           "function": "MGEAParentSelectorMetricProportional",
           "parameters": {
             "N": 1,
-            "metric": "balance"
+            "metric": "rotation"
           }
         },
-        "MetricProportional1Fitness": {
+        "MetricProportional1COMHeight": {
           "function": "MGEAParentSelectorMetricProportional",
           "parameters": {
             "N": 1,
-            "metric": "fitness"
+            "metric": "comheight"
           }
         }
       },
       "individualSort": {
-        "fitnessBased": {
+        "comheightBased": {
           "function": "StdIndividualSorterMetric",
           "parameters": {
-            "metric": "fitness"
+            "metric": "comheight"
           }
         }
       }
     },
     "compile": {
-      "genesis": [ "ImportFile" ],
-      "individualSort": [ "fitnessBased" ],
+      "genesis": [ "MGEAGenesisZero" ],
+      "individualSort": [ "comheightBased" ],
       "survivorSelection": [ "StdSurvivorSelectorAll" ],
       "variationFromIndividualPtrs": [ "MGEAVariationFromIndividualPtrsSNV" ],
       "convergenceCheck": [ "StdConvergenceCheckerNever" ]
@@ -88,49 +76,49 @@
     "definitions": {
       "crossoverAll": {
         "numberOfParents": 1,
-        "parentSelection": "Random2Fitness",
+        "parentSelection": "Random2COMHeight",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsCrossoverAll",
         "probability": 0.5,
         "removeParentsFromMatingPool": false
       },
-      "snvBP": {
+      "snvCH": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Balance",
+        "parentSelection": "MetricProportional1COMHeight",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
         "probability": 1,
         "removeParentsFromMatingPool": false
       },
-      "insertionBP": {
+      "insertionCH": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Balance",
+        "parentSelection": "MetricProportional1COMHeight",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
         "probability": 1,
         "removeParentsFromMatingPool": false
       },
-      "deletionBP": {
+      "deletionCH": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Balance",
+        "parentSelection": "MetricProportional1COMHeight",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
         "probability": 1,
         "removeParentsFromMatingPool": false
       },
-      "snvFP": {
+      "snvRot": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Fitness",
+        "parentSelection": "MetricProportional1Rotation",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
         "probability": 1,
         "removeParentsFromMatingPool": false
       },
-      "insertionFP": {
+      "insertionRot": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Fitness",
+        "parentSelection": "MetricProportional1Rotation",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
         "probability": 1,
         "removeParentsFromMatingPool": false
       },
-      "deletionFP": {
+      "deletionRot": {
         "numberOfParents": 1,
-        "parentSelection": "MetricProportional1Fitness",
+        "parentSelection": "MetricProportional1Rotation",
         "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
         "probability": 1,
         "removeParentsFromMatingPool": false
@@ -138,35 +126,30 @@
     },
     "used": [
       "crossoverAll",
-      "snvBP",
-      "insertionBP",
-      "deletionBP",
-      "snvFP",
-      "insertionFP",
-      "deletionFP"
+      "snvCH",
+      "insertionCH",
+      "deletionCH",
+      "snvRot",
+      "insertionRot",
+      "deletionRot"
     ]
   },
   "metricFunctors": {
     "definitions": {
-      "balance": {
-        "type": "double",
-        "basicBetterThan": "lesser",
-        "computeFromIndividualPtr": "outputBetweenTwoValues",
-        "computeParameters": {
-          "value": "centerOfMassX",
-          "firstBoundary": "fingertipX",
-          "secondBoundary": "palmX"
-        }
-      },
-      "fitness": {
+      "rotation": {
         "type": "double",
         "basicBetterThan": "greater",
-        "computeFromIndividualPtr": "computeFitness"
+        "computeFromIndividualPtr": "computeRotation"
+      },
+      "comheight": {
+        "type": "double",
+        "basicBetterThan": "greater",
+        "computeFromIndividualPtr": "computeCOMHeight"
       }
     },
     "usedForIndividuals": [
-      "balance",
-      "fitness"
+      "comheight",
+      "rotation"
     ]
   }
 }
