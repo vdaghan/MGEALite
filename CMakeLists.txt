@@ -18,14 +18,14 @@ find_package(OpenGL REQUIRED)
 # *.*.X.0 : bugfix updates, guaranteed compiling "on my machine"
 # *.X.0.0 : minor updates, guaranteed compiling "on my machine"
 # X.0.0.0 : major updates, guaranteed compiling on my desktop & laptop
-project(MGEALite LANGUAGES CXX VERSION 0.5.2.2)
+project(MGEALite LANGUAGES CXX VERSION 0.5.2.3)
 configure_file(mgealite_version.cpp.in mgealite_version.cpp @ONLY)
 
 add_custom_target(MGEADependencies COMMAND dot -Tsvg ${CMAKE_BINARY_DIR}/MGEALite.dot -o ${CMAKE_BINARY_DIR}/MGEALite.svg)
 
-FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG 5e16c2e657b5df9c2b5b02f6199a5b436a167e26 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.5.2.3
+FetchContent_Declare(DEvA GIT_REPOSITORY https://github.com/vdaghan/DEvA.git GIT_TAG e69cf3a76000def7484f4ca0759b23cc060b1228 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DEvA) # 0.5.2.5
 FetchContent_Declare(DTimer GIT_REPOSITORY https://github.com/vdaghan/DTimer.git GIT_TAG 03c3a8cd8f3d0c5976a2d596c41979318c5a6a08 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/DTimer) # 0.1.0.1
-FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG 76fb40d95455f249bd70824ecfcae7a8f0930fa3 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.10.0
+FetchContent_Declare(spdlog GIT_REPOSITORY https://github.com/gabime/spdlog.git GIT_TAG 7e635fca68d014934b4af8a1cf874f63989352b7 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/spdlog) # release-1.12.0
 FetchContent_Declare(glfw GIT_REPOSITORY https://github.com/glfw/glfw.git GIT_TAG 7482de6071d21db77a7236155da44c172a7f6c9e GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/glfw) # release-3.3.8
 FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG 9aae45eb4a05a5a1f96be1ef37eb503a12ceb889 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/imgui) # release-1.88
 FetchContent_Declare(implot GIT_REPOSITORY https://github.com/epezent/implot.git GIT_TAG 15e494b76a78b44ae2c1b76608ff9bc39a661409 GIT_PROGRESS TRUE SOURCE_DIR ${CMAKE_SOURCE_DIR}/external/implot) # release-0.14

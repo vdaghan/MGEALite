@@ -31,6 +31,10 @@ struct nlohmann::adl_serializer<MotionParameters> {
 		if (j.contains("jointLimits")) {
 			j.at("jointLimits").get_to(mP.jointLimits);
 		}
+		mP.torqueSplineControlPointMinimumDistance = 1;
+		if (j.contains("torqueSplineControlPointMinimumDistance")) {
+			j.at("torqueSplineControlPointMinimumDistance").get_to(mP.torqueSplineControlPointMinimumDistance);
+		}
 		if (j.contains("contactParameters")) {
 			j.at("contactParameters").get_to(mP.contactParameters);
 		}
@@ -39,5 +43,6 @@ struct nlohmann::adl_serializer<MotionParameters> {
     }
     static void to_json(JSON & j, MotionParameters const & mP) {
 		j["stiffness"] = cP.stiffness;
+		j["torqueSplineControlPointMinimumDistance"] = cP.torqueSplineControlPointMinimumDistance;
     }
 };

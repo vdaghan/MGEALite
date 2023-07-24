@@ -1,0 +1,124 @@
+{
+  "motionParameters": {
+    "simStart": 0.0,
+    "simStep": 0.01,
+    "simSamples": 512,
+    "alignment": -1,
+    "timeout": 30.0,
+    "masses": {
+      "arms": 4.9,
+      "hands": 1.2,
+      "legs": 16.5,
+      "trunk": 30.3
+    },
+    "jointNames": [
+      "wrist",
+      "shoulder",
+      "hip"
+    ],
+    "jointLimits": {
+      "wrist": [ -100.0, 100.0 ],
+      "shoulder": [ -150.0, 150.0 ],
+      "hip": [ -100.0, 100.0 ]
+    },
+    "torqueSplineControlPointMinimumDistance": 256,
+    "contactParameters": {
+      "stiffness": 50000.0,
+      "damping": 50000.0,
+      "transitionRegionWidth": 0.01,
+      "staticFriction": 3.0,
+      "dynamicFriction": 2.0,
+      "criticalVelocity": 0.001
+    }
+  },
+  "functions": {
+    "definitions": {
+      "parentSelection": {
+        "BestNOfMFitness": {
+          "function": "StdParentSelectorBestNofM",
+          "parameters": {
+            "N": 1,
+            "M": 1,
+            "metric": "maximumAngleDifferenceStepped"
+          }
+        }
+      },
+      "individualSort": {
+        "fitnessBased": {
+          "function": "StdIndividualSorterMetric",
+          "parameters": {
+            "metric": "maximumAngleDifferenceStepped"
+          }
+        }
+      },
+      "survivorSelection": {
+        "Clamp": {
+          "function": "StdSurvivorSelectorClamp",
+          "parameters": {
+            "N": 1
+          }
+        }
+      }
+    },
+    "compile": {
+      "genesis": [ "MGEAGenesisZero" ],
+      "individualSort": [ "fitnessBased" ],
+      "survivorSelection": [ "Clamp" ],
+      "variationFromIndividualPtrs": [ "MGEAVariationFromIndividualPtrsSNV" ],
+      "convergenceCheck": [ "StdConvergenceCheckerNever" ]
+    }
+  },
+  "variationFunctors": {
+    "definitions": {
+      "snv": {
+        "numberOfParents": 1,
+        "parentSelection": "BestNOfMFitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
+        "probability": 1.0,
+        "removeParentsFromMatingPool": false
+      },
+      "insertion": {
+        "numberOfParents": 1,
+        "parentSelection": "BestNOfMFitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
+        "probability": 0.5,
+        "removeParentsFromMatingPool": false
+      },
+      "deletion": {
+        "numberOfParents": 1,
+        "parentSelection": "BestNOfMFitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
+        "probability": 0.5,
+        "removeParentsFromMatingPool": false
+      }
+    },
+    "used": [
+      "snv",
+      "insertion",
+      "deletion"
+    ]
+  },
+  "metricFunctors": {
+    "definitions": {
+      "maximumAngleDifference": {
+        "type": "double",
+        "basicBetterThan": "lesser",
+        "computeFromIndividualPtr": "maximumAngleDifference"
+      },
+      "maximumAngleDifferenceStepped": {
+        "betterThan": "steppedDoubleLesser",
+        "equivalence": "steppedDoubleEquivalence",
+        "computeFromIndividualPtr": "maximumAngleDifferenceStepped",
+        "computeParameters": {
+          "maxSteps": 512,
+          "stepThreshold": 3.0
+        },
+        "metricToJSON": "steppedDoubleConversion"
+      }
+    },
+    "usedForIndividuals": [
+      "maximumAngleDifference",
+      "maximumAngleDifferenceStepped"
+    ]
+  }
+}

@@ -1,0 +1,171 @@
+{
+  "motionParameters": {
+    "simStart": 0.0,
+    "simStep": 0.01,
+    "simSamples": 512,
+    "alignment": -1,
+    "timeout": 30.0,
+    "masses": {
+      "arms": 4.9,
+      "hands": 1.2,
+      "legs": 16.5,
+      "trunk": 30.3
+    },
+    "jointNames": [
+      "wrist",
+      "shoulder",
+      "hip"
+    ],
+    "jointLimits": {
+      "wrist": [ -100.0, 100.0 ],
+      "shoulder": [ -150.0, 150.0 ],
+      "hip": [ -100.0, 100.0 ]
+    },
+    "torqueSplineControlPointMinimumDistance": 2,
+    "contactParameters": {
+      "stiffness": 50000.0,
+      "damping": 50000.0,
+      "transitionRegionWidth": 0.01,
+      "staticFriction": 3.0,
+      "dynamicFriction": 2.0,
+      "criticalVelocity": 0.001
+    }
+  },
+  "functions": {
+    "definitions": {
+      "genesis": {
+        "ImportFile": {
+          "function": "MGEAGenesisImportFromFolder",
+          "parameters": {
+            "files": [
+              "03_handstand.deva"
+            ]
+          }
+        }
+      },
+      "parentSelection": {
+        "Random2Fitness": {
+          "function": "StdParentSelectorRandomN",
+          "parameters": {
+            "N": 2,
+            "metric": "fitness"
+          }
+        },
+        "MetricProportional1Balance": {
+          "function": "MGEAParentSelectorMetricProportional",
+          "parameters": {
+            "N": 1,
+            "metric": "balance"
+          }
+        },
+        "MetricProportional1Fitness": {
+          "function": "MGEAParentSelectorMetricProportional",
+          "parameters": {
+            "N": 1,
+            "metric": "fitness"
+          }
+        }
+      },
+      "individualSort": {
+        "fitnessBased": {
+          "function": "StdIndividualSorterMetric",
+          "parameters": {
+            "metric": "fitness"
+          }
+        }
+      }
+    },
+    "compile": {
+      "genesis": [ "ImportFile" ],
+      "individualSort": [ "fitnessBased" ],
+      "survivorSelection": [ "StdSurvivorSelectorAll" ],
+      "variationFromIndividualPtrs": [ "MGEAVariationFromIndividualPtrsSNV" ],
+      "convergenceCheck": [ "StdConvergenceCheckerNever" ]
+    }
+  },
+  "variationFunctors": {
+    "definitions": {
+      "crossoverAll": {
+        "numberOfParents": 1,
+        "parentSelection": "Random2Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsCrossoverAll",
+        "probability": 0.5,
+        "removeParentsFromMatingPool": false
+      },
+      "snvBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      },
+      "insertionBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      },
+      "deletionBP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Balance",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      },
+      "snvFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsSNV",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      },
+      "insertionFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsInsertionSingle",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      },
+      "deletionFP": {
+        "numberOfParents": 1,
+        "parentSelection": "MetricProportional1Fitness",
+        "variationFromIndividualPtrs": "MGEAVariationFromIndividualPtrsDeletionSingle",
+        "probability": 1,
+        "removeParentsFromMatingPool": false
+      }
+    },
+    "used": [
+      "crossoverAll",
+      "snvBP",
+      "insertionBP",
+      "deletionBP",
+      "snvFP",
+      "insertionFP",
+      "deletionFP"
+    ]
+  },
+  "metricFunctors": {
+    "definitions": {
+      "balance": {
+        "type": "double",
+        "basicBetterThan": "lesser",
+        "computeFromIndividualPtr": "outputBetweenTwoValues",
+        "computeParameters": {
+          "value": "centerOfMassX",
+          "firstBoundary": "fingertipX",
+          "secondBoundary": "palmX"
+        }
+      },
+      "fitness": {
+        "type": "double",
+        "basicBetterThan": "greater",
+        "computeFromIndividualPtr": "computeFitness"
+      }
+    },
+    "usedForIndividuals": [
+      "balance",
+      "fitness"
+    ]
+  }
+}

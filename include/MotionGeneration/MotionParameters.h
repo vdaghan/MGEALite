@@ -28,5 +28,6 @@ struct MotionParameters {
 	std::map<std::string, double> masses;
 	std::vector<std::string> jointNames;
 	std::map<std::string, std::pair<double, double>> jointLimits;
+	std::size_t torqueSplineControlPointMinimumDistance;
 	std::optional<ContactParameters> contactParameters;
 };

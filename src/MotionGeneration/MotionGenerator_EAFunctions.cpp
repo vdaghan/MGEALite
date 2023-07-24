@@ -45,6 +45,7 @@ void MotionGenerator::importMotionParameters(std::filesystem::path const & filen
 	motionParameters.masses = motionParametersJSON.at("masses").get<std::map<std::string, double>>();
 	motionParameters.jointNames = motionParametersJSON.at("jointNames").get<std::vector<std::string>>();
 	motionParameters.jointLimits = motionParametersJSON.at("jointLimits").get<std::map<std::string, std::pair<double, double>>>();
+	motionParameters.torqueSplineControlPointMinimumDistance = motionParametersJSON.at("torqueSplineControlPointMinimumDistance").get<std::size_t>();
 	auto & contactParametersJSON = motionParametersJSON.at("contactParameters");
 	ContactParameters contactParameters{};
 	contactParameters.stiffness = contactParametersJSON.at("stiffness").get<double>();
